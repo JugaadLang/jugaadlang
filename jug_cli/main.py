@@ -21,7 +21,8 @@ console_stderr = Console(color_system="truecolor", force_terminal=True, stderr=T
 @click.version_option(version="1.0.2", message="JugaadLang v%(version)s 🇮🇳")
 def main() -> None:
     """JugaadLang — The Hindi-keyword programming language. 🚀"""
-    pass
+    from jugaadlang.config import load_config
+    load_config()
 
 
 @main.command(context_settings=dict(ignore_unknown_options=True, allow_extra_args=True))

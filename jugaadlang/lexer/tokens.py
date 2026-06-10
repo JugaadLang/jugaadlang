@@ -175,6 +175,82 @@ KEYWORDS: dict[str, TokenType] = {
     "kaand": TokenType.KAAND,
 }
 
+def register_custom_keywords(custom_mapping: dict[str, str | list[str]]) -> None:
+    """
+    Dynamically register custom keywords/aliases mapped to the standard English/Python keyword equivalents.
+    For example: `{"print": "chhap"}` or `{"print": ["chhap", "bolo"]}`
+    """
+    # Inverse map to find the TokenType for a given standard token name
+    # e.g., "print" -> TokenType.BOLO (since bolo maps to print conceptually)
+    # Wait, the config uses english equivalents or standard jugaadlang names?
+    # According to plan: `print = ["chhap", "bolo"]`. So the key is the conceptual name or default jug keyword.
+    
+    # We can create a reverse mapping from string representation of TokenType (like BOLO) 
+    # to the enum type to make it easy.
+    type_map = {t.name.lower(): t for t in TokenType}
+    
+    # Also map common python names to their JugaadLang TokenTypes for ease of use
+    python_to_jug = {
+        "print": TokenType.BOLO,
+        "input": TokenType.POOCHHO,
+        "if": TokenType.AGAR,
+        "elif": TokenType.SHAYAD,
+        "else": TokenType.WARNA,
+        "for": TokenType.GHUMO,
+        "while": TokenType.JABTAK,
+        "def": TokenType.BANAO,
+        "return": TokenType.WAPAS,
+        "class": TokenType.USTAD,
+        "self": TokenType.KHUD,
+        "import": TokenType.LAO,
+        "from": TokenType.SE,
+        "break": TokenType.RUKJA,
+        "continue": TokenType.CHALTE_RAHO,
+        "try": TokenType.KOSHISH,
+        "except": TokenType.GADBAD,
+        "finally": TokenType.AAKHIR_ME,
+        "raise": TokenType.UDAO,
+        "true": TokenType.SAHI,
+        "false": TokenType.GALAT,
+        "none": TokenType.KUCH_NAHI,
+        "and": TokenType.AUR,
+        "or": TokenType.YA,
+        "not": TokenType.NAHI,
+        "async": TokenType.TEZ,
+        "await": TokenType.INTEZAAR,
+        "yield": TokenType.BAANTO,
+        "pass": TokenType.THEEK_HAI,
+        "global": TokenType.SABKA,
+        "lambda": TokenType.CHOTA_FUNKSHAN,
+        "in": TokenType.MEIN,
+        "is": TokenType.HAI,
+        "del": TokenType.DEL,
+        "nonlocal": TokenType.NONLOCAL,
+        "with": TokenType.WITH,
+        "as": TokenType.AS,
+        "assert": TokenType.ASSERT,
+        "match": TokenType.AGAR_MATCH,
+        "case": TokenType.KAAND,
+    }
+
+    for key, aliases in custom_mapping.items():
+        # Find the correct TokenType
+        key_lower = key.lower()
+        target_type = None
+        if key_lower in type_map:
+            target_type = type_map[key_lower]
+        elif key_lower in python_to_jug:
+            target_type = python_to_jug[key_lower]
+        
+        if not target_type:
+            continue
+            
+        if isinstance(aliases, str):
+            aliases = [aliases]
+            
+        for alias in aliases:
+            KEYWORDS[alias] = target_type
+
 # Human-readable names for error messages
 TOKEN_NAMES: dict[TokenType, str] = {
     TokenType.INT: "integer",
