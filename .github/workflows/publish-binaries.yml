@@ -82,8 +82,6 @@ jobs:
         include:
           - os: macos-latest
             arch: arm64
-          - os: macos-13
-            arch: amd64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -226,7 +224,7 @@ jobs:
         with:
           formula-name: jugaadlang
           homebrew-tap: jugaadlang/homebrew-tap
-          download-url: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/jug-macos-amd64
+          download-url: https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/jug-macos-arm64
         env:
           COMMITTER_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         continue-on-error: true
