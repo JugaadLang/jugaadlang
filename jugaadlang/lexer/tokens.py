@@ -125,6 +125,7 @@ class TokenType(Enum):
 
 # ── Keyword string → TokenType mapping ───────────────────────────────
 KEYWORDS: dict[str, TokenType] = {
+    # ── Hindi Keywords ────────────────────────────────────────────
     "bolo": TokenType.BOLO,
     "poochho": TokenType.POOCHHO,
     "agar": TokenType.AGAR,
@@ -173,6 +174,43 @@ KEYWORDS: dict[str, TokenType] = {
     "pakka": TokenType.ASSERT,
     "agar_match": TokenType.AGAR_MATCH,
     "kaand": TokenType.KAAND,
+
+    # ── English Keyword Interop ───────────────────────────────────
+    "print": TokenType.BOLO,
+    "input": TokenType.POOCHHO,
+    "if": TokenType.AGAR,
+    "elif": TokenType.SHAYAD,
+    "else": TokenType.WARNA,
+    "for": TokenType.GHUMO,
+    "while": TokenType.JABTAK,
+    "def": TokenType.BANAO,
+    "return": TokenType.WAPAS,
+    "class": TokenType.USTAD,
+    "import": TokenType.LAO,
+    "from": TokenType.SE,
+    "break": TokenType.RUKJA,
+    "continue": TokenType.CHALTE_RAHO,
+    "try": TokenType.KOSHISH,
+    "except": TokenType.GADBAD,
+    "finally": TokenType.AAKHIR_ME,
+    "raise": TokenType.UDAO,
+    "True": TokenType.SAHI,
+    "False": TokenType.GALAT,
+    "None": TokenType.KUCH_NAHI,
+    "and": TokenType.AUR,
+    "or": TokenType.YA,
+    "not": TokenType.NAHI,
+    "async": TokenType.TEZ,
+    "await": TokenType.INTEZAAR,
+    "yield": TokenType.BAANTO,
+    "pass": TokenType.THEEK_HAI,
+    "global": TokenType.SABKA,
+    "lambda": TokenType.CHOTA_FUNKSHAN,
+    "in": TokenType.MEIN,
+    "is": TokenType.HAI,
+    "match": TokenType.AGAR_MATCH,
+    "case": TokenType.KAAND,
+    "call": TokenType.BULAWO,
 }
 
 # Human-readable names for error messages

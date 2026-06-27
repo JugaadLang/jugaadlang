@@ -1,97 +1,97 @@
 # JugaadLang Keywords Reference
 
-## Keyword Mapping
+JugaadLang supports **dual keyword systems**: the original Hindi (Roman Hindi) keywords AND standard Python English keywords. You can use either interchangeably in the same file.
 
-Every Python keyword has a Hindi (Roman Hindi) equivalent. All keywords are case-sensitive and lowercase.
+## Keyword Mapping
 
 ### Control Flow
 
-| Keyword | Python Equivalent | Hindi Meaning | Example |
+| English | Hindi | Python Equivalent | Example |
 |---|---|---|---|
-| `agar` | `if` | If | `agar x > 5: bolo("bada hai")` |
-| `shayad` | `elif` | Maybe/Perhaps | `shayad x == 5: bolo("barabar")` |
-| `warna` | `else` | Otherwise | `warna: bolo("chota hai")` |
-| `ghumo` | `for` | Roam/Iterate | `ghumo i mein range(5):` |
-| `jabtak` | `while` | As long as | `jabtak x > 0:` |
-| `rukja` | `break` | Stop! | `rukja` |
-| `chalte_raho` | `continue` | Keep going | `chalte_raho` |
-| `theek_hai` | `pass` | It's fine | `theek_hai` |
+| `if` | `agar` | `if` | `if x > 5: print("bada hai")` |
+| `elif` | `shayad` | `elif` | `elif x == 5: print("barabar")` |
+| `else` | `warna` | `else` | `else: print("chota hai")` |
+| `for` | `ghumo` | `for` | `for i in range(5):` |
+| `while` | `jabtak` | `while` | `while x > 0:` |
+| `break` | `rukja` | `break` | `break` |
+| `continue` | `chalte_raho` | `continue` | `continue` |
+| `pass` | `theek_hai` | `pass` | `pass` |
 
 ### Functions & Classes
 
-| Keyword | Python Equivalent | Hindi Meaning | Example |
+| English | Hindi | Python Equivalent | Example |
 |---|---|---|---|
-| `banao` | `def` | Create/Make | `banao add(a, b): wapas a + b` |
-| `wapas` | `return` | Return/Go back | `wapas result` |
-| `ustad` | `class` | Master/Teacher | `ustad Car:` |
-| `khud` | `self` | Self | `khud.naam = naam` |
-| `shuru` | `__init__` | Start | Method name for constructor |
-| `chota_funkshan` | `lambda` | Little function | `chota_funkshan x: x + 1` |
-| `baanto` | `yield` | Distribute | `baanto value` |
+| `def` | `banao` | `def` | `def add(a, b): return a + b` |
+| `return` | `wapas` | `return` | `return result` |
+| `class` | `ustad` | `class` | `class Car:` |
+| `self` | `khud` | `self` | `self.name = name` |
+| *(n/a)* | `shuru` | `__init__` | Constructor method name |
+| `lambda` | `chota_funkshan` | `lambda` | `lambda x: x + 1` |
+| `yield` | `baanto` | `yield` | `yield value` |
 
 ### Exception Handling
 
-| Keyword | Python Equivalent | Hindi Meaning | Example |
+| English | Hindi | Python Equivalent | Example |
 |---|---|---|---|
-| `koshish` | `try` | Try/Attempt | `koshish:` |
-| `gadbad` | `except` | Problem | `gadbad ValueError:` |
-| `aakhir_me` | `finally` | In the end | `aakhir_me:` |
-| `udao` | `raise` | Throw | `udao ValueError("kuch gadbad hai")` |
+| `try` | `koshish` | `try` | `try:` |
+| `except` | `gadbad` | `except` | `except ValueError:` |
+| `finally` | `aakhir_me` | `finally` | `finally:` |
+| `raise` | `udao` | `raise` | `raise ValueError("kuch gadbad hai")` |
 
 ### Imports
 
-| Keyword | Python Equivalent | Hindi Meaning | Example |
+| English | Hindi | Python Equivalent | Example |
 |---|---|---|---|
-| `lao` | `import` | Bring | `lao math` |
-| `se` | `from` | From | `se math lao sqrt` |
-| `jaise` | `as` | Like | `lao numpy jaise np` |
+| `import` | `lao` | `import` | `import math` |
+| `from` | `se` | `from` | `from math import sqrt` |
+| `as` | `jaise` | `as` | `import numpy as np` |
 
 ### Boolean & Operators
 
-| Keyword | Python Equivalent | Hindi Meaning | Example |
+| English | Hindi | Python Equivalent | Example |
 |---|---|---|---|
-| `sahi` | `True` | Correct | `agar sahi:` |
-| `galat` | `False` | Wrong | `jabtak galat:` |
-| `kuch_nahi` | `None` | Nothing | `x = kuch_nahi` |
-| `aur` | `and` | And | `agar x > 0 aur x < 10:` |
-| `ya` | `or` | Or | `agar x == 0 ya x == 1:` |
-| `nahi` | `not` | Not | `agar nahi x:` |
-| `mein` | `in` | In | `ghumo x mein list:` |
-| `mein_nahi` | `not in` | Not in | `agar 5 mein_nahi list:` |
-| `hai` | `is` | Is | `agar x hai kuch_nahi:` |
-| `nahi_hai` | `is not` | Is not | `agar x nahi_hai y:` |
+| `True` | `sahi` | `True` | `if True:` |
+| `False` | `galat` | `False` | `while False:` |
+| `None` | `kuch_nahi` | `None` | `x = None` |
+| `and` | `aur` | `and` | `if x > 0 and x < 10:` |
+| `or` | `ya` | `or` | `if x == 0 or x == 1:` |
+| `not` | `nahi` | `not` | `if not x:` |
+| `in` | `mein` | `in` | `for x in list:` |
+| `not in` | `mein_nahi` | `not in` | `if 5 not in list:` |
+| `is` | `hai` | `is` | `if x is None:` |
+| `is not` | `nahi_hai` | `is not` | `if x is not y:` |
 
 ### Async
 
-| Keyword | Python Equivalent | Hindi Meaning | Example |
+| English | Hindi | Python Equivalent | Example |
 |---|---|---|---|
-| `tez` | `async` | Fast | `tez banao fetch():` |
-| `intezaar` | `await` | Wait | `intezaar fetch()` |
+| `async` | `tez` | `async` | `async def fetch():` |
+| `await` | `intezaar` | `await` | `await fetch()` |
 
 ### Declarations
 
-| Keyword | Python Equivalent | Hindi Meaning | Example |
+| English | Hindi | Python Equivalent | Example |
 |---|---|---|---|
-| `sabka` | `global` | Everyone's | `sabka x` |
-| `gair_local` | `nonlocal` | Non-local | `gair_local x` |
-| `pakka` | `assert` | Guaranteed | `pakka x > 0, "positive hona chahiye"` |
-| `hatao` | `del` | Remove | `hatao x` |
-| `ke_saath` | `with` | With | `ke_saath open("file") as f:` |
+| `global` | `sabka` | `global` | `global x` |
+| `nonlocal` | `gair_local` | `nonlocal` | `nonlocal x` |
+| `assert` | `pakka` | `assert` | `assert x > 0, "positive hona chahiye"` |
+| `del` | `hatao` | `del` | `del x` |
+| `with` | `ke_saath` | `with` | `with open("file") as f:` |
 
 ### Pattern Matching (Python 3.10+)
 
-| Keyword | Python Equivalent | Hindi Meaning | Example |
+| English | Hindi | Python Equivalent | Example |
 |---|---|---|---|
-| `agar_match` | `match` | If matches | `agar_match value:` |
-| `kaand` | `case` | Case/situation | `kaand sahi:` |
+| `match` | `agar_match` | `match` | `match value:` |
+| `case` | `kaand` | `case` | `case True:` |
 
 ### I/O Keywords
 
-| Keyword | Python Equivalent | Hindi Meaning | Example |
+| English | Hindi | Python Equivalent | Example |
 |---|---|---|---|
-| `bolo` | `print` | Speak | `bolo("Hello")` |
-| `poochho` | `input` | Ask | `poochho naam` |
-| `bulawo` | (call sugar) | Call | `bulawo func()` |
+| `print` | `bolo` | `print` | `print("Hello")` or `bolo("Hello")` |
+| `input` | `poochho` | `input` | `name = input("Name: ")` or `poochho naam` |
+| `call` | `bulawo` | (call sugar) | `call func()` |
 
 ## Built-in Functions (Hindi → Python Mapping)
 
@@ -106,8 +106,14 @@ These JugaadLang built-in function names map directly to Python's built-in funct
 | `satyata(x)` | `bool(x)` | Truth value |
 | `bulaane_yogya(x)` | `callable(x)` | Callable |
 | `akshar(x)` | `chr(x)` | Character |
+| `avdhi(s, e)` | `range(s, e)` | Range of numbers |
+| `dashamlav(x)` | `float(x)` | Decimal/float number |
 | `gun_hatao(o, a)` | `delattr(o, a)` | Remove attribute |
+| `gol(x, n)` | `round(x, n)` | Round number |
+| `jama_huya(x)` | `frozenset(x)` | Immutable set |
+| `jod(s1, s2)` | `zip(s1, s2)` | Zip sequences |
 | `kosh()` | `dict()` | Dictionary |
+| `kram(c)` | `ord(c)` | Unicode code point |
 | `bhag_shesh(a, b)` | `divmod(a, b)` | Quotient-remainder |
 | `ginti(x)` | `enumerate(x)` | Counting |
 | `chalao(x)` | `exec(x)` | Execute |
@@ -120,7 +126,13 @@ These JugaadLang built-in function names map directly to Python's built-in funct
 | `prakar_hai(x, t)` | `isinstance(x, t)` | Is of type |
 | `subclass_hai(c, b)` | `issubclass(c, b)` | Is subclass |
 | `lambaee(x)` | `len(x)` | Length |
+| `manchitra(f, s)` | `map(f, s)` | Map function to sequence |
+| `pratinidh(x)` | `repr(x)` | Representation |
+| `purnank(x)` | `int(x)` | Integer |
+| `samuchay(x)` | `set(x)` | Set |
 | `suchi(x)` | `list(x)` | List |
+| `suchi_batao(x)` | `dir(x)` | Show attribute list |
+| `yadrichhik()` | `random.random()` | Random float 0-1 |
 | `adhiktam(a, b)` | `max(a, b)` | Maximum |
 | `nyuntam(a, b)` | `min(a, b)` | Minimum |
 | `agla(x)` | `next(x)` | Next |
@@ -132,7 +144,9 @@ These JugaadLang built-in function names map directly to Python's built-in funct
 | `tukda(a, b, c)` | `slice(a, b, c)` | Slice |
 | `kramwar(x)` | `sorted(x)` | Sequential |
 | `shabd(x)` | `str(x)` | Word/string |
+| `uper()` | `super()` | Superclass |
 | `yog(x)` | `sum(x)` | Sum |
+| `yugm(x)` | `tuple(x)` | Tuple |
 | `prakar(x)` | `type(x)` | Type |
 
 ## JugaadLang Built-in Fun Functions
@@ -155,8 +169,10 @@ These are custom functions injected at runtime (not in Python stdlib):
 | `bas_kar_bhai()` | Sleep reminder |
 | `chilla_mat()` | Calm down reminder |
 | `kundli()` | Code horoscope |
-| `kismat(start, end)` | Random number |
+| `kismat(start, end)` | Random integer |
+| `pasand(list)` | Random choice from list |
 | `sikka()` | Coin flip (Head/Tail) |
+| `yadrichhik()` | Random float 0-1 |
 | `saaf()` | Clear terminal |
 | `ruk(seconds)` | Sleep/pause |
 | `bahar()` | Exit program |

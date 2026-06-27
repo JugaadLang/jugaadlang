@@ -44,6 +44,8 @@ from ..ast_nodes.nodes import (
     SetComp,
     DictComp,
     GeneratorExp,
+    Yield,
+    YieldFrom,
     Await,
     Compare,
     Call,
@@ -890,7 +892,51 @@ class Parser:
 
     # ── Expression Parsing (Precedence Climb / Pratt) ─────────────────
 
+    def parse_yield(self) -> Expr:
+        """
+        Parse yield / yield from expression.
+
+        Handles:
+          - baanto         (bare yield)
+          - baanto expr    (yield value)
+          - baanto se expr (yield from iterable)
+
+        Also handles English keywords:
+          - yield
+          - yield expr
+          - yield from expr
+        """
+        tok = self._expect(TokenType.BAANTO, "Expected 'baanto' or 'yield'")
+
+        # yield from expr
+        if self._match(TokenType.SE):
+            value = self.parse_expression()
+            return YieldFrom(value=value, line=tok.line, col=tok.col)
+
+        # Check if there's an expression following (not a statement-ending token)
+        if not self._check(
+            TokenType.NEWLINE,
+            TokenType.EOF,
+            TokenType.DEDENT,
+            TokenType.COLON,
+            TokenType.RPAREN,
+            TokenType.RBRACKET,
+            TokenType.RBRACE,
+            TokenType.COMMA,
+            TokenType.SEMICOLON,
+        ):
+            # yield expr
+            value = self.parse_expression()
+            return Yield(value=value, line=tok.line, col=tok.col)
+
+        # bare yield
+        return Yield(value=None, line=tok.line, col=tok.col)
+
     def parse_expression(self) -> Expr:
+        # 0. Yield / yield from (baanto / baanto se)
+        if self._check(TokenType.BAANTO):
+            return self.parse_yield()
+
         # 1. Lambda functions (chota_funkshan)
         if self._check(TokenType.CHOTA_FUNKSHAN):
             return self.parse_lambda()
@@ -970,10 +1016,29 @@ class Parser:
             TokenType.NAHI_HAI: "nahi_hai",
         }
 
-        while self._current_token().type in comp_tokens:
-            tok = self._advance()
-            ops.append(comp_tokens[tok.type])
-            comparators.append(self.parse_bitwise_or())
+        while True:
+            ct = self._current_token().type
+
+            # Handle compound English operators: "not in" and "is not"
+            # These are tokenized as separate tokens but act as single comparison operators
+            if ct == TokenType.NAHI and self._peek().type == TokenType.MEIN:
+                # "not in" → mein_nahi
+                self._advance()  # consume 'not'
+                self._advance()  # consume 'in'
+                ops.append("mein_nahi")
+                comparators.append(self.parse_bitwise_or())
+            elif ct == TokenType.HAI and self._peek().type == TokenType.NAHI:
+                # "is not" → nahi_hai
+                self._advance()  # consume 'is'
+                self._advance()  # consume 'not'
+                ops.append("nahi_hai")
+                comparators.append(self.parse_bitwise_or())
+            elif ct in comp_tokens:
+                tok = self._advance()
+                ops.append(comp_tokens[ct])
+                comparators.append(self.parse_bitwise_or())
+            else:
+                break
 
         if ops:
             return Compare(
@@ -1334,7 +1399,10 @@ class Parser:
                 target = Tuple(elts=elts, line=target.line, col=target.col)
 
             self._expect(TokenType.MEIN, "Expected 'mein' in comprehension")
-            iter_expr = self.parse_expression()
+            # Use parse_logical_or instead of parse_expression to prevent the
+            # ternary operator (agar...warna) from consuming this keyword as a
+            # comprehension if-filter clause
+            iter_expr = self.parse_logical_or()
             ifs = []
             while self._match(TokenType.AGAR):
                 ifs.append(self.parse_expression())

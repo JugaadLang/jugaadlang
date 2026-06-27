@@ -1,0 +1,136 @@
+# 📦 JugaadLang Built-in Functions Demo
+# Showcasing all Hindi built-in mappings
+
+bolo("=== JugaadLang Hindi Built-ins Demo ===")
+bolo("")
+
+# ────────────────────────────────
+# Data Type Conversions
+# ────────────────────────────────
+bolo("--- Data Type Conversions ---")
+
+# dashamlav (float): string se float
+val = dashamlav("3.14")
+bolo("dashamlav('3.14') = " + shabd(val) + "  (" + shabd(prakar(val)) + ")")
+
+# yugm (tuple): list se tuple
+lst = [1, 2, 3]
+t = yugm(lst)
+bolo("yugm([1, 2, 3]) = " + shabd(t) + "  (" + shabd(prakar(t)) + ")")
+
+# samuchay (set): duplicate hatakar set banana
+s = samuchay([1, 2, 2, 3, 3, 3, 4])
+bolo("samuchay([1, 2, 2, 3, 3, 3, 4]) = " + shabd(s) + "  (" + shabd(prakar(s)) + ")")
+
+# jama_huya (frozenset): immutable set
+fs = jama_huya([1, 2, 3])
+bolo("jama_huya([1, 2, 3]) = " + shabd(fs) + "  (" + shabd(prakar(fs)) + ")")
+
+# kram (ord): character ka Unicode code point
+code = kram("A")
+bolo("kram('A') = " + shabd(code) + "  (Unicode code of A)")
+
+code2 = kram("z")
+bolo("kram('z') = " + shabd(code2) + "  (Unicode code of z)")
+
+# akshar (chr): code point se wapas character (pair with kram)
+ch = akshar(65)
+bolo("akshar(65) = " + ch + "  (character from code)")
+
+bolo("")
+
+# ────────────────────────────────
+# Math & Logic
+# ────────────────────────────────
+bolo("--- Math & Logic ---")
+
+# gol (round): number ko round karna
+rounded = gol(3.14159, 2)
+bolo("gol(3.14159, 2) = " + shabd(rounded))
+
+rounded2 = gol(4.7)
+bolo("gol(4.7) = " + shabd(rounded2))
+
+# avdhi (range): range generate karna
+rng = avdhi(1, 6)
+bolo("avdhi(1, 6) = " + shabd(list(rng)) + "  (1 se 5 tak numbers)")
+
+# ghat (pow): power
+power = ghat(2, 10)
+bolo("ghat(2, 10) = " + shabd(power))
+
+# maan (abs), yog (sum), adhiktam (max), nyuntam (min)
+bolo("maan(-10) = " + shabd(maan(-10)))
+bolo("yog([1,2,3,4,5]) = " + shabd(yog([1, 2, 3, 4, 5])))
+bolo("adhiktam([3,7,2,9,5]) = " + shabd(adhiktam([3, 7, 2, 9, 5])))
+bolo("nyuntam([3,7,2,9,5]) = " + shabd(nyuntam([3, 7, 2, 9, 5])))
+
+# pratinidh (repr): representation
+bolo("pratinidh('hello') = " + pratinidh("hello"))
+
+bolo("")
+
+# ────────────────────────────────
+# Random Functions
+# ────────────────────────────────
+bolo("--- Random Functions ---")
+
+# kismat (randint): random integer
+bolo("kismat(1, 100) = " + shabd(kismat(1, 100)) + "  (1-100 ka random number)")
+
+# pasand (choice): list me se random element
+fruits = ["aam", "santra", "kela", "seb", "angoor"]
+choice = pasand(fruits)
+bolo("pasand(fruits) = " + choice + "  (randomly chosen fruit)")
+
+# yadrichhik (random.random): random float 0-1
+rand_float = yadrichhik()
+bolo("yadrichhik() = " + shabd(rand_float) + "  (random float between 0 and 1)")
+
+# sikka: Head ya Tail
+bolo("sikka() = " + sikka())
+
+bolo("")
+
+# ────────────────────────────────
+# Functional Programming
+# ────────────────────────────────
+bolo("--- Functional Programming ---")
+
+# manchitra (map): function lagana har element par
+nums = [1, 2, 3, 4, 5]
+doubled = list(manchitra(lambda x: x * 2, nums))
+bolo("manchitra(x*2, [1,2,3,4,5]) = " + shabd(doubled))
+
+# jod (zip): do sequences ko combine karna
+names = ["Rahul", "Priya", "Amit"]
+scores = [85, 92, 78]
+pairs = list(jod(names, scores))
+bolo("jod(names, scores) = " + shabd(pairs))
+
+# chhano (filter): condition ke hisaab se filter
+evens = list(chhano(lambda x: x % 2 == 0, [1, 2, 3, 4, 5, 6]))
+bolo("chhano(even, numbers) = " + shabd(evens))
+
+bolo("")
+
+# ────────────────────────────────
+# Other Useful Built-ins
+# ────────────────────────────────
+bolo("--- Other Built-ins ---")
+
+# purnank (int), shabd (str), satyata (bool)
+bolo("purnank('42') = " + shabd(purnank("42")))
+bolo("satyata(1) = " + shabd(satyata(1)))
+bolo("satyata(0) = " + shabd(satyata(0)))
+
+# lambaee (len)
+bolo("lambaee(\"Namaste\") = " + shabd(lambaee("Namaste")))
+bolo("lambaee([10, 20, 30]) = " + shabd(lambaee([10, 20, 30])))
+
+# maan (abs)
+bolo("maan(-42) = " + shabd(maan(-42)))
+bolo("maan(42) = " + shabd(maan(42)))
+
+bolo("")
+bolo("=== Sab kuch sahi chala! 🎉 ===")

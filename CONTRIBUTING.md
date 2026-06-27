@@ -2,107 +2,40 @@
 
 Welcome! We are excited that you want to contribute to JugaadLang — a Hindi-keyword programming language for Indian developers. By contributing, you help make coding more accessible to millions of developers.
 
-Please take a moment to review this document before submitting contributions.
+---
+
+## 📚 Comprehensive Contribution Guide
+
+**For the full contribution guide, see [`docs/contributing.md`](docs/contributing.md)** — it covers everything you need:
+
+| Section | Description |
+|---|---|
+| [Code of Conduct](docs/contributing.md#code-of-conduct) | Expected behavior and reporting |
+| [Reporting Issues](docs/contributing.md#reporting-issues--feature-requests) | Bug reports, feature requests, security issues |
+| [Development Setup](docs/contributing.md#development-setup) | Prerequisites, fork/clone, editable install |
+| [Project Architecture](docs/contributing.md#project-architecture) | Pipeline overview, key modules |
+| [Coding Standards](docs/contributing.md#coding-standards) | Style guide, linting, type checking, testing |
+| [Contribution Workflow](docs/contributing.md#contribution-workflow) | Step-by-step: branch → change → verify → commit → PR |
+| [Adding a New Keyword](docs/contributing.md#adding-a-new-keyword) | 11-step checklist for keyword contributions |
+| [Adding a Stdlib Module](docs/contributing.md#adding-a-standard-library-module) | 5-step checklist for stdlib contributions |
+| [PR Guidelines](docs/contributing.md#pull-request-guidelines) | Best practices for pull requests |
+| [Release Process](docs/contributing.md#release-process) | Version bumping, building, publishing |
+| [Debugging Tips](docs/contributing.md#debugging-tips) | Helpful commands for troubleshooting |
+| [Getting Help](docs/contributing.md#getting-help) | Where to ask questions |
 
 ---
 
-## Code of Conduct
+## Quick Start
 
-By participating in this project, you agree to abide by our [Code of Conduct](https://github.com/JugaadLang/jugaadlang/blob/main/CONTRIBUTING.md). Please report any unacceptable behavior to `jugaadlang@gmail.com`.
-
----
-
-## Reporting Issues & Feature Requests
-
-We use GitHub Issues to track bugs and feature requests.
-
-### Standard Bugs & Feature Requests
-For general bugs or proposing new features:
-1. Search existing issues to ensure it hasn't already been reported.
-2. If it is new, open a [new GitHub issue](https://github.com/jugaadlang/jugaadlang/issues).
-3. Provide a clear description, reproduction steps, expected behavior, and system details (OS version, Python version).
-
-### Security Bug Reports
-> [!IMPORTANT]
-> If you discover a security vulnerability or sensitive bug, **do not** open a public issue. Please refer to our [Security Policy](https://github.com/JugaadLang/jugaadlang/blob/main/SECURITY.md) and email the details confidentially to **jugaadlang@gmail.com**.
-
----
-
-## Pull Request Workflow & Automated Checks
-
-We welcome contributions via Pull Requests (PRs). To contribute code:
-
-### 1. Local Development Setup
-First, fork the repository and clone it to your local machine.
-
-Initialize your development environment:
 ```bash
-# Install package in editable mode with development and optional dependencies
+# Fork → Clone → Install
+git clone https://github.com/YOUR_USERNAME/jugaadlang.git
+cd jugaadlang
 pip install -e .[dev,all]
+
+# Verify
+jug --version
+pytest
 ```
 
-### 2. Making Changes
-* Create a descriptive branch from `main` (e.g., `feature/loops` or `bugfix/parser-error`).
-* Write clean, documented code.
-* Ensure code follows project standards by running tests and formatting checks locally.
-
-### 3. Local Verification
-Before opening a PR, run the following tools locally to verify your changes:
-
-* **Linting & Formatting (Ruff)**:
-  We use `ruff` to enforce code style and formatting standards.
-  ```bash
-  ruff check .
-  ```
-  To automatically fix formatting/linting issues:
-  ```bash
-  ruff check --fix .
-  ```
-
-* **Running Tests (Pytest)**:
-  Ensure all existing tests pass and write new tests for your features.
-  ```bash
-  pytest
-  ```
-
-### 4. Automated Pull Request Checks (CI)
-When you submit or update a Pull Request, GitHub Actions will automatically run the **JugaadLang CI** workflow (`ci.yml`):
-* **Multi-Version Testing**: Pytest runs across Python versions `3.10`, `3.11`, `3.12`, `3.13`, and `3.14`.
-* **Automated Linting**: The codebase is checked using `ruff`.
-
-> [!NOTE]
-> All automated status checks must pass green before a Pull Request can be merged.
-
----
-
-## Pip Package Publishing
-
-JugaadLang is published to PyPI as `jugaadlang`.
-
-### Automated Release Pipeline (CD)
-Maintainers publish packages automatically using GitHub Actions:
-1. Create and publish a new GitHub Release on the repository web interface.
-2. The **JugaadLang Release** workflow (`release.yml`) is triggered on the `published` release event.
-3. The workflow automatically:
-   - Sets up Python.
-   - Installs build tools (`build`, `twine`).
-   - Builds binary wheels and source tarballs (`python -m build`).
-   - Uploads the assets to PyPI using the secured `PYPI_API_TOKEN` secret.
-
-### Manual Release (Maintainers Only)
-If a manual release needs to be performed:
-
-1. Ensure the version is updated in [pyproject.toml](https://github.com/JugaadLang/jugaadlang/blob/main/pyproject.toml).
-2. Install release dependencies:
-   ```bash
-   pip install build twine
-   ```
-3. Build the distribution packages:
-   ```bash
-   python -m build
-   ```
-   This will generate a source tarball (`.tar.gz`) and a binary wheel (`.whl`) in the `dist/` directory.
-4. Upload to PyPI:
-   ```bash
-   twine upload dist/*
-   ```
+> 💡 **Read the full guide at [`docs/contributing.md`](docs/contributing.md)**

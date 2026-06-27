@@ -81,6 +81,70 @@ FUNNY_ERRORS = {
         "title": "📦 Module missing!",
         "body": "Dhundne se bhi nahi mila. Install kiya hai kya? (jug install check karo)",
     },
+    "ValueError": {
+        "title": "🎭 Value galat hai boss!",
+        "body": "Function ko sahi value do na. Ye kya bhej diya?",
+    },
+    "ImportError": {
+        "title": "📥 Import gadbad ho gaya.",
+        "body": "Kuch laane mein problem hai. Module ka naam check karo.",
+    },
+    "FileNotFoundError": {
+        "title": "📁 File mili hi nahi!",
+        "body": "Jagah sahi hai? File gayab ho gayi? Check karo path.",
+    },
+    "PermissionError": {
+        "title": "🚫 Ijjazat nahi hai!",
+        "body": "Permission nahi mili. Root bano ya sudo lagao.",
+    },
+    "TimeoutError": {
+        "title": "⏰ Time khatam ho gaya!",
+        "body": "Kaafi wait kar liya. Kuch gadbad hai operation mein.",
+    },
+    "ConnectionError": {
+        "title": "🔌 Connection nahi ho raha!",
+        "body": "Internet band hai ya server so gaya. Dobara try karo.",
+    },
+    "RecursionError": {
+        "title": "🔄 Loop mein phans gaye!",
+        "body": "Recursion itni deep aa gayi ki stack ka dhakkan khul gaya. Base case daalo.",
+    },
+    "StopIteration": {
+        "title": "🏁 Iterator khatam ho gaya.",
+        "body": "Aur kuch nahi bacha. Next call mat karo ab.",
+    },
+    "MemoryError": {
+        "title": "🧠 Yaad kam pad gayi.",
+        "body": "RAM ka saath nahi de rahi. Kuch band karo ya RAM badhao.",
+    },
+    "OverflowError": {
+        "title": "📈 Hadd se zyada ho gaya!",
+        "body": "Number itna bada ki calculator bhi haar gaya.",
+    },
+    "FloatingPointError": {
+        "title": "🎯 Point mein gadbad.",
+        "body": "Floating point ki precision ne dhoka de diya. Round karke dekho.",
+    },
+    "EOFError": {
+        "title": "📄 File achanak khatam!",
+        "body": "Padhte padhte end aa gaya. Aur kuch data nahi hai.",
+    },
+    "UnicodeError": {
+        "title": "🔤 Unicode samajh nahi aaya.",
+        "body": "Characters encoding ki problem. UTF-8 try karo.",
+    },
+    "KeyboardInterrupt": {
+        "title": "⌨️ Ctrl+C! Kaunsi shakti hai ye?",
+        "body": "Achha choro, aadha kaam theek hai. Agli baar file se chalao.",
+    },
+    "AssertionError": {
+        "title": "🎯 Assert ka pakka fail!",
+        "body": "Na maanne wali baat galat nikli. Dhyan se check karo.",
+    },
+    "NotImplementedError": {
+        "title": "🏗️ Abhi baki hai!",
+        "body": "Ye feature abhi implement nahi hua. Khud likhdo.",
+    },
 }
 
 

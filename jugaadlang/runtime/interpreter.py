@@ -26,6 +26,16 @@ def kismat(start: int, end: int) -> int:
     return random.randint(start, end)
 
 
+def yadrichhik() -> float:
+    """Return a random float between 0 and 1 (like random.random())."""
+    return random.random()
+
+
+def pasand(items: list[Any]) -> Any:
+    """Choose a random element from a list (like random.choice())."""
+    return random.choice(items)
+
+
 def sikka() -> str:
     """Return 'Head' or 'Tail'."""
     return random.choice(["Head", "Tail"])
@@ -78,22 +88,41 @@ poochho(prompt)    : Read input from console.
 
 --- Data Types & Conversion ---
 purnank(x)         : Convert to Integer.
+dashamlav(x)        : Convert to Float / Decimal.
 shabd(x)           : Convert to String / Text.
 suchi(x)           : Convert to List.
+yugm(x)            : Convert to Tuple.
+samuchay(x)        : Convert to Set.
+jama_huya(x)       : Convert to FrozenSet.
+suchi_batao(x)     : Show list of attributes (dir).
 kosh(x)            : Convert to Dictionary.
 satyata(x)         : Convert to Boolean (True/False).
 prakar(x)          : Get type of x.
+pratinidh(x)       : Get representation (repr).
+kram(c)            : Get Unicode code point of character.
 
 --- Math & Logic ---
 yog(x)             : Sum.
 adhiktam(a, b)     : Max value.
 nyuntam(a, b)      : Min value.
 maan(x)            : Absolute value.
+gol(x, n)          : Round x to n decimal places.
+ghat(x, y)         : x raised to power y (pow).
+avdhi(start, end)  : Generate range of numbers.
 lambaee(x)         : Length of x.
 
+--- Functional Programming ---
+manchitra(f, seq)  : Apply function f to each item in seq (map).
+jod(seq1, seq2)    : Combine sequences element-wise (zip).
+
 --- Random Functions ---
-kismat(start, end) : Returns a random number.
+kismat(start, end) : Returns a random integer.
+pasand(list)       : Choose a random element from a list.
 sikka()            : Returns "Head" or "Tail".
+yadrichhik()       : Returns a random float between 0 and 1.
+
+--- OOP ---
+uper()             : Call superclass method (super).
 
 --- System Functions ---
 saaf()             : Clear terminal.
@@ -185,6 +214,8 @@ class JugaadInterpreter:
             # Built-in funny functions
             "kismat": kismat,
             "sikka": sikka,
+            "yadrichhik": yadrichhik,
+            "pasand": pasand,
             "saaf": saaf,
             "ruk": ruk,
             "bahar": bahar,
@@ -203,8 +234,13 @@ class JugaadInterpreter:
             "satyata": bool,
             "bulaane_yogya": callable,
             "akshar": chr,
+            "dashamlav": float,
             "gun_hatao": delattr,
+            "gol": round,
+            "jama_huya": frozenset,
+            "jod": zip,
             "kosh": dict,
+            "kram": ord,
             "bhag_shesh": divmod,
             "ginti": enumerate,
             "chalao": exec,
@@ -212,15 +248,19 @@ class JugaadInterpreter:
             "gun_lao": getattr,
             "gun_hai": hasattr,
             "madad": madad,
+            "manchitra": map,
             "pehchan": id,
+            "pratinidh": repr,
             "purnank": int,
             "prakar_hai": isinstance,
             "subclass_hai": issubclass,
             "lambaee": len,
             "suchi": list,
+            "suchi_batao": dir,
             "adhiktam": max,
             "nyuntam": min,
             "agla": next,
+            "avdhi": range,
             "vastu": object,
             "kholo": open,
             "ghat": pow,
@@ -229,8 +269,11 @@ class JugaadInterpreter:
             "tukda": slice,
             "kramwar": sorted,
             "shabd": str,
+            "samuchay": set,
             "yog": sum,
             "prakar": type,
+            "uper": super,
+            "yugm": tuple,
         }
         self.globals.update(FUN_BUILTINS)
 

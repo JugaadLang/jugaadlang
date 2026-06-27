@@ -1,0 +1,121 @@
+# 🏫 JugaadLang OOP Demo — Inheritance with uper()
+# Showcasing class inheritance and super() via uper()
+
+bolo("=== JugaadLang OOP with uper() ===")
+
+# ────────────────────────────────
+# Basic Inheritance
+# ────────────────────────────────
+bolo("--- Basic Inheritance ---")
+
+ustad Animal:
+    banao shuru(khud, naam):
+        khud.naam = naam
+        khud.energy = 100
+
+    banao speak(khud):
+        bolo(khud.naam + " makes a sound")
+
+    banao run(khud):
+        agar khud.energy >= 10:
+            khud.energy = khud.energy - 10
+            bolo(khud.naam + " is running! 🏃")
+        warna:
+            bolo(khud.naam + " is too tired! 😴")
+
+# Dog inherits from Animal using uper() to call parent constructor
+ustad Dog(Animal):
+    banao shuru(khud, naam, breed):
+        uper().__init__(naam)  # <-- uper() = super()
+        khud.breed = breed
+
+    # Method override with uper() reuse
+    banao speak(khud):
+        uper().speak()  # <-- parent method call via uper()
+        bolo(khud.naam + " barks: Woof! Woof! 🐕")
+
+    banao fetch(khud):
+        agar khud.energy >= 20:
+            khud.energy = khud.energy - 20
+            bolo(khud.naam + " fetched the ball! 🎾")
+        warna:
+            bolo(khud.naam + " is too tired to fetch!")
+
+# Cat also inherits from Animal
+ustad Cat(Animal):
+    banao shuru(khud, naam, color):
+        uper().__init__(naam)
+        khud.color = color
+
+    banao speak(khud):
+        bolo(khud.naam + " meows: Meow! Meow! 🐱")
+
+    banao climb(khud):
+        agar khud.energy >= 15:
+            khud.energy = khud.energy - 15
+            bolo(khud.naam + " climbed the tree! 🌳")
+        warna:
+            bolo(khud.naam + " is too lazy to climb!")
+
+# Dog create karo
+bolo("")
+bolo(">> Creating Dog...")
+d = Dog("Tommy", "Golden Retriever")
+d.speak()
+d.run()
+d.fetch()
+bolo("Energy left: " + shabd(d.energy))
+
+bolo("")
+
+# Cat create karo
+bolo(">> Creating Cat...")
+c = Cat("Whiskers", "Orange")
+c.speak()
+c.climb()
+c.run()
+bolo("Energy left: " + shabd(c.energy))
+
+bolo("")
+
+# ────────────────────────────────
+# Multiple Inheritance
+# ────────────────────────────────
+bolo("--- Multiple Inheritance ---")
+
+ustad Flyer:
+    banao fly(khud):
+        bolo(khud.naam + " is flying! ✈️")
+
+ustad Swimmer:
+    banao swim(khud):
+        bolo(khud.naam + " is swimming! 🏊")
+
+# Duck inherits from Animal, Flyer, AND Swimmer
+ustad Duck(Animal, Flyer, Swimmer):
+    banao shuru(khud, naam):
+        uper().__init__(naam)  # calls Animal.__init__ via super()
+
+    banao speak(khud):
+        bolo(khud.naam + " quacks: Quack! Quack! 🦆")
+
+bolo("")
+bolo(">> Creating Duck (multiple inheritance)...")
+duck = Duck("Daffy")
+duck.speak()
+duck.fly()    # inherited from Flyer
+duck.swim()   # inherited from Swimmer
+duck.run()    # inherited from Animal
+bolo("Energy left: " + shabd(duck.energy))
+
+bolo("")
+
+# ────────────────────────────────
+# Method Resolution Order (MRO)
+# ────────────────────────────────
+bolo("--- MRO (Method Resolution Order) ---")
+bolo("Duck's parents: Animal, Flyer, Swimmer")
+bolo("Duck inherits speak() from itself, run() from Animal")
+bolo("")
+
+bolo("=== Sab kuch sahi chala! 🎉 ===")

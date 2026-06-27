@@ -227,6 +227,93 @@ val_type = prakar("test") == shabd
     assert interpreter.globals["val_type"] is True
 
 
+def test_new_hindi_builtins():
+    """Test all Hindi built-in mappings for 100% Python cheatsheet coverage."""
+    interpreter = JugaadInterpreter()
+
+    # 1. dashamlav (float)
+    interpreter.run("x = dashamlav('3.14')")
+    assert isinstance(interpreter.globals["x"], float)
+    assert interpreter.globals["x"] == 3.14
+
+    # 2. gol (round)
+    interpreter.run("y = gol(3.14159, 2)")
+    assert interpreter.globals["y"] == 3.14
+    interpreter.run("z = gol(4.7)")
+    assert interpreter.globals["z"] == 5.0
+
+    # 3. yadrichhik (random.random)
+    interpreter.run("r = yadrichhik()")
+    assert 0.0 <= interpreter.globals["r"] <= 1.0
+
+    # 4. suchi_batao (dir)
+    interpreter.run("d = suchi_batao([])")
+    dir_list = interpreter.globals["d"]
+    assert isinstance(dir_list, list)
+    assert "append" in dir_list
+    assert "pop" in dir_list
+
+    # 5. yugm (tuple)
+    interpreter.run("t = yugm([1, 2, 3])")
+    assert interpreter.globals["t"] == (1, 2, 3)
+    assert isinstance(interpreter.globals["t"], tuple)
+
+    # 6. samuchay (set)
+    interpreter.run("s = samuchay([1, 2, 2, 3, 3, 3])")
+    assert interpreter.globals["s"] == {1, 2, 3}
+    assert isinstance(interpreter.globals["s"], set)
+
+    # 7. jama_huya (frozenset)
+    interpreter.run("f = jama_huya([1, 2, 3])")
+    assert interpreter.globals["f"] == frozenset({1, 2, 3})
+    assert isinstance(interpreter.globals["f"], frozenset)
+
+    # 8. avdhi (range)
+    interpreter.run("rng = avdhi(0, 5)")
+    assert list(interpreter.globals["rng"]) == [0, 1, 2, 3, 4]
+    assert isinstance(interpreter.globals["rng"], range)
+
+    # 9. pasand (random.choice)
+    interpreter.run("c = pasand([10, 20, 30])")
+    assert interpreter.globals["c"] in [10, 20, 30]
+
+    # 10. manchitra (map)
+    interpreter.run("m = manchitra(lambda x: x * 2, [1, 2, 3])")
+    assert list(interpreter.globals["m"]) == [2, 4, 6]
+
+    # 11. jod (zip)
+    interpreter.run("zp = jod([1, 2, 3], ['a', 'b', 'c'])")
+    assert list(interpreter.globals["zp"]) == [(1, 'a'), (2, 'b'), (3, 'c')]
+
+    # 12. pratinidh (repr)
+    interpreter.run("rp = pratinidh('hello')")
+    assert interpreter.globals["rp"] == "'hello'"
+
+    # 13. uper (super) — test in class context
+    interpreter.run("""
+ustad A:
+    banao shuru(khud):
+        khud.val = 10
+
+ustad B(A):
+    banao shuru(khud):
+        uper().__init__()
+        khud.extra = 20
+
+b = B()
+parent_val = b.val
+extra_val = b.extra
+""")
+    assert interpreter.globals["parent_val"] == 10
+    assert interpreter.globals["extra_val"] == 20
+
+    # 14. kram (ord)
+    interpreter.run("code = kram('A')")
+    assert interpreter.globals["code"] == 65
+    interpreter.run("code2 = kram('z')")
+    assert interpreter.globals["code2"] == 122
+
+
 def test_cli_typecheck(tmp_path):
     from click.testing import CliRunner
     from jug_cli.main import typecheck
