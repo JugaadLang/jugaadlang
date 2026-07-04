@@ -139,6 +139,9 @@ brew tap jugaadlang/tap
 brew install jugaadlang
 ```
 
+
+
+
 **Option B: Using pip**
 
 ```bash
