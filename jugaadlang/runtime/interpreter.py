@@ -242,22 +242,35 @@ class JugaadInterpreter:
     def run(self, source: str) -> None:
         """Run JugaadLang source code as statements (exec mode)."""
         try:
-            # 1. Lexical analysis
-            lexer = Lexer(source, self.filename)
-            tokens = lexer.tokenize()
+            from ..cache.manager import cache_manager
+            
+            py_ast_code = cache_manager.get(source)
+            if py_ast_code is None:
+                # 1. Lexical analysis
+                lexer = Lexer(source, self.filename)
+                tokens = lexer.tokenize()
+    
+                # 2. Syntax analysis
+                parser = Parser(tokens, self.filename, source)
+                ast_mod = parser.parse()
+    
+                # 3. Transpile to Python AST
+                transformer = JugaadToPythonTransformer(self.filename)
+                py_ast = transformer.transform(ast_mod)
+                
+                # 4. Generate Python source code
+                py_ast_code = ast.unparse(py_ast)
+                
+                # 5. Cache it
+                cache_manager.set(source, py_ast_code)
+                
+                # Compile Python AST to bytecode directly
+                code_obj = compile(py_ast, self.filename, "exec")
+            else:
+                # Compile cached Python source to bytecode
+                code_obj = compile(py_ast_code, self.filename, "exec")
 
-            # 2. Syntax analysis
-            parser = Parser(tokens, self.filename, source)
-            ast_mod = parser.parse()
-
-            # 3. Transpile to Python AST
-            transformer = JugaadToPythonTransformer(self.filename)
-            py_ast = transformer.transform(ast_mod)
-
-            # 4. Compile Python AST to bytecode
-            code_obj = compile(py_ast, self.filename, "exec")
-
-            # 5. Execute bytecode in the persistent namespace
+            # Execute bytecode in the persistent namespace
             exec(code_obj, self.globals, self.globals)
         except Exception as e:
             # Print funny error message and re-raise / handle
@@ -272,6 +285,18 @@ class JugaadInterpreter:
         Otherwise, execute as standard statements (exec mode).
         """
         try:
+            from ..cache.manager import cache_manager
+            
+            # Since eval and exec modes produce different results, we prepend the mode to the source
+            # for caching to avoid collisions. But here we just parse first. 
+            # Actually, `run_expression` decides eval/exec based on the AST.
+            # Caching here requires us to either cache the decision or parse to find out.
+            # If we cache the transpiled output, we can't easily know if it's an expression or a module
+            # without parsing. Wait, if we use a special prefix like "expr:" or "exec:", we don't know
+            # which it is until we parse!
+            # Since `run_expression` is usually used in REPL and for single lines, 
+            # maybe it's okay to just parse it, and then cache the transpilation step.
+            
             lexer = Lexer(source, self.filename)
             tokens = lexer.tokenize()
             parser = Parser(tokens, self.filename, source)
@@ -279,21 +304,40 @@ class JugaadInterpreter:
 
             # If the source is a single expression statement, evaluate it and return the result
             if len(ast_mod.body) == 1 and isinstance(ast_mod.body[0], ExprStmt):
-                expr_node = ast_mod.body[0].value
-
-                transformer = JugaadToPythonTransformer(self.filename)
-                py_expr_ast = transformer.visit(expr_node)
-
-                py_expr = ast.Expression(body=py_expr_ast)
-                ast.fix_missing_locations(py_expr)
-
-                code_obj = compile(py_expr, self.filename, "eval")
+                cache_key = "eval:" + source
+                py_ast_code = cache_manager.get(cache_key)
+                
+                if py_ast_code is None:
+                    expr_node = ast_mod.body[0].value
+                    transformer = JugaadToPythonTransformer(self.filename)
+                    py_expr_ast = transformer.visit(expr_node)
+                    py_expr = ast.Expression(body=py_expr_ast)
+                    ast.fix_missing_locations(py_expr)
+                    
+                    py_ast_code = ast.unparse(py_expr)
+                    cache_manager.set(cache_key, py_ast_code)
+                    
+                    code_obj = compile(py_expr, self.filename, "eval")
+                else:
+                    code_obj = compile(py_ast_code, self.filename, "eval")
+                    
                 return eval(code_obj, self.globals, self.globals)
             else:
-                # Compile and execute as a normal module block
-                transformer = JugaadToPythonTransformer(self.filename)
-                py_ast = transformer.transform(ast_mod)
-                code_obj = compile(py_ast, self.filename, "exec")
+                cache_key = "exec:" + source
+                py_ast_code = cache_manager.get(cache_key)
+                
+                if py_ast_code is None:
+                    # Compile and execute as a normal module block
+                    transformer = JugaadToPythonTransformer(self.filename)
+                    py_ast = transformer.transform(ast_mod)
+                    
+                    py_ast_code = ast.unparse(py_ast)
+                    cache_manager.set(cache_key, py_ast_code)
+                    
+                    code_obj = compile(py_ast, self.filename, "exec")
+                else:
+                    code_obj = compile(py_ast_code, self.filename, "exec")
+                    
                 exec(code_obj, self.globals, self.globals)
                 return None
         except Exception as e:
