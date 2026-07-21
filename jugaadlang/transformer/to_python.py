@@ -487,6 +487,7 @@ class JugaadToPythonTransformer:
             "ghat": "pow",
             "ulta": "reversed",
             "gun_badlo": "setattr",
+            "kholo": "open",
             "tukda": "slice",
             "kramwar": "sorted",
             "shabd": "str",

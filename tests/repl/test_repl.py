@@ -1,4 +1,6 @@
 import os
+import io
+import sys
 import pytest
 from unittest.mock import patch, MagicMock
 from jugaadlang.repl.repl import JugaadREPL
@@ -50,9 +52,14 @@ def test_repl_multiline_block():
         mock_session.prompt.side_effect = inputs
         mock_session_cls.return_value = mock_session
         with patch("jugaadlang.repl.repl.console.print") as mock_print:
-            with patch("builtins.print") as mock_builtin_print:
+            captured = io.StringIO()
+            old_stdout = sys.stdout
+            sys.stdout = captured
+            try:
                 repl.start()
-                mock_builtin_print.assert_called_with("hello")
+            finally:
+                sys.stdout = old_stdout
+            assert "hello" in captured.getvalue()
 
 def test_repl_syntax_error():
     repl = JugaadREPL()

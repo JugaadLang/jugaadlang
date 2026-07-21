@@ -282,8 +282,9 @@ def test_builtins_includes_safe():
 
 def test_shell_chalao_uses_shell_false():
     """Verify shell_chalao uses shell=False to prevent injection."""
+    import sys
     from jugaadlang.stdlib.tantra import shell_chalao
-    ret = shell_chalao("python --version")
+    ret = shell_chalao(f"{sys.executable} --version")
     assert ret == 0
 
 
