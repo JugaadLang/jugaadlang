@@ -973,10 +973,25 @@ class Parser:
             TokenType.NAHI_HAI: "nahi_hai",
         }
 
-        while self._current_token().type in comp_tokens:
-            tok = self._advance()
-            ops.append(comp_tokens[tok.type])
-            comparators.append(self.parse_bitwise_or())
+        while True:
+            tok_type = self._current_token().type
+            # Check compound operators first (before single-token matches)
+            if tok_type == TokenType.NAHI and self._peek().type == TokenType.MEIN:
+                self._advance()
+                self._advance()
+                ops.append("mein_nahi")
+                comparators.append(self.parse_bitwise_or())
+            elif tok_type == TokenType.HAI and self._peek().type == TokenType.NAHI:
+                self._advance()
+                self._advance()
+                ops.append("nahi_hai")
+                comparators.append(self.parse_bitwise_or())
+            elif tok_type in comp_tokens:
+                tok = self._advance()
+                ops.append(comp_tokens[tok.type])
+                comparators.append(self.parse_bitwise_or())
+            else:
+                break
 
         if ops:
             return Compare(

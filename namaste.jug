@@ -7,3 +7,5 @@ agar naam == "Sumangal":
     bolo("Legend mil gaya! 😎")
 warna:
     bolo("Namaste " + naam)
+print("Namaste Duniya! 🙏")
+input("Press Enter to exit...")
