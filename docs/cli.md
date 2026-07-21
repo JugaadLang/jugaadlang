@@ -125,9 +125,9 @@ Type-check a JugaadLang file using mypy (behind the scenes).
 jug typecheck main.jug
 ```
 
-### `jug doctor` (available via `run.sh`)
+### `jug doctor`
 
-Diagnose the JugaadLang installation.
+Diagnose the JugaadLang installation (Python version, core imports, and optional extras).
 
 ```bash
 jug doctor

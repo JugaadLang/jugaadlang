@@ -1,5 +1,6 @@
 <div align="center">
   <h1>JugaadLang 🇮🇳</h1> 
+  <h2> Please🙏 star ⭐ the repo 🤝❤</h2>
    
 <p> Code karo Hindi mein, Duniya hila do! 🚀</p>
 <p align="center" >
@@ -117,7 +118,7 @@ bolo("Namaste Duniya 🚀")
 Run it:
 
 ```powershell
-jug run hello.jg
+jug run hello.jug
 ```
 
 Output:
@@ -154,7 +155,7 @@ jug --version
 ### Run
 
 ```bash
-jug run hello.jg
+jug run hello.jug
 ```
 
 ---
@@ -185,7 +186,7 @@ jug --version
 ### Run
 
 ```bash
-jug run hello.jg
+jug run hello.jug
 ```
 
 ---
@@ -241,7 +242,7 @@ jug remove chai
 Start the JugaadLang shell:
 
 ```bash
-jug
+jug repl
 ```
 
 Example:
@@ -257,11 +258,11 @@ Namaste
 
 | Command                | Description           |
 | ---------------------- | --------------------- |
-| `jug run file.jg`   | Run a program         |
-| `jug build file.jg` | Build project         |
+| `jug run file.jug`  | Run a program         |
+| `jug compile file.jug` | Transpile to Python |
 | `jug repl`          | Open REPL             |
 | `jug install pkg`   | Install package       |
-| `jug update`        | Update packages       |
+| `jug update pkg`    | Update a package      |
 | `jug search pkg`    | Search package        |
 | `jug remove pkg`    | Remove package        |
 | `jug doctor`        | Diagnose installation |

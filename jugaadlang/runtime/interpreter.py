@@ -4,6 +4,7 @@ JugaadLang Runtime — Executes JugaadLang AST after transpiling to Python.
 
 from __future__ import annotations
 import ast
+import builtins
 import sys
 import os
 import random
@@ -16,6 +17,46 @@ from ..transformer.to_python import JugaadToPythonTransformer
 from ..ast_nodes.nodes import ExprStmt
 from ..errors.messages import format_error
 from .fun_builtins import FUN_BUILTINS
+
+
+# ── Safe builtins (explicit allowlist — no exec/eval/compile/open/__import__) ─
+
+_SAFE_BUILTINS: dict[str, Any] = {
+    name: getattr(builtins, name)
+    for name in [
+        "abs", "all", "any", "ascii", "bin", "bool", "bytearray", "bytes",
+        "callable", "chr", "classmethod", "complex", "delattr", "dict",
+        "dir", "divmod", "enumerate", "filter", "float", "format",
+        "frozenset", "getattr", "hasattr", "hash", "hex", "id", "input",
+        "int", "isinstance", "issubclass", "iter", "len", "list", "map",
+        "max", "memoryview", "min", "next", "object", "oct", "ord",
+        "pow", "print", "property", "range", "repr", "reversed", "round",
+        "set", "setattr", "slice", "sorted", "staticmethod", "str",
+        "sum", "super", "tuple", "type", "zip",
+        # Required for language functionality (not security risks)
+        "__build_class__", "__import__",
+        # Exception types
+        "ArithmeticError", "AssertionError", "AttributeError",
+        "BaseException", "BrokenPipeError", "BufferError", "BytesWarning",
+        "ChildProcessError", "ConnectionAbortedError", "ConnectionError",
+        "ConnectionRefusedError", "ConnectionResetError", "DeprecationWarning",
+        "EOFError", "EnvironmentError", "Exception",
+        "FileExistsError", "FileNotFoundError", "FloatingPointError",
+        "FutureWarning", "GeneratorExit", "IOError", "ImportError",
+        "IndentationError", "IndexError", "InterruptedError",
+        "IsADirectoryError", "KeyError", "KeyboardInterrupt",
+        "LookupError", "MemoryError", "ModuleNotFoundError",
+        "NameError", "NotADirectoryError", "NotImplemented", "NotImplementedError",
+        "OSError", "OverflowError", "PendingDeprecationWarning",
+        "PermissionError", "ProcessLookupError", "RecursionError",
+        "ReferenceError", "ResourceWarning", "RuntimeError", "RuntimeWarning",
+        "StopAsyncIteration", "StopIteration", "SyntaxError", "SystemError",
+        "SystemExit", "TabError", "TimeoutError", "TypeError",
+        "UnboundLocalError", "UnicodeDecodeError", "UnicodeEncodeError",
+        "UnicodeError", "UnicodeTranslateError", "UnicodeWarning",
+        "UserWarning", "ValueError", "Warning", "ZeroDivisionError",
+    ]
+}
 
 
 # ── Built-in functions ────────────────────────────────────────────────────────
@@ -178,7 +219,9 @@ class JugaadInterpreter:
 
         # Persistent global namespace
         self.globals: dict[str, Any] = {
-            "__builtins__": __builtins__,
+            "__builtins__": _SAFE_BUILTINS,
+            "__name__": self.filename,
+            "__qualname__": self.filename,
             # Built-in variables
             "bolo": print,
             "poochho": input,
@@ -207,7 +250,6 @@ class JugaadInterpreter:
             "kosh": dict,
             "bhag_shesh": divmod,
             "ginti": enumerate,
-            "chalao": exec,
             "chhano": filter,
             "gun_lao": getattr,
             "gun_hai": hasattr,
@@ -222,7 +264,6 @@ class JugaadInterpreter:
             "nyuntam": min,
             "agla": next,
             "vastu": object,
-            "kholo": open,
             "ghat": pow,
             "ulta": reversed,
             "gun_badlo": setattr,
@@ -241,6 +282,8 @@ class JugaadInterpreter:
 
     def run(self, source: str) -> None:
         """Run JugaadLang source code as statements (exec mode)."""
+        from ..events.bus import event_bus
+        event_bus.emit("EXECUTION_STARTED", {"filename": self.filename, "mode": "exec"})
         try:
             from ..cache.manager import cache_manager
             
@@ -272,6 +315,7 @@ class JugaadInterpreter:
 
             # Execute bytecode in the persistent namespace
             exec(code_obj, self.globals, self.globals)
+            event_bus.emit("EXECUTION_COMPLETED", {"filename": self.filename, "mode": "exec"})
         except Exception as e:
             # Print funny error message and re-raise / handle
             formatted = format_error(e, source, self.filename)
@@ -284,6 +328,8 @@ class JugaadInterpreter:
         If it's a single expression, evaluate and return its value (eval mode).
         Otherwise, execute as standard statements (exec mode).
         """
+        from ..events.bus import event_bus
+        event_bus.emit("EXECUTION_STARTED", {"filename": self.filename, "mode": "eval"})
         try:
             from ..cache.manager import cache_manager
             
@@ -339,6 +385,7 @@ class JugaadInterpreter:
                     code_obj = compile(py_ast_code, self.filename, "exec")
                     
                 exec(code_obj, self.globals, self.globals)
+                event_bus.emit("EXECUTION_COMPLETED", {"filename": self.filename, "mode": "exec"})
                 return None
         except Exception as e:
             formatted = format_error(e, source, self.filename)
