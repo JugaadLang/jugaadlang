@@ -72,6 +72,7 @@ omit = ["tests/*", "examples/*"]
 [tool.coverage.report]
 show_missing = true
 skip_covered = false
+fail_under = 60
 
 [tool.black]
 line-length = 100
