@@ -1,0 +1,32 @@
+.custom-cursor {
+    position: fixed;
+    width: 30px;
+    height: 30px;
+    border: 2px solid #00bfff;
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+}
+
+.cursor-dot {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    background: #00bfff;
+    border-radius: 50%;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 10000;
+}
+.custom-cursor {
+    transition: width 0.2s ease, height 0.2s ease;
+}
+
+.custom-cursor.active {
+    width: 45px;
+    height: 45px;
+}
+body{
+    cursor: none;
+}
