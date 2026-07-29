@@ -1,8 +1,5 @@
 name: VS Code Extension
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 on:
   push:
     branches: [ main, master ]
@@ -29,7 +26,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v6
       with:
-        node-version: 24
+        node-version: 22
         cache: 'npm'
         cache-dependency-path: ./vscode_extension/package-lock.json
 

@@ -5,6 +5,8 @@ Uses recursive descent with precedence climb.
 
 from __future__ import annotations
 
+from typing import Optional
+
 from ..lexer.tokens import Token, TokenType
 from ..ast_nodes.nodes import (
     Module,
@@ -547,24 +549,24 @@ class Parser:
             tok = self._previous_token()
             v_str = tok.value
             if v_str.startswith(("0x", "0X")):
-                val = int(v_str, 16)
+                ival = int(v_str, 16)
             elif v_str.startswith(("0b", "0B")):
-                val = int(v_str, 2)
+                ival = int(v_str, 2)
             elif v_str.startswith(("0o", "0O")):
-                val = int(v_str, 8)
+                ival = int(v_str, 8)
             else:
-                val = int(v_str)
-            val_expr = Constant(value=val, line=tok.line, col=tok.col)
+                ival = int(v_str)
+            val_expr = Constant(value=ival, line=tok.line, col=tok.col)
             return MatchValue(value=val_expr, line=tok.line, col=tok.col)
         elif self._match(TokenType.FLOAT):
             tok = self._previous_token()
-            val = float(tok.value)
-            val_expr = Constant(value=val, line=tok.line, col=tok.col)
+            fval = float(tok.value)
+            val_expr = Constant(value=fval, line=tok.line, col=tok.col)
             return MatchValue(value=val_expr, line=tok.line, col=tok.col)
         elif self._match(TokenType.STRING):
             tok = self._previous_token()
-            val = tok.value
-            val_expr = Constant(value=val, line=tok.line, col=tok.col)
+            strval = tok.value
+            val_expr = Constant(value=strval, line=tok.line, col=tok.col)
             return MatchValue(value=val_expr, line=tok.line, col=tok.col)
         elif self._check(TokenType.MINUS):
             minus_tok = self._advance()
@@ -572,20 +574,20 @@ class Parser:
                 tok = self._previous_token()
                 v_str = tok.value
                 if v_str.startswith(("0x", "0X")):
-                    val = int(v_str, 16)
+                    ival = int(v_str, 16)
                 elif v_str.startswith(("0b", "0B")):
-                    val = int(v_str, 2)
+                    ival = int(v_str, 2)
                 elif v_str.startswith(("0o", "0O")):
-                    val = int(v_str, 8)
+                    ival = int(v_str, 8)
                 else:
-                    val = int(v_str)
-                val = -val
-                val_expr = Constant(value=val, line=minus_tok.line, col=minus_tok.col)
+                    ival = int(v_str)
+                ival = -ival
+                val_expr = Constant(value=ival, line=minus_tok.line, col=minus_tok.col)
                 return MatchValue(value=val_expr, line=minus_tok.line, col=minus_tok.col)
             elif self._match(TokenType.FLOAT):
                 tok = self._previous_token()
-                val = -float(tok.value)
-                val_expr = Constant(value=val, line=minus_tok.line, col=minus_tok.col)
+                fval = -float(tok.value)
+                val_expr = Constant(value=fval, line=minus_tok.line, col=minus_tok.col)
                 return MatchValue(value=val_expr, line=minus_tok.line, col=minus_tok.col)
             else:
                 raise self._error("Expected integer or float after '-' in pattern")
@@ -680,7 +682,7 @@ class Parser:
 
     def parse_dotted_name(self) -> Expr:
         tok = self._expect(TokenType.IDENTIFIER, "Expected identifier")
-        node = Name(id=tok.value, line=tok.line, col=tok.col)
+        node: Expr = Name(id=tok.value, line=tok.line, col=tok.col)
         while self._match(TokenType.DOT):
             attr_tok = self._expect(TokenType.IDENTIFIER, "Expected attribute name")
             node = Attribute(value=node, attr=attr_tok.value, line=attr_tok.line, col=attr_tok.col)
@@ -879,12 +881,12 @@ class Parser:
         # Check for annotated assignment, e.g. x: int = 10
         if self._match(TokenType.COLON):
             annotation = self.parse_expression()
-            value = None
+            ann_value: Optional[Expr] = None
             if self._match(TokenType.ASSIGN):
-                value = self.parse_expression()
+                ann_value = self.parse_expression()
             self._expect_newline_or_eof()
             return AnnAssign(
-                target=expr, annotation=annotation, value=value, line=expr.line, col=expr.col
+                target=expr, annotation=annotation, value=ann_value, line=expr.line, col=expr.col
             )
 
         # Standard expression statement
@@ -1215,7 +1217,7 @@ class Parser:
         )
 
     def parse_fstring(self, token: Token) -> Expr:
-        parts = []
+        parts: list[Expr] = []
         val = token.value
         pos = 0
         while pos < len(val):

@@ -84,10 +84,7 @@ class JugaadPackageManager:
         import os
         import json
 
-        try:
-            import importlib.metadata as importlib_metadata
-        except ImportError:
-            import importlib_metadata
+        import importlib.metadata as importlib_metadata  # type: ignore[no-redef]
 
         lock_path = os.path.join(os.getcwd(), "jug.lock")
 

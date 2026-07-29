@@ -1,4 +1,6 @@
 import os
+from unittest.mock import patch
+
 import pytest
 from click.testing import CliRunner
 from jug_cli.main import main
@@ -65,8 +67,6 @@ def test_cli_new_existing_dir(runner, tmp_path):
         result = runner.invoke(main, ['new', 'myproject'])
         assert result.exit_code != 0
         assert "pehle se hi hai" in result.output
-
-from unittest.mock import patch
 
 # Mock PackageManager for install, remove, update, search
 @patch("jugaadlang.package_manager.manager.JugaadPackageManager.search")

@@ -1,7 +1,6 @@
 import os
 import io
 import sys
-import pytest
 from unittest.mock import patch, MagicMock
 from jugaadlang.repl.repl import JugaadREPL
 
@@ -51,7 +50,7 @@ def test_repl_multiline_block():
         mock_session = MagicMock()
         mock_session.prompt.side_effect = inputs
         mock_session_cls.return_value = mock_session
-        with patch("jugaadlang.repl.repl.console.print") as mock_print:
+        with patch("jugaadlang.repl.repl.console.print") as _:
             captured = io.StringIO()
             old_stdout = sys.stdout
             sys.stdout = captured
@@ -67,7 +66,7 @@ def test_repl_syntax_error():
         mock_session = MagicMock()
         mock_session.prompt.side_effect = ["bolo('missing_paren", EOFError]
         mock_session_cls.return_value = mock_session
-        with patch("jugaadlang.repl.repl.console.print") as mock_print:
+        with patch("jugaadlang.repl.repl.console.print") as _:
             repl.start()
 
 def test_repl_runtime_error():
@@ -76,7 +75,7 @@ def test_repl_runtime_error():
         mock_session = MagicMock()
         mock_session.prompt.side_effect = ["1 / 0", EOFError]
         mock_session_cls.return_value = mock_session
-        with patch("jugaadlang.repl.repl.console.print") as mock_print:
+        with patch("jugaadlang.repl.repl.console.print") as _:
             repl.start()
 
 def test_repl_history_file_creation(tmp_path):

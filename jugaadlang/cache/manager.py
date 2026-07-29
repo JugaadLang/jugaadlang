@@ -1,6 +1,5 @@
 import os
 import hashlib
-import json
 from typing import Optional
 
 class CacheManager:

@@ -1,7 +1,5 @@
 name: JugaadLang CI
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 on:
   push:
     branches: [ main, master ]
@@ -14,7 +12,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
     - name: Checkout Code
@@ -31,10 +29,48 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e .[dev,all]
 
+    - name: Run Linter (ruff)
+      run: |
+        ruff check .
+
     - name: Run Tests with Pytest
       run: |
         pytest --cov=jugaadlang --cov-report=xml
 
-    - name: Run Linter
+    - name: Upload Coverage to Codecov
+      uses: codecov/codecov-action@v6
+      with:
+        file: ./coverage.xml
+        fail_ci_if_error: false
+
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v6
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v6
+      with:
+        python-version: "3.12"
+        cache: 'pip'
+
+    - name: Install Dependencies
       run: |
-        ruff check .
+        python -m pip install --upgrade pip
+        pip install -e .[dev,all]
+
+    - name: Run mypy
+      run: |
+        mypy jugaadlang/ast_nodes/nodes.py \
+              jugaadlang/lexer/lexer.py \
+              jugaadlang/lexer/tokens.py \
+              jugaadlang/parser/parser.py \
+              jugaadlang/transformer/to_python.py \
+              jugaadlang/runtime/interpreter.py \
+              jugaadlang/runtime/fun_builtins.py \
+              jugaadlang/events/bus.py \
+              jugaadlang/cache/manager.py \
+              jugaadlang/package_manager/manager.py \
+              jugaadlang/repl/repl.py \
+              --ignore-missing-imports --follow-imports=skip

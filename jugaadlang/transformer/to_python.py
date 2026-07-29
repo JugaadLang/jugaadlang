@@ -142,13 +142,11 @@ class JugaadToPythonTransformer:
         visitor = getattr(self, method_name, self.generic_visit)
         res = visitor(node, ctx)
 
-        # Propagate line and column info to Python AST nodes for accurate error stack traces
         if isinstance(res, ast.AST) and hasattr(node, "line") and hasattr(node, "col"):
-            res.lineno = node.line
-            res.col_offset = node.col
-            # Also set end lines if available or copy from start
-            res.end_lineno = node.line
-            res.end_col_offset = node.col
+            setattr(res, "lineno", node.line)
+            setattr(res, "col_offset", node.col)
+            setattr(res, "end_lineno", node.line)
+            setattr(res, "end_col_offset", node.col)
 
         return res
 
