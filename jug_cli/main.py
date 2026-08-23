@@ -212,8 +212,18 @@ def typecheck(file: str) -> None:
     """Type check a JugaadLang file using mypy."""
     import subprocess
     import tempfile
+    from importlib.util import find_spec
 
     console.print("[bold green]🕵️ JugaadLang Type Checker[/bold green]")
+
+    if find_spec("mypy") is None:
+        console.print(
+            "[bold red]✗ mypy is not installed.[/bold red]\n"
+            "mypy is required for type checking. Install it with:\n"
+            "  [cyan]pip install jugaadlang\\[dev][/cyan]"
+        )
+        sys.exit(1)
+
     console.print(f"Type checking [cyan]{file}[/cyan]...")
 
     try:
