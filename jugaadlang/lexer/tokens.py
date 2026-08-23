@@ -3,8 +3,9 @@ JugaadLang Token Types and Keyword Mapping.
 """
 
 from __future__ import annotations
-from enum import Enum, auto
+
 from dataclasses import dataclass
+from enum import Enum, auto
 
 
 class TokenType(Enum):

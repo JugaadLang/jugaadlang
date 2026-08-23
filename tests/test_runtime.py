@@ -179,10 +179,11 @@ res4 = test_match("random")
 
 
 def test_lockfile_generation(tmp_path):
-    import os
     import json
-    from jugaadlang.package_manager.manager import JugaadPackageManager
+    import os
     from unittest.mock import patch
+
+    from jugaadlang.package_manager.manager import JugaadPackageManager
 
     old_cwd = os.getcwd()
     os.chdir(tmp_path)
@@ -283,6 +284,7 @@ def test_builtins_includes_safe():
 def test_shell_chalao_uses_shell_false():
     """Verify shell_chalao uses shell=False to prevent injection."""
     import sys
+
     from jugaadlang.stdlib.tantra import shell_chalao
     ret = shell_chalao(f"{sys.executable} --version")
     assert ret == 0
@@ -290,6 +292,7 @@ def test_shell_chalao_uses_shell_false():
 
 def test_cli_doctor():
     from click.testing import CliRunner
+
     from jug_cli.main import doctor
 
     runner = CliRunner()
@@ -301,6 +304,7 @@ def test_cli_doctor():
 
 def test_cli_typecheck(tmp_path):
     from click.testing import CliRunner
+
     from jug_cli.main import typecheck
 
     # 1. Test valid file

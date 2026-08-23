@@ -4,8 +4,8 @@ Tests for JugaadLang Lexer.
 
 import pytest
 
-from jugaadlang.lexer.tokens import TokenType
 from jugaadlang.lexer.lexer import Lexer, LexerError
+from jugaadlang.lexer.tokens import TokenType
 
 
 def test_basic_tokens():

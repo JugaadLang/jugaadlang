@@ -18,7 +18,6 @@ import pytest
 
 from jugaadlang.runtime.interpreter import JugaadInterpreter
 
-
 # ── Helpers ────────────────────────────────────────────────────────────────
 
 
@@ -446,7 +445,7 @@ class TestDatabase:
                 pass  # Windows file lock — skip
 
     def test_field_types(self) -> None:
-        from jugaadlang.stdlib.database import String, Integer, Float, Boolean
+        from jugaadlang.stdlib.database import Boolean, Float, Integer, String
 
         s = String()
         assert s.sql_type == "TEXT"

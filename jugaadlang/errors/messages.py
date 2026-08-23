@@ -3,8 +3,10 @@ JugaadLang Errors — Humorous Hindi error messages for developers.
 """
 
 from __future__ import annotations
+
 import re
 from typing import Optional
+
 from rich.console import Console
 
 

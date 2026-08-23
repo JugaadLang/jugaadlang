@@ -1,5 +1,6 @@
 from jugaadlang.events.bus import EventBus
 
+
 def test_event_bus_singleton():
     bus1 = EventBus()
     bus2 = EventBus()

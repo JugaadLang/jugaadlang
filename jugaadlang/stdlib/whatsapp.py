@@ -1,5 +1,5 @@
-import webbrowser
 import urllib.parse
+import webbrowser
 
 
 def bhejo(phone: str, message: str) -> None:

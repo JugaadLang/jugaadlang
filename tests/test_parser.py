@@ -2,30 +2,30 @@
 Tests for JugaadLang Parser.
 """
 
-from jugaadlang.lexer.lexer import Lexer
-from jugaadlang.parser.parser import Parser
 from jugaadlang.ast_nodes.nodes import (
-    Module,
-    ExprStmt,
-    Call,
-    Name,
     Assign,
-    If,
-    Constant,
-    FunctionDef,
-    ClassDef,
-    Slice,
-    Subscript,
-    Lambda,
-    IfExp,
     Await,
+    Call,
+    ClassDef,
+    Constant,
+    ExprStmt,
+    FunctionDef,
+    If,
+    IfExp,
+    Lambda,
     Match,
     MatchAs,
-    MatchValue,
-    MatchSingleton,
-    MatchSequence,
     MatchClass,
+    MatchSequence,
+    MatchSingleton,
+    MatchValue,
+    Module,
+    Name,
+    Slice,
+    Subscript,
 )
+from jugaadlang.lexer.lexer import Lexer
+from jugaadlang.parser.parser import Parser
 
 
 def test_parse_expression_stmt():

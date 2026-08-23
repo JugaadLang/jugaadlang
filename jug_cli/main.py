@@ -3,16 +3,18 @@ JugaadLang CLI Main Entry Point.
 """
 
 from __future__ import annotations
-import click
+
+import ast
 import os
 import sys
-import ast
+
+import click
 from rich.console import Console
 
 from jugaadlang import __version__
+from jugaadlang.package_manager.manager import JugaadPackageManager
 from jugaadlang.repl.repl import JugaadREPL
 from jugaadlang.runtime.interpreter import JugaadInterpreter
-from jugaadlang.package_manager.manager import JugaadPackageManager
 
 console = Console(color_system="truecolor", force_terminal=True)
 console_stderr = Console(color_system="truecolor", force_terminal=True, stderr=True)

@@ -4,7 +4,8 @@ Each node includes line and column information for accurate error reporting.
 """
 
 from __future__ import annotations
-from dataclasses import dataclass, field, KW_ONLY
+
+from dataclasses import KW_ONLY, dataclass, field
 from typing import Any, Optional
 
 

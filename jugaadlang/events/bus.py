@@ -1,4 +1,5 @@
-from typing import Callable, Any, Dict
+from typing import Any, Callable, Dict
+
 
 class EventBus:
     """

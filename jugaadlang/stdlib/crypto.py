@@ -2,8 +2,8 @@
 crypto — JugaadLang Cryptography Module.
 """
 
-import hashlib
 import base64
+import hashlib
 
 
 def sha256(text: str) -> str:

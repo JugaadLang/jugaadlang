@@ -2,10 +2,10 @@
 tantra — JugaadLang System and Environment Module.
 """
 
-import sys
 import os
 import shlex
 import subprocess
+import sys
 
 # System attributes
 path = sys.path

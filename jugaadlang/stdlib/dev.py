@@ -1,6 +1,6 @@
 import random
-import time
 import sys
+import time
 
 
 def fake_commit() -> str:

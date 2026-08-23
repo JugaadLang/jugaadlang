@@ -3,21 +3,21 @@ JugaadLang Runtime — Executes JugaadLang AST after transpiling to Python.
 """
 
 from __future__ import annotations
+
 import ast
 import builtins
-import sys
 import os
 import random
+import sys
 import time
 from typing import Any
 
+from ..ast_nodes.nodes import ExprStmt
+from ..errors.messages import format_error
 from ..lexer.lexer import Lexer
 from ..parser.parser import Parser
 from ..transformer.to_python import JugaadToPythonTransformer
-from ..ast_nodes.nodes import ExprStmt
-from ..errors.messages import format_error
 from .fun_builtins import FUN_BUILTINS
-
 
 # ── Safe builtins (explicit allowlist — no exec/eval/compile/open/__import__) ─
 

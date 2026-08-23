@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import Iterator
 
-from .tokens import Token, TokenType, KEYWORDS
+from .tokens import KEYWORDS, Token, TokenType
 
 
 class LexerError(Exception):

@@ -1,8 +1,10 @@
-import os
 import io
+import os
 import sys
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from jugaadlang.repl.repl import JugaadREPL
+
 
 def test_repl_eof():
     repl = JugaadREPL()

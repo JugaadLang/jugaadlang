@@ -4,8 +4,8 @@ json — JugaadLang JSON parser and stringifier.
 
 from __future__ import annotations
 
-import sys
 import os
+import sys
 from typing import Any, Optional
 
 # Temporarily remove local dir from path to import the real stdlib json

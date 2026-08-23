@@ -2,8 +2,8 @@
 samay — JugaadLang Date and Time Module.
 """
 
-import time
 import datetime
+import time
 
 # Standard time helpers
 samay = time.time

@@ -3,8 +3,9 @@ JugaadORM — SQLite-backed Object-Relational Mapper for JugaadLang.
 """
 
 from __future__ import annotations
-import sqlite3
+
 import contextlib
+import sqlite3
 from typing import Any, Optional, Type, TypeVar
 
 T = TypeVar("T", bound="Model")

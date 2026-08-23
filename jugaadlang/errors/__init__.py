@@ -1,14 +1,14 @@
 # jugaadlang/errors/__init__.py
 from .messages import (
-    format_error,
-    format_syntax_error,
+    FUNNY_ERRORS,
     JugaadError,
-    JugaadSyntaxError,
-    JugaadRuntimeError,
     JugaadNameError,
+    JugaadRuntimeError,
+    JugaadSyntaxError,
     JugaadTypeError,
     JugaadZeroDivisionError,
-    FUNNY_ERRORS,
+    format_error,
+    format_syntax_error,
 )
 
 __all__ = [

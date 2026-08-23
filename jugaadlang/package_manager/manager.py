@@ -4,8 +4,10 @@ Wraps pip and manages custom package maps (e.g. 'web' installing flask/requests)
 """
 
 from __future__ import annotations
-import sys
+
 import subprocess
+import sys
+
 import requests
 from rich.console import Console
 from rich.table import Table
@@ -81,8 +83,8 @@ class JugaadPackageManager:
 
     @staticmethod
     def _update_lockfile(targets: list[str]) -> None:
-        import os
         import json
+        import os
 
         try:
             import importlib.metadata as importlib_metadata
@@ -118,8 +120,8 @@ class JugaadPackageManager:
 
     @staticmethod
     def _remove_from_lockfile(targets: list[str]) -> None:
-        import os
         import json
+        import os
 
         lock_path = os.path.join(os.getcwd(), "jug.lock")
         if not os.path.exists(lock_path):

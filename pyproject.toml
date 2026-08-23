@@ -82,6 +82,11 @@ target-version = ["py310", "py311", "py312"]
 line-length = 100
 target-version = "py310"
 
+[tool.ruff.lint]
+# Explicit selection so new ruff releases cannot change CI results
+# by expanding the default rule set (defaults as of 0.15 + isort).
+select = ["E4", "E7", "E9", "F", "I"]
+
 [tool.mypy]
 python_version = "3.10"
 strict = false

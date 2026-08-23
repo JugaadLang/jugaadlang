@@ -3,10 +3,12 @@ web — JugaadLang Web client requests and micro web framework (JugaadWeb).
 """
 
 from __future__ import annotations
-import requests
+
 import json
-from typing import Any, Callable
 from types import FunctionType
+from typing import Any, Callable
+
+import requests
 
 # Re-export client requests
 get = requests.get
@@ -100,7 +102,7 @@ class JugaadWeb:
             print(f"🚀 JugaadWeb running on http://{host}:{port}...")
 
             from http.server import BaseHTTPRequestHandler, HTTPServer
-            from urllib.parse import urlparse, parse_qs
+            from urllib.parse import parse_qs, urlparse
 
             # Save self reference for handler
             routes_map = self.routes

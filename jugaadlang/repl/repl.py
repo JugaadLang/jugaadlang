@@ -4,17 +4,17 @@ Uses prompt_toolkit and pygments for premium terminal capabilities.
 """
 
 from __future__ import annotations
+
 import os
-from rich.console import Console
 
 from prompt_toolkit import PromptSession
-from prompt_toolkit.lexers import PygmentsLexer
-from prompt_toolkit.history import FileHistory
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.completion import WordCompleter
-
+from prompt_toolkit.history import FileHistory
+from prompt_toolkit.lexers import PygmentsLexer
 from pygments.lexer import RegexLexer, words
-from pygments.token import Keyword, Name, Number, String, Operator, Comment, Text
+from pygments.token import Comment, Keyword, Name, Number, Operator, String, Text
+from rich.console import Console
 
 from ..runtime.interpreter import JugaadInterpreter
 
