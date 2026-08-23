@@ -709,5 +709,8 @@ def test_for_with_multiple_targets() -> None:
     """Verify for loop with tuple unpacking."""
     source = "ghumo k, v mein items.items():\n    bolo(k + v)"
     result = _unparse(source)
-    expected = "for k, v in items.items():\n    print(k + v)"
-    assert result == expected
+    # ast.unparse() parenthesizes tuple targets on Python <= 3.10 only.
+    assert result in (
+        "for k, v in items.items():\n    print(k + v)",
+        "for (k, v) in items.items():\n    print(k + v)",
+    )
