@@ -247,14 +247,16 @@ jobs:
           VERSION=${GITHUB_REF_NAME#v}
           URL_AMD64="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/jug-windows-amd64.exe"
           HASH_AMD64=$(curl -sL $URL_AMD64 | sha256sum | awk '{print $1}')
-          
+
           cd scoop-bucket
-          jq ".version = \"$VERSION\" | .architecture.\"64bit\".url = \"$URL_AMD64\" | .architecture.\"64bit\".hash = \"$HASH_AMD64\"" jugaadlang.json > jugaadlang.tmp.json
-          mv jugaadlang.tmp.json jugaadlang.json
-          
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add jugaadlang.json
+          for MANIFEST in jugaadlang.json bucket/jugaadlang.json; do
+            [ -f "$MANIFEST" ] || continue
+            jq ".version = \"$VERSION\" | .architecture.\"64bit\".url = \"$URL_AMD64\" | .architecture.\"64bit\".hash = \"$HASH_AMD64\"" "$MANIFEST" > manifest.tmp.json
+            mv manifest.tmp.json "$MANIFEST"
+            git add "$MANIFEST"
+          done
           git commit -m "Update jugaadlang to version $VERSION"
           git push
         continue-on-error: true
