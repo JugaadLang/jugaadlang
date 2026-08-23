@@ -9,6 +9,7 @@ import sys
 import ast
 from rich.console import Console
 
+from jugaadlang import __version__
 from jugaadlang.repl.repl import JugaadREPL
 from jugaadlang.runtime.interpreter import JugaadInterpreter
 from jugaadlang.package_manager.manager import JugaadPackageManager
@@ -18,7 +19,7 @@ console_stderr = Console(color_system="truecolor", force_terminal=True, stderr=T
 
 
 @click.group()
-@click.version_option(version="1.1.5", message="JugaadLang v%(version)s 🇮🇳")
+@click.version_option(version=__version__, message="JugaadLang v%(version)s 🇮🇳")
 def main() -> None:
     """JugaadLang — The Hindi-keyword programming language. 🚀"""
     pass
