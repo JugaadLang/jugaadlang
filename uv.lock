@@ -996,11 +996,12 @@ wheels = [
 
 [[package]]
 name = "jugaadlang"
-version = "1.0.3"
+version = "1.1.5"
 source = { editable = "." }
 dependencies = [
     { name = "click" },
     { name = "prompt-toolkit" },
+    { name = "publish" },
     { name = "pygments" },
     { name = "requests" },
     { name = "rich" },
@@ -1040,6 +1041,7 @@ requires-dist = [
     { name = "jugaadlang", extras = ["web", "dev"], marker = "extra == 'all'" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.6" },
     { name = "prompt-toolkit", specifier = ">=3.0" },
+    { name = "publish", specifier = ">=0.3.6" },
     { name = "pygments", specifier = ">=2.17" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.4" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.1" },

@@ -25,7 +25,13 @@ def shell_chalao(command: str) -> int:
     """Run a command and return exit code.
 
     Uses shlex.split() + shell=False to prevent shell injection.
+
+    On Windows, POSIX-mode splitting would treat backslashes in paths
+    like C:\\Users\\... as escape characters, so native mode is used there
+    and leftover quote characters are stripped from tokens.
     """
-    args = shlex.split(command)
+    args = shlex.split(command, posix=os.name != "nt")
+    if os.name == "nt":
+        args = [arg.strip('"') for arg in args]
     result = subprocess.run(args)  # noqa: S603
     return result.returncode
