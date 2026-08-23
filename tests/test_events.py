@@ -1,4 +1,3 @@
-import pytest
 from jugaadlang.events.bus import EventBus
 
 def test_event_bus_singleton():

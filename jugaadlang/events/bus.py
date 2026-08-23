@@ -1,11 +1,8 @@
-from typing import Callable, Any, Dict, List
+from typing import Callable, Any, Dict, Optional
 
 class EventBus:
-    """
-    A simple singleton event bus for decoupling core modules (Lexer, Parser, Runtime)
-    using the observer pattern.
-    """
-    _instance = None
+    _instance: Optional["EventBus"] = None
+    _subscribers: Dict[str, list[Callable[[Dict[str, Any]], None]]]
 
     def __new__(cls) -> "EventBus":
         if cls._instance is None:
@@ -28,7 +25,7 @@ class EventBus:
             if not self._subscribers[event_type]:
                 del self._subscribers[event_type]
 
-    def emit(self, event_type: str, data: Dict[str, Any] = None) -> None:
+    def emit(self, event_type: str, data: Optional[Dict[str, Any]] = None) -> None:
         """Emit an event to all subscribed callbacks."""
         if data is None:
             data = {}
@@ -39,8 +36,7 @@ class EventBus:
         for callback in callbacks:
             try:
                 callback(data)
-            except Exception as e:
-                # Event callbacks should not break the main execution flow
+            except Exception:
                 pass
 
     def clear(self) -> None:

@@ -373,3 +373,135 @@ banao outer():
 res = outer()
 """)
     assert interpreter.globals["res"] == 20
+
+
+def test_python_keyword_aliases():
+    """Verify Python English keywords work as aliases for Hindi keywords."""
+    interpreter = JugaadInterpreter()
+
+    # 1. if/elif/else
+    interpreter.run("""
+x = 5
+if x > 5:
+    res = "big"
+elif x == 5:
+    res = "equal"
+else:
+    res = "small"
+""")
+    assert interpreter.globals["res"] == "equal"
+
+    # 2. for loop
+    interpreter.run("""
+total = 0
+for i in [1, 2, 3]:
+    total = total + i
+""")
+    assert interpreter.globals["total"] == 6
+
+    # 3. while loop
+    interpreter.run("""
+count = 3
+result = 0
+while count > 0:
+    result = result + count
+    count = count - 1
+""")
+    assert interpreter.globals["result"] == 6
+
+    # 4. def/return
+    interpreter.run("""
+def add(a, b):
+    return a + b
+res = add(3, 4)
+""")
+    assert interpreter.globals["res"] == 7
+
+    # 5. class
+    interpreter.run("""
+class Dog:
+    def speak(self):
+        return "bark"
+d = Dog()
+res2 = d.speak()
+""")
+    assert interpreter.globals["res2"] == "bark"
+
+    # 6. and/or/not
+    interpreter.run("""
+v1 = True and False
+v2 = True or False
+v3 = not True
+""")
+    assert interpreter.globals["v1"] is False
+    assert interpreter.globals["v2"] is True
+    assert interpreter.globals["v3"] is False
+
+    # 7. in/is comparison
+    interpreter.run("""
+c1 = 3 in [1, 2, 3]
+c2 = 3 is not 4
+""")
+    assert interpreter.globals["c1"] is True
+    assert interpreter.globals["c2"] is True
+
+    # 8. try/except
+    interpreter.run("""
+try:
+    x = 1 / 0
+except:
+    x = -1
+""")
+    assert interpreter.globals["x"] == -1
+
+    # 9. pass
+    interpreter.run("""
+def noop():
+    pass
+res3 = "ok"
+""")
+    assert interpreter.globals["res3"] == "ok"
+
+    # 10. True/False/None literals
+    interpreter.run("""
+a = True
+b = False
+c = None
+""")
+    assert interpreter.globals["a"] is True
+    assert interpreter.globals["b"] is False
+    assert interpreter.globals["c"] is None
+
+    # 11. import/from
+    interpreter.run("import math")
+    interpreter.run("from math import sqrt")
+    res4 = interpreter.run_expression("sqrt(9)")
+    assert res4 == 3.0
+
+    # 12. break/continue
+    interpreter.run("""
+nums = []
+i = 0
+while i < 10:
+    i = i + 1
+    if i == 3:
+        continue
+    if i == 7:
+        break
+    nums.append(i)
+""")
+    assert interpreter.globals["nums"] == [1, 2, 4, 5, 6]
+
+    # 13. for/else and while/else (optional to test)
+    # 14. match/case
+    interpreter.run("""
+val = 1
+match val:
+    case 1:
+        kind = "one"
+    case 2:
+        kind = "two"
+    case _:
+        kind = "other"
+""")
+    assert interpreter.globals["kind"] == "one"

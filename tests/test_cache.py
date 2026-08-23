@@ -1,5 +1,3 @@
-import pytest
-import os
 from jugaadlang.cache.manager import CacheManager
 
 def test_cache_l1_set_get():

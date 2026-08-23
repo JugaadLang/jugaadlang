@@ -223,9 +223,9 @@ class Lexer:
                 continue
 
             # ── Operators & Delimiters ────────────────────────────
-            tok = self._scan_operator(line, col)
-            if tok:
-                yield tok
+            op_tok = self._scan_operator(line, col)
+            if op_tok is not None:
+                yield op_tok
                 continue
 
             # ── Unknown character ─────────────────────────────────
