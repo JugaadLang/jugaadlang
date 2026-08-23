@@ -41,6 +41,7 @@ class JugaadPackageManager:
         except subprocess.CalledProcessError as e:
             console.print("[bold red]✗ Error: Installation fail ho gayi![/bold red]")
             console.print(f"[dim]{e.stderr}[/dim]")
+            sys.exit(1)
 
     @staticmethod
     def remove(package: str) -> None:
@@ -58,6 +59,7 @@ class JugaadPackageManager:
         except subprocess.CalledProcessError as e:
             console.print("[bold red]✗ Error: Remove fail ho gaya![/bold red]")
             console.print(f"[dim]{e.stderr}[/dim]")
+            sys.exit(1)
 
     @staticmethod
     def update(package: str) -> None:
@@ -75,6 +77,7 @@ class JugaadPackageManager:
         except subprocess.CalledProcessError as e:
             console.print("[bold red]✗ Error: Update fail ho gaya![/bold red]")
             console.print(f"[dim]{e.stderr}[/dim]")
+            sys.exit(1)
 
     @staticmethod
     def _update_lockfile(targets: list[str]) -> None:

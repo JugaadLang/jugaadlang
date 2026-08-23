@@ -101,6 +101,8 @@ class Parser:
 
     def parse(self) -> Module:
         """Parse the entire token stream into a Module AST node."""
+        from ..events.bus import event_bus
+        event_bus.emit("PARSING_STARTED", {"filename": self._filename, "token_count": len(self._tokens)})
         body = []
         try:
             while not self._check(TokenType.EOF):
@@ -118,6 +120,7 @@ class Parser:
             curr = self._current_token()
             raise ParseError(f"Parser error occurred: {str(e)}", curr.line, curr.col)
 
+        event_bus.emit("PARSING_COMPLETED", {"filename": self._filename, "node_count": len(body)})
         return Module(body=body, line=1, col=1)
 
     # ── Token Navigation Helpers ──────────────────────────────────────

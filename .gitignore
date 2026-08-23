@@ -2,6 +2,11 @@
 __pycache__/
 *.py[cod]
 *$py.class
+.jug_mypy_cache/
+.jug_cache/
+.test_cache_1/
+.test_cache_2/
+.test_cache_3/
 
 # C extensions
 *.so

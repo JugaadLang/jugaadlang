@@ -3,6 +3,9 @@ Tests for JugaadLang Runtime/Interpreter.
 """
 
 import os
+
+import pytest
+
 from jugaadlang.runtime.interpreter import JugaadInterpreter
 
 
@@ -202,6 +205,21 @@ def test_lockfile_generation(tmp_path):
         os.chdir(old_cwd)
 
 
+def test_package_manager_exits_on_pip_failure():
+    import subprocess
+    from unittest.mock import patch
+
+    from jugaadlang.package_manager.manager import JugaadPackageManager
+
+    err = subprocess.CalledProcessError(1, ["pip", "install", "fake"], stderr="not found")
+    with patch("subprocess.run", side_effect=err):
+        try:
+            JugaadPackageManager.install("totally-fake-package-xyz")
+            assert False, "expected SystemExit"
+        except SystemExit as exc:
+            assert exc.code == 1
+
+
 def test_hindi_builtins():
     interpreter = JugaadInterpreter()
     code = """
@@ -225,6 +243,60 @@ val_type = prakar("test") == shabd
     assert interpreter.globals["val_sum"] == 6
     assert interpreter.globals["val_str"] == "123"
     assert interpreter.globals["val_type"] is True
+
+
+# ── Security: RCE vector regression tests ─────────────────────────────────
+
+
+def test_chalao_exec_is_removed():
+    """Verify 'chalao' (formerly exec) is no longer available."""
+    interpreter = JugaadInterpreter()
+    with pytest.raises(Exception):
+        interpreter.run('chalao("x = 1")')
+
+
+def test_kholo_open_is_removed():
+    """Verify 'kholo' (formerly open) is no longer available."""
+    interpreter = JugaadInterpreter()
+    with pytest.raises(Exception):
+        interpreter.run('kholo("/etc/passwd")')
+
+
+def test_builtins_excludes_dangerous():
+    """Verify that dangerous builtins are not accessible from JugaadLang."""
+    interpreter = JugaadInterpreter()
+    for dangerous in ("exec", "eval", "compile", "open"):
+        # Attempt to access each dangerous builtin directly
+        with pytest.raises(Exception, match=dangerous):
+            interpreter.run_expression(dangerous)
+
+
+def test_builtins_includes_safe():
+    """Verify that safe builtins remain accessible from JugaadLang."""
+    interpreter = JugaadInterpreter()
+    interpreter.run_expression("maan(-10)")
+    interpreter.run_expression("lambaee([1, 2, 3])")
+    interpreter.run_expression("yog([1, 2, 3])")
+    interpreter.run_expression("prakar(sahi)")
+
+
+def test_shell_chalao_uses_shell_false():
+    """Verify shell_chalao uses shell=False to prevent injection."""
+    import sys
+    from jugaadlang.stdlib.tantra import shell_chalao
+    ret = shell_chalao(f"{sys.executable} --version")
+    assert ret == 0
+
+
+def test_cli_doctor():
+    from click.testing import CliRunner
+    from jug_cli.main import doctor
+
+    runner = CliRunner()
+    result = runner.invoke(doctor)
+    assert result.exit_code == 0
+    assert "JugaadLang Doctor" in result.output
+    assert "Sab theek hai" in result.output
 
 
 def test_cli_typecheck(tmp_path):

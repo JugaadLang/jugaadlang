@@ -74,7 +74,11 @@ class Lexer:
 
     def tokenize(self) -> list[Token]:
         """Return the full token list for the source."""
-        return list(self._generate())
+        from ..events.bus import event_bus
+        event_bus.emit("LEXING_STARTED", {"filename": self.filename, "source_length": len(self.source)})
+        tokens = list(self._generate())
+        event_bus.emit("LEXING_COMPLETED", {"filename": self.filename, "token_count": len(tokens)})
+        return tokens
 
     # ── Internal helpers ──────────────────────────────────────────────
 

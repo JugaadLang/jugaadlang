@@ -4,6 +4,7 @@ JugaadORM — SQLite-backed Object-Relational Mapper for JugaadLang.
 
 from __future__ import annotations
 import sqlite3
+import contextlib
 from typing import Any, Optional, Type, TypeVar
 
 T = TypeVar("T", bound="Model")
@@ -97,25 +98,27 @@ class Model:
             fields_sql.append(sql)
 
         sql_stmt = f"CREATE TABLE IF NOT EXISTS {cls.table_name()} ({', '.join(fields_sql)});"
-        with cls.connect() as conn:
-            try:
-                conn.execute(sql_stmt)
-                conn.commit()
-            except Exception:
-                conn.rollback()
-                raise
+        with contextlib.closing(cls.connect()) as conn:
+            with conn:
+                try:
+                    conn.execute(sql_stmt)
+                    conn.commit()
+                except Exception:
+                    conn.rollback()
+                    raise
 
     @classmethod
     def drop_table(cls) -> None:
         """Drop SQLite table if it exists."""
-        with cls.connect() as conn:
-            try:
-                sql_stmt = f"DROP TABLE IF EXISTS {cls.table_name()};"
-                conn.execute(sql_stmt)
-                conn.commit()
-            except Exception:
-                conn.rollback()
-                raise
+        with contextlib.closing(cls.connect()) as conn:
+            with conn:
+                try:
+                    sql_stmt = f"DROP TABLE IF EXISTS {cls.table_name()};"
+                    conn.execute(sql_stmt)
+                    conn.commit()
+                except Exception:
+                    conn.rollback()
+                    raise
 
     def bachao(self) -> None:
         """Save (insert or update) record to database."""
@@ -124,55 +127,58 @@ class Model:
 
         field_names = [name for name in self._fields.keys() if name != "id"]
 
-        with self.connect() as conn:
-            try:
-                cursor = conn.cursor()
-                if self.id is None:
-                    # Insert
-                    placeholders = ", ".join(["?"] * len(field_names))
-                    values = [getattr(self, name) for name in field_names]
-                    sql = f"INSERT INTO {self.table_name()} ({', '.join(field_names)}) VALUES ({placeholders})"
-                    cursor.execute(sql, values)
-                    self.id = cursor.lastrowid
-                else:
-                    # Update
-                    set_clause = ", ".join([f"{name} = ?" for name in field_names])
-                    values = [getattr(self, name) for name in field_names] + [self.id]
-                    sql = f"UPDATE {self.table_name()} SET {set_clause} WHERE id = ?"
-                    cursor.execute(sql, values)
-                conn.commit()
-            except Exception:
-                conn.rollback()
-                raise
+        with contextlib.closing(self.connect()) as conn:
+            with conn:
+                try:
+                    cursor = conn.cursor()
+                    if self.id is None:
+                        # Insert
+                        placeholders = ", ".join(["?"] * len(field_names))
+                        values = [getattr(self, name) for name in field_names]
+                        sql = f"INSERT INTO {self.table_name()} ({', '.join(field_names)}) VALUES ({placeholders})"
+                        cursor.execute(sql, values)
+                        self.id = cursor.lastrowid
+                    else:
+                        # Update
+                        set_clause = ", ".join([f"{name} = ?" for name in field_names])
+                        values = [getattr(self, name) for name in field_names] + [self.id]
+                        sql = f"UPDATE {self.table_name()} SET {set_clause} WHERE id = ?"
+                        cursor.execute(sql, values)
+                    conn.commit()
+                except Exception:
+                    conn.rollback()
+                    raise
 
     def mitao(self) -> None:
         """Delete record from database."""
         if self.id is None:
             return
-        with self.connect() as conn:
-            try:
-                sql = f"DELETE FROM {self.table_name()} WHERE id = ?"
-                conn.execute(sql, (self.id,))
-                conn.commit()
-            except Exception:
-                conn.rollback()
-                raise
+        with contextlib.closing(self.connect()) as conn:
+            with conn:
+                try:
+                    sql = f"DELETE FROM {self.table_name()} WHERE id = ?"
+                    conn.execute(sql, (self.id,))
+                    conn.commit()
+                except Exception:
+                    conn.rollback()
+                    raise
             self.id = None
 
     @classmethod
     def sab(cls: Type[T]) -> list[T]:
         """Fetch all records."""
         cls.banao_table()
-        with cls.connect() as conn:
-            cursor = conn.execute(f"SELECT * FROM {cls.table_name()}")
-            rows = cursor.fetchall()
+        with contextlib.closing(cls.connect()) as conn:
+            with conn:
+                cursor = conn.execute(f"SELECT * FROM {cls.table_name()}")
+                rows = cursor.fetchall()
 
-            results = []
-            for row in rows:
-                obj = cls(**dict(row))
-                obj.id = row["id"]
-                results.append(obj)
-            return results
+                results = []
+                for row in rows:
+                    obj = cls(**dict(row))
+                    obj.id = row["id"]
+                    results.append(obj)
+                return results
 
     @classmethod
     def filter(cls: Type[T], **kwargs: Any) -> list[T]:
@@ -184,13 +190,14 @@ class Model:
         where_clause = " AND ".join([f"{k} = ?" for k in kwargs.keys()])
         values = list(kwargs.values())
 
-        with cls.connect() as conn:
-            cursor = conn.execute(f"SELECT * FROM {cls.table_name()} WHERE {where_clause}", values)
-            rows = cursor.fetchall()
+        with contextlib.closing(cls.connect()) as conn:
+            with conn:
+                cursor = conn.execute(f"SELECT * FROM {cls.table_name()} WHERE {where_clause}", values)
+                rows = cursor.fetchall()
 
-            results = []
-            for row in rows:
-                obj = cls(**dict(row))
-                obj.id = row["id"]
-                results.append(obj)
-            return results
+                results = []
+                for row in rows:
+                    obj = cls(**dict(row))
+                    obj.id = row["id"]
+                    results.append(obj)
+                return results

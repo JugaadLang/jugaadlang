@@ -110,7 +110,6 @@ These JugaadLang built-in function names map directly to Python's built-in funct
 | `kosh()` | `dict()` | Dictionary |
 | `bhag_shesh(a, b)` | `divmod(a, b)` | Quotient-remainder |
 | `ginti(x)` | `enumerate(x)` | Counting |
-| `chalao(x)` | `exec(x)` | Execute |
 | `chhano(f, x)` | `filter(f, x)` | Filter |
 | `gun_lao(o, a)` | `getattr(o, a)` | Get attribute |
 | `gun_hai(o, a)` | `hasattr(o, a)` | Has attribute |
@@ -125,7 +124,6 @@ These JugaadLang built-in function names map directly to Python's built-in funct
 | `nyuntam(a, b)` | `min(a, b)` | Minimum |
 | `agla(x)` | `next(x)` | Next |
 | `vastu()` | `object()` | Object |
-| `kholo(f)` | `open(f)` | Open |
 | `ghat(x, y)` | `pow(x, y)` | Power |
 | `ulta(x)` | `reversed(x)` | Reversed |
 | `gun_badlo(o, a, v)` | `setattr(o, a, v)` | Change attribute |
