@@ -20,7 +20,7 @@ jobs:
             arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -84,7 +84,7 @@ jobs:
             arch: arm64
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -150,7 +150,7 @@ jobs:
             py_arch: x64
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -187,7 +187,7 @@ jobs:
   build-vscode-extension:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
@@ -221,7 +221,7 @@ jobs:
       SCOOP_TOKEN: ${{ secrets.SCOOP_BUCKET_TOKEN }}
       WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       
       - name: Update Homebrew Tap
         uses: dawidd6/action-homebrew-bump-formula@v8
@@ -233,7 +233,7 @@ jobs:
         continue-on-error: true
           
       - name: Checkout Scoop Bucket
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         if: env.SCOOP_TOKEN != ''
         with:
           repository: jugaadlang/scoop-bucket
