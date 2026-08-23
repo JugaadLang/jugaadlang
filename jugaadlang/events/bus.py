@@ -1,4 +1,4 @@
-from typing import Callable, Any, Dict, List
+from typing import Callable, Any, Dict
 
 class EventBus:
     """
@@ -39,7 +39,7 @@ class EventBus:
         for callback in callbacks:
             try:
                 callback(data)
-            except Exception as e:
+            except Exception:
                 # Event callbacks should not break the main execution flow
                 pass
 

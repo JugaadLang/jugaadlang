@@ -17,6 +17,15 @@ from jugaadlang.package_manager.manager import JugaadPackageManager
 console = Console(color_system="truecolor", force_terminal=True)
 console_stderr = Console(color_system="truecolor", force_terminal=True, stderr=True)
 
+# Windows consoles default to legacy codepages (e.g. cp1252) that cannot
+# encode the emoji used across the CLI; switch to UTF-8 where supported.
+for _stream in (sys.stdout, sys.stderr):
+    if _stream is not None and hasattr(_stream, "reconfigure"):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):
+            pass
+
 
 @click.group()
 @click.version_option(version=__version__, message="JugaadLang v%(version)s 🇮🇳")

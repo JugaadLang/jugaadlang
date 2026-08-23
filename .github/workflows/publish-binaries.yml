@@ -29,7 +29,7 @@ jobs:
           
       - name: Install dependencies
         run: |
-          pip install -e .
+          pip install .
           pip install pyinstaller
           
       - name: Build Binary
@@ -93,7 +93,7 @@ jobs:
           
       - name: Install dependencies
         run: |
-          pip install -e .
+          pip install .
           pip install pyinstaller
           
       - name: Build Binary
@@ -160,7 +160,7 @@ jobs:
           
       - name: Install dependencies
         run: |
-          pip install -e .
+          pip install .
           pip install pyinstaller
           
       - name: Build Binary
