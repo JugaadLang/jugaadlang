@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en" style="color-scheme: light;">
+<head>
+  <script>
+    (function() {
+      var localTheme = localStorage.getItem('theme');
+      if (localTheme) {
+        document.documentElement.setAttribute('data-theme', localTheme);
+      } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Docs — JugaadLang</title>
+  <meta name="description" content="JugaadLang documentation: getting started, installation, syntax reference, standard library, and CLI reference." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/png" href="assets/icon.png" />
+  <link rel="stylesheet" href="style.css" />
+
+  <style>
+    /* ===== DOCS PAGE LAYOUT ===== */
+    body { background: var(--bg-primary); color: var(--text-primary); font-family: var(--font-heading, 'Outfit', sans-serif); }
+
+    .docs-shell {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 96px 24px 64px;
+      gap: 48px;
+      align-items: start;
+    }
+
+    /* --- Sidebar --- */
+    .docs-sidebar {
+      position: sticky;
+      top: 96px;
+      max-height: calc(100vh - 120px);
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+    .docs-sidebar-group { margin-bottom: 28px; }
+    .docs-sidebar-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .docs-sidebar-link {
+      display: block;
+      padding: 7px 10px;
+      margin-bottom: 2px;
+      border-radius: var(--radius-xs);
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.92rem;
+      font-weight: 500;
+      transition: var(--transition);
+      border-left: 2px solid transparent;
+    }
+    .docs-sidebar-link:hover { background: var(--bg-card); color: var(--text-primary); }
+    .docs-sidebar-link.active {
+      color: var(--accent-saffron);
+      background: var(--bg-card);
+      border-left: 2px solid var(--accent-saffron);
+    }
+
+    /* --- Content --- */
+    .docs-content { min-width: 0; }
+    .docs-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent-saffron);
+      margin-bottom: 12px;
+    }
+    .docs-hero-title {
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 12px;
+    }
+    .docs-hero-sub {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      max-width: 640px;
+      margin-bottom: 40px;
+    }
+
+    .docs-section { margin-bottom: 56px; scroll-margin-top: 96px; }
+    .docs-section h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .docs-section h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 24px 0 10px;
+      color: var(--text-primary);
+    }
+    .docs-section p { color: var(--text-secondary); line-height: 1.7; margin-bottom: 14px; }
+    .docs-section ul, .docs-section ol { color: var(--text-secondary); line-height: 1.8; margin: 0 0 14px 20px; }
+    .docs-section code {
+      font-family: var(--font-mono, 'JetBrains Mono', monospace);
+      background: var(--bg-card);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.88em;
+      color: var(--accent-saffron);
+    }
+
+    .docs-pre {
+      font-family: var(--font-mono, 'JetBrains Mono', monospace);
+      background: var(--bg-code, var(--bg-secondary));
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px 20px;
+      overflow-x: auto;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+    }
+
+    .docs-table-wrap { overflow-x: auto; margin-bottom: 20px; }
+    .docs-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .docs-table th, .docs-table td {
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .docs-table th {
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .docs-table td:first-child code { color: var(--accent-green); }
+    .docs-table tr:hover td { background: var(--bg-card); }
+
+    .docs-callout {
+      background: var(--bg-card);
+      border-left: 3px solid var(--accent-saffron);
+      border-radius: var(--radius-xs);
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      font-size: 0.92rem;
+      color: var(--text-secondary);
+    }
+
+    .docs-next {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 64px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+    .docs-next a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.92rem;
+      font-weight: 600;
+      transition: var(--transition);
+    }
+    .docs-next a:hover { color: var(--accent-saffron); }
+    .docs-next .label { display: block; font-size: 0.7rem; color: var(--text-muted); font-weight: 500; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+    @media (max-width: 900px) {
+      .docs-shell { grid-template-columns: 1fr; padding-top: 88px; }
+      .docs-sidebar {
+        position: static;
+        max-height: none;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 20px;
+        margin-bottom: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== NAVIGATION (matches index.html) ===== -->
+<nav id="navbar" class="scrolled">
+  <a href="index.html#hero" class="nav-logo">
+    <img src="assets/icon.svg?v=4" alt="JugaadLang Logo" class="nav-logo-img">
+    <span class="nav-logo-text">JugaadLang</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html#features">Features</a></li>
+    <li><a href="index.html#examples">Examples</a></li>
+    <li><a href="index.html#install">Install</a></li>
+    <li><a href="docs.html" style="color: var(--accent-saffron);">Docs</a></li>
+    <li><a href="https://github.com/JugaadLang/jugaadlang" class="nav-cta" target="_blank" rel="noopener"><svg class="github-icon" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>GitHub</a></li>
+    <li>
+      <button class="theme-toggle" id="theme-toggle-desktop" aria-label="Toggle dark mode" type="button">
+        <svg class="icon-sun" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+      </button>
+    </li>
+  </ul>
+  <div class="hamburger" id="hamburger" aria-label="Toggle menu" role="button" tabindex="0">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<div class="mobile-menu" id="mobile-menu">
+  <a href="index.html#features" onclick="closeMobileMenu()">Features</a>
+  <a href="index.html#examples" onclick="closeMobileMenu()">Examples</a>
+  <a href="index.html#install" onclick="closeMobileMenu()">Install</a>
+  <a href="docs.html" onclick="closeMobileMenu()">Docs</a>
+  <a href="https://github.com/JugaadLang/jugaadlang" target="_blank" rel="noopener">GitHub</a>
+</div>
+
+<!-- ===== DOCS LAYOUT ===== -->
+<div class="docs-shell">
+
+  <aside class="docs-sidebar">
+    <div class="docs-sidebar-group">
+      <div class="docs-sidebar-title">Start Here</div>
+      <a class="docs-sidebar-link" href="#getting-started">Getting Started</a>
+      <a class="docs-sidebar-link" href="#installation">Installation</a>
+    </div>
+    <div class="docs-sidebar-group">
+      <div class="docs-sidebar-title">Language</div>
+      <a class="docs-sidebar-link" href="#keywords">Syntax &amp; Keywords</a>
+      <a class="docs-sidebar-link" href="#stdlib">Standard Library</a>
+    </div>
+    <div class="docs-sidebar-group">
+      <div class="docs-sidebar-title">Tooling</div>
+      <a class="docs-sidebar-link" href="#cli">CLI Reference</a>
+    </div>
+    <div class="docs-sidebar-group">
+      <div class="docs-sidebar-title">More</div>
+      <a class="docs-sidebar-link" href="https://github.com/JugaadLang/jugaadlang/blob/main/docs/architecture.md" target="_blank" rel="noopener">Architecture ↗</a>
+      <a class="docs-sidebar-link" href="https://github.com/JugaadLang/jugaadlang/blob/main/docs/api.md" target="_blank" rel="noopener">Internal API ↗</a>
+      <a class="docs-sidebar-link" href="https://github.com/JugaadLang/jugaadlang/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributor Guide ↗</a>
+    </div>
+  </aside>
+
+  <main class="docs-content">
+    <span class="docs-eyebrow">📖 Documentation</span>
+    <h1 class="docs-hero-title">Sab kuch ek jagah.</h1>
+    <p class="docs-hero-sub">
+      Everything you need to write, run, and ship JugaadLang — from your first <code>bolo("Namaste!")</code>
+      to the full standard library. New here? Start with Getting Started below.
+    </p>
+
+    <section class="docs-section" id="getting-started">
+      <h2>Getting Started</h2>
+      <p>JugaadLang is a Hindi-keyword programming language that transpiles directly to Python's AST, so it runs with zero runtime overhead and has full access to the Python ecosystem.</p>
+
+      <h3>Your first program</h3>
+      <p>Create a file named <code>namaste.jug</code>:</p>
+      <div class="docs-pre">lao ganit
+
+banao namaste(naam):
+    bolo("Namaste, " + naam + "!")
+    bolo("Pi ki value hai: " + shabd(ganit.pi))
+
+namaste("Duniya")</div>
+      <p>Run it:</p>
+      <div class="docs-pre">jug run namaste.jug</div>
+
+      <h3>How it works</h3>
+      <p>Every JugaadLang keyword maps 1:1 to a Python keyword or builtin — <code>agar</code> is <code>if</code>, <code>banao</code> is <code>def</code>, <code>bolo</code> is <code>print</code>. Under the hood, the lexer and parser build a Python AST directly, so there's no separate interpreter to slow things down. See <a href="#keywords" style="color: var(--accent-saffron);">Syntax &amp; Keywords</a> for the full mapping.</p>
+
+      <div class="docs-callout">New to the project? The <a href="https://github.com/JugaadLang/jugaadlang/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener" style="color: var(--accent-saffron);">Contributor Guide</a> covers local dev setup, linting with <code>ruff</code>, and running tests with <code>pytest</code>.</div>
+    </section>
+
+    <section class="docs-section" id="installation">
+      <h2>Installation</h2>
+      <h3>Install via pip</h3>
+      <div class="docs-pre">pip install jugaadlang</div>
+      <p>This installs the <code>jug</code> CLI, the language runtime, and the standard library.</p>
+
+      <h3>Verify the install</h3>
+      <div class="docs-pre">jug --version
+jug doctor</div>
+
+      <h3>From source (for contributors)</h3>
+      <div class="docs-pre">git clone https://github.com/JugaadLang/jugaadlang.git
+cd jugaadlang
+pip install -e .[dev,all]</div>
+      <p>This installs JugaadLang in editable mode along with development and optional dependencies, as described in the <code>CONTRIBUTING.md</code> at the project root.</p>
+    </section>
+
+    <section class="docs-section" id="keywords">
+      <h2>Syntax &amp; Keywords</h2>
+      <p>Every Python keyword has a Hindi (Roman Hindi) equivalent. All keywords are case-sensitive and lowercase.</p>
+
+      <h3>Control Flow</h3>
+      <div class="docs-table-wrap">
+        <table class="docs-table">
+          <thead><tr><th>Keyword</th><th>Python</th><th>Meaning</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td><code>agar</code></td><td>if</td><td>If</td><td><code>agar x > 5:</code></td></tr>
+            <tr><td><code>shayad</code></td><td>elif</td><td>Maybe</td><td><code>shayad x == 5:</code></td></tr>
+            <tr><td><code>warna</code></td><td>else</td><td>Otherwise</td><td><code>warna:</code></td></tr>
+            <tr><td><code>ghumo</code></td><td>for</td><td>Roam/Iterate</td><td><code>ghumo i mein range(5):</code></td></tr>
+            <tr><td><code>jabtak</code></td><td>while</td><td>As long as</td><td><code>jabtak x > 0:</code></td></tr>
+            <tr><td><code>rukja</code></td><td>break</td><td>Stop!</td><td><code>rukja</code></td></tr>
+            <tr><td><code>chalte_raho</code></td><td>continue</td><td>Keep going</td><td><code>chalte_raho</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Functions &amp; Classes</h3>
+      <div class="docs-table-wrap">
+        <table class="docs-table">
+          <thead><tr><th>Keyword</th><th>Python</th><th>Meaning</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td><code>banao</code></td><td>def</td><td>Create/Make</td><td><code>banao add(a, b):</code></td></tr>
+            <tr><td><code>wapas</code></td><td>return</td><td>Return</td><td><code>wapas result</code></td></tr>
+            <tr><td><code>ustad</code></td><td>class</td><td>Master/Teacher</td><td><code>ustad Car:</code></td></tr>
+            <tr><td><code>khud</code></td><td>self</td><td>Self</td><td><code>khud.naam = naam</code></td></tr>
+            <tr><td><code>chota_funkshan</code></td><td>lambda</td><td>Little function</td><td><code>chota_funkshan x: x + 1</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Exceptions &amp; Imports</h3>
+      <div class="docs-table-wrap">
+        <table class="docs-table">
+          <thead><tr><th>Keyword</th><th>Python</th><th>Meaning</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td><code>koshish</code></td><td>try</td><td>Try/Attempt</td><td><code>koshish:</code></td></tr>
+            <tr><td><code>gadbad</code></td><td>except</td><td>Problem</td><td><code>gadbad ValueError:</code></td></tr>
+            <tr><td><code>udao</code></td><td>raise</td><td>Throw</td><td><code>udao ValueError("gadbad!")</code></td></tr>
+            <tr><td><code>lao</code></td><td>import</td><td>Bring</td><td><code>lao math</code></td></tr>
+            <tr><td><code>se</code></td><td>from</td><td>From</td><td><code>se math lao sqrt</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="docs-callout">This is a partial reference. The full keyword mapping — including booleans, operators, and 60+ builtin functions — lives in <a href="https://github.com/JugaadLang/jugaadlang/blob/main/docs/keywords.md" target="_blank" rel="noopener" style="color: var(--accent-saffron);"><code>docs/keywords.md</code></a>.</div>
+    </section>
+
+    <section class="docs-section" id="stdlib">
+      <h2>Standard Library</h2>
+      <p>Standard library modules are imported with <code>lao</code> and use Hindi module names.</p>
+
+      <h3><code>ganit</code> — Mathematics</h3>
+      <p>Hindi wrapper around Python's <code>math</code> module.</p>
+      <div class="docs-table-wrap">
+        <table class="docs-table">
+          <thead><tr><th>Function</th><th>Python Equivalent</th></tr></thead>
+          <tbody>
+            <tr><td><code>ganit.sqrt(x)</code></td><td><code>math.sqrt(x)</code></td></tr>
+            <tr><td><code>ganit.factorial(x)</code></td><td><code>math.factorial(x)</code></td></tr>
+            <tr><td><code>ganit.gcd(a, b)</code></td><td><code>math.gcd(a, b)</code></td></tr>
+            <tr><td><code>ganit.sin(x)</code> / <code>cos(x)</code> / <code>tan(x)</code></td><td><code>math.sin</code> / <code>cos</code> / <code>tan</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="docs-pre">lao ganit
+bolo(ganit.pi)
+bolo(ganit.sqrt(16))</div>
+
+      <h3><code>faili</code> — File System</h3>
+      <div class="docs-table-wrap">
+        <table class="docs-table">
+          <thead><tr><th>Function</th><th>Description</th><th>Python Equivalent</th></tr></thead>
+          <tbody>
+            <tr><td><code>faili.padho(path)</code></td><td>Read file contents</td><td><code>open().read()</code></td></tr>
+            <tr><td><code>faili.likho(path, content)</code></td><td>Write to file</td><td><code>open().write()</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="docs-callout">The full standard library — including networking, dates, and collections modules — is documented in <a href="https://github.com/JugaadLang/jugaadlang/blob/main/docs/stdlib.md" target="_blank" rel="noopener" style="color: var(--accent-saffron);"><code>docs/stdlib.md</code></a>.</div>
+    </section>
+
+    <section class="docs-section" id="cli">
+      <h2>CLI Reference</h2>
+      <div class="docs-pre">jug [OPTIONS] COMMAND [ARGS]...</div>
+
+      <h3>Common commands</h3>
+      <div class="docs-table-wrap">
+        <table class="docs-table">
+          <thead><tr><th>Command</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>jug run FILE</code></td><td>Run a <code>.jug</code> file</td></tr>
+            <tr><td><code>jug repl</code></td><td>Start the interactive REPL</td></tr>
+            <tr><td><code>jug install PACKAGE</code></td><td>Install a package or bundle (<code>web</code>, <code>dev</code>, <code>ml</code>)</td></tr>
+            <tr><td><code>jug new PROJECT_NAME</code></td><td>Scaffold a new project</td></tr>
+            <tr><td><code>jug compile FILE -o OUTPUT</code></td><td>Transpile to Python source</td></tr>
+            <tr><td><code>jug check FILE</code></td><td>Validate syntax without executing</td></tr>
+            <tr><td><code>jug doctor</code></td><td>Diagnose your installation</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="docs-pre"># Run a file
+jug run hello.jug
+
+# Install a bundle
+jug install web
+
+# Transpile to Python
+jug compile myapp/main.jug -o myapp/main.py</div>
+    </section>
+
+    <div class="docs-next">
+      <a href="index.html#install"><span class="label">Back</span>← Install JugaadLang</a>
+      <a href="https://github.com/JugaadLang/jugaadlang/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener"><span class="label">Next</span>Contributor Guide →</a>
+    </div>
+  </main>
+</div>
+
+<!-- ===== FOOTER (matches index.html) ===== -->
+<footer>
+  <div class="footer-content">
+    <div class="footer-logo">
+      <img src="assets/icon.svg?v=4" alt="JugaadLang Logo" class="footer-logo-img">
+      <span class="footer-logo-text">JugaadLang</span>
+    </div>
+    <p class="footer-tagline">जुगाड़लैंग — Code karo Hindi mein, Duniya hila do!</p>
+    <div class="footer-links">
+      <a href="index.html#hero">Home</a>
+      <a href="index.html#features">Features</a>
+      <a href="index.html#examples">Examples</a>
+      <a href="docs.html">Docs</a>
+      <a href="index.html#install">Install</a>
+      <a href="https://github.com/JugaadLang/jugaadlang" class="footer-github-link" target="_blank" rel="noopener">GitHub</a>
+      <a href="404.html">404</a>
+    </div>
+    <div class="footer-bottom">
+      Made with ☕ + 💪 in Bharat &nbsp;|&nbsp;
+      MIT License &nbsp;|&nbsp;
+      &copy; 2026 JugaadLang Contributors &nbsp;|&nbsp;
+      <span style="color:var(--accent-saffron)">Jai Hind! 🇮🇳</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+// ===== HAMBURGER MENU =====
+const hamburger = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobile-menu');
+hamburger.addEventListener('click', () => {
+  hamburger.classList.toggle('open');
+  mobileMenu.classList.toggle('open');
+});
+hamburger.addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' ') hamburger.click();
+});
+function closeMobileMenu() {
+  hamburger.classList.remove('open');
+  mobileMenu.classList.remove('open');
+}
+
+// ===== THEME MANAGER =====
+(function() {
+  const toggleDesktop = document.getElementById('theme-toggle-desktop');
+  function applyTheme(theme) { document.documentElement.setAttribute('data-theme', theme); }
+  function handleToggle() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    applyTheme(newTheme);
+    localStorage.setItem('theme', newTheme);
+  }
+  if (toggleDesktop) toggleDesktop.addEventListener('click', handleToggle);
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if (!localStorage.getItem('theme')) applyTheme(e.matches ? 'dark' : 'light');
+  });
+})();
+
+// ===== ACTIVE SIDEBAR LINK ON SCROLL =====
+(function() {
+  const sections = document.querySelectorAll('.docs-section[id]');
+  const links = document.querySelectorAll('.docs-sidebar-link');
+  function onScroll() {
+    let current = '';
+    sections.forEach(s => { if (window.scrollY >= s.offsetTop - 140) current = s.id; });
+    links.forEach(l => {
+      l.classList.toggle('active', l.getAttribute('href') === '#' + current);
+    });
+  }
+  window.addEventListener('scroll', onScroll);
+  onScroll();
+})();
+</script>
+
+</body>
+</html>
