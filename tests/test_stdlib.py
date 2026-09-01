@@ -610,3 +610,60 @@ def test_crypto_module_re_exports() -> None:
     assert hasattr(crypto_module, "md5")
     assert hasattr(crypto_module, "base64_encode")
     assert hasattr(crypto_module, "base64_decode")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 18. Paath (Text/String)
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+class TestPaath:
+    """Tests for jug.stdlib.paath — text/string utilities."""
+
+    def test_ulta(self, interpreter: JugaadInterpreter) -> None:
+        import_module_via_interpreter(interpreter, "paath")
+        interpreter.run('x = paath.ulta("abc")')
+        assert interpreter.globals["x"] == "cba"
+
+    def test_palindrome_hai(self, interpreter: JugaadInterpreter) -> None:
+        import_module_via_interpreter(interpreter, "paath")
+        interpreter.run('a = paath.palindrome_hai("nayan")')
+        assert interpreter.globals["a"] is True
+        interpreter.run('b = paath.palindrome_hai("hello")')
+        assert interpreter.globals["b"] is False
+
+    def test_counts(self, interpreter: JugaadInterpreter) -> None:
+        import_module_via_interpreter(interpreter, "paath")
+        interpreter.run('w = paath.shabd_gino("ek do teen")')
+        assert interpreter.globals["w"] == 3
+        interpreter.run('c = paath.akshar_gino("abc")')
+        assert interpreter.globals["c"] == 3
+
+    def test_case_transforms(self, interpreter: JugaadInterpreter) -> None:
+        import_module_via_interpreter(interpreter, "paath")
+        interpreter.run('u = paath.bada("hi")')
+        assert interpreter.globals["u"] == "HI"
+        interpreter.run('l = paath.chota("HI")')
+        assert interpreter.globals["l"] == "hi"
+        interpreter.run('t = paath.title_banao("hello world")')
+        assert interpreter.globals["t"] == "Hello World"
+
+    def test_saaf(self, interpreter: JugaadInterpreter) -> None:
+        import_module_via_interpreter(interpreter, "paath")
+        interpreter.run('x = paath.saaf("  x  ")')
+        assert interpreter.globals["x"] == "x"
+
+    def test_badlo(self, interpreter: JugaadInterpreter) -> None:
+        import_module_via_interpreter(interpreter, "paath")
+        interpreter.run('x = paath.badlo("aXa", "X", "Y")')
+        assert interpreter.globals["x"] == "aYa"
+
+    def test_shamil_hai(self, interpreter: JugaadInterpreter) -> None:
+        import_module_via_interpreter(interpreter, "paath")
+        interpreter.run('x = paath.shamil_hai("hello", "ell")')
+        assert interpreter.globals["x"] is True
+
+    def test_dohrao(self, interpreter: JugaadInterpreter) -> None:
+        import_module_via_interpreter(interpreter, "paath")
+        interpreter.run('x = paath.dohrao("ab", 3)')
+        assert interpreter.globals["x"] == "ababab"
