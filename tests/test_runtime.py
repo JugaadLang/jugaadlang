@@ -325,6 +325,23 @@ def test_cli_typecheck(tmp_path):
     assert "Incompatible types in assignment" in result.output
 
 
+def test_cli_typecheck_missing_mypy(tmp_path):
+    from unittest.mock import patch
+    from click.testing import CliRunner
+    from jug_cli.main import typecheck
+
+    file_ok = tmp_path / "test_ok.jug"
+    file_ok.write_text("naam: shabd = 'Aaman'\n", encoding="utf-8")
+
+    runner = CliRunner()
+    with patch("importlib.util.find_spec", return_value=None):
+        result = runner.invoke(typecheck, [str(file_ok)])
+        assert result.exit_code != 0
+        assert "is not installed" in result.output
+        assert "mypy is required for type checking" in result.output
+
+
+
 def test_import_jaise_alias():
     interpreter = JugaadInterpreter()
     interpreter.run("lao ganit jaise g\nx = g.sqrt(16)")
