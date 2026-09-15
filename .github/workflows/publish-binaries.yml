@@ -224,7 +224,7 @@ jobs:
       - uses: actions/checkout@v7
       
       - name: Update Homebrew Tap
-        uses: dawidd6/action-homebrew-bump-formula@v8
+        uses: dawidd6/action-homebrew-bump-formula@v10
         if: env.HOMEBREW_TOKEN != ''
         with:
           token: ${{ env.HOMEBREW_TOKEN }}
