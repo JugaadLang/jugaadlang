@@ -2,6 +2,38 @@
 
 All standard library modules are imported with `lao` (the Hindi equivalent of `import`).
 
+Start with [functions and modules](functions.html) for import syntax, or [installation](installation.html) for optional dependencies. Examples that write files should be run in a disposable working folder.
+
+## `paath` — Text and strings
+
+Import with `lao paath`.
+
+| Function | Behavior |
+| --- | --- |
+| `ulta(text)` | Reverse the text |
+| `palindrome_hai(text)` | Check a palindrome, ignoring case and spaces |
+| `shabd_gino(text)` | Count whitespace-separated words |
+| `akshar_gino(text)` | Count characters |
+| `bada(text)`, `chota(text)` | Uppercase or lowercase text |
+| `title_banao(text)` | Title-case words |
+| `saaf(text)` | Trim leading and trailing whitespace |
+| `badlo(text, purana, naya)` | Replace occurrences of a substring |
+| `shamil_hai(text, khoj)` | Check whether a substring is present |
+| `dohrao(text, n)` | Repeat text `n` times |
+
+```jugaadlang
+lao paath
+bolo(paath.ulta("chai"))
+bolo(paath.shabd_gino("Code karo Hindi mein"))
+```
+
+Expected output:
+
+```text
+iahc
+4
+```
+
 ---
 
 ## 1. `ganit` — Mathematics
@@ -90,8 +122,6 @@ lao faili
 faili.likho("notes.txt", "JugaadLang code likha!")
 text = faili.padho("notes.txt")
 bolo(text)
-agar faili.hai_kya("docs"):
-    faili.mitao("docs")
 faili.folder_banao("myproject/src")
 ```
 

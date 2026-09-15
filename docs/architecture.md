@@ -2,7 +2,7 @@
 
 ## Overview
 
-JugaadLang is a Hindi-keyword programming language that transpiles directly to Python AST (Abstract Syntax Tree). This means JugaadLang code is compiled to Python's internal AST representation and executed by the Python VM with **zero runtime overhead**.
+JugaadLang is a Hindi-keyword programming language that transforms its own syntax tree into Python AST (Abstract Syntax Tree), compiles it to bytecode, and executes it on the Python VM. Parsing, transformation, and runtime helpers have costs; this is not a zero-overhead guarantee. The runtime caches generated Python source to reuse it on subsequent executions.
 
 ### Pipeline
 

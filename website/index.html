@@ -1765,6 +1765,12 @@
     }
 
     /* ===== RESPONSIVE ===== */
+    /* Leave room for Docs and search before the navigation starts to overflow. */
+    @media (max-width: 1180px) {
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+    }
+
     @media (max-width: 900px) {
       .hero-content {
         grid-template-columns: 1fr;
@@ -2629,6 +2635,7 @@
       <li><a href="#errors">Errors</a></li>
       <li><a href="#install">Install</a></li>
       <li><a href="#stdlib">Stdlib</a></li>
+      <li><a href="docs/index.html">Docs</a></li>
       <li><a href="https://github.com/JugaadLang/jugaadlang" class="nav-cta" target="_blank" rel="noopener"><svg
             class="github-icon" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false">
             <path
@@ -2682,6 +2689,7 @@
     <a href="#errors" onclick="closeMobileMenu()">Errors</a>
     <a href="#install" onclick="closeMobileMenu()">Install</a>
     <a href="#stdlib" onclick="closeMobileMenu()">Stdlib</a>
+    <a href="docs/index.html">Docs</a>
     <!-- Mobile search trigger — Issue #47 -->
     <button id="mobile-search-btn" class="mobile-search-trigger" type="button" aria-label="Search documentation">
       <svg width="16" height="16" viewBox="0 0 15 15" fill="none" aria-hidden="true">
@@ -2752,7 +2760,7 @@
           <a href="#install" class="btn-primary">
             <span>⚡</span> Install Karo
           </a>
-          <a href="#examples" class="btn-secondary">
+          <a href="docs/index.html" class="btn-secondary">
             <span>📖</span> Docs Padho
           </a>
           <a href="https://marketplace.visualstudio.com/items?itemName=jugaadlang.jugaadlang" target="_blank"
