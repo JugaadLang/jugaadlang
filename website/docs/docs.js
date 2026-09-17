@@ -128,7 +128,11 @@
   input.addEventListener('keydown', event => {
     if (event.key === 'ArrowDown' || event.key === 'Enter') {
       const first = results.querySelector('a');
-      if (first) { event.preventDefault(); first.focus(); }
+      if (first) {
+        event.preventDefault();
+        if (event.key === 'Enter') first.click();
+        else first.focus();
+      }
     }
   });
   results.addEventListener('keydown', event => {

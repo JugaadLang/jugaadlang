@@ -261,12 +261,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible {
   font-size:14px;
 }
 
-.search input:focus-visible {
-  outline-offset:0;
+.search input:focus {
+  /* The enclosing field supplies the focus indicator, including for keyboard users. */
+  outline:none;
 }
 
 .search-field:focus-within {
   border-color:var(--accent);
+  outline:2px solid var(--accent);
+  outline-offset:0;
 }
 
 #search-panel {
@@ -568,6 +571,32 @@ footer {
 }
 
 @media(max-width:900px) {
+  .search input {
+    font-size:16px;
+    min-height:48px;
+  }
+  .header-actions button {
+    width:44px;
+    height:44px;
+    flex-shrink:0;
+  }
+  .sidebar a {
+    min-height:44px;
+    display:flex;
+    align-items:center;
+  }
+  .copy-code {
+    min-width:44px;
+    min-height:44px;
+    top:4px;
+  }
+  pre:has(.copy-code) {
+    padding-top:56px;
+  }
+  #search-panel {
+    max-height:min(420px, 50dvh);
+    overscroll-behavior:contain;
+  }
   .layout {
     display:block;
     padding:0 24px;
