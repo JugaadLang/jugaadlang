@@ -487,33 +487,6 @@
       max-width: 600px;
     }
 
-    .hero-logo-container {
-      margin-bottom: 1.5rem;
-      display: inline-flex;
-      align-items: center;
-      justify-content: flex-start;
-    }
-
-    .hero-logo-img {
-      height: 100px;
-      width: 100px;
-      object-fit: contain;
-      filter: drop-shadow(0 0 25px rgba(255, 153, 51, 0.25));
-      animation: float-logo 4s ease-in-out infinite;
-    }
-
-    @keyframes float-logo {
-
-      0%,
-      100% {
-        transform: translateY(0);
-      }
-
-      50% {
-        transform: translateY(-8px);
-      }
-    }
-
     .hero-badge {
       display: inline-flex;
       align-items: center;
@@ -804,8 +777,13 @@
       padding-right: 0.75rem;
     }
 
-    /* ===== FLOATING EMOJI PARTICLES ===== */
-    .emoji-particles {
+    /* ===== CODE-THEMED BACKGROUND DECORATION ===== */
+    /* Faint, drifting programming glyphs/keywords instead of colorful emoji —
+       reinforces the "code" theme while staying out of the way of the
+       title, subtitle, and CTAs (which are the real focus). Pure CSS,
+       no JS required. Particles are positioned along the edges, away
+       from the 25%-75% horizontal band where the headline/copy live. */
+    .code-particles {
       position: absolute;
       inset: 0;
       pointer-events: none;
@@ -813,30 +791,56 @@
       overflow: hidden;
     }
 
-    .emoji-particle {
+    .code-particle {
       position: absolute;
-      font-size: 1.5rem;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      font-size: 1.1rem;
       opacity: 0;
-      animation: emoji-float var(--duration, 8s) var(--delay, 0s) ease-in-out infinite;
+      color: var(--text-muted);
+      white-space: pre;
+      animation-name: code-particle-drift;
+      animation-timing-function: ease-in-out;
+      animation-iteration-count: infinite;
     }
 
-    @keyframes emoji-float {
+    .code-particle.accent-saffron { color: var(--accent-saffron); }
+    .code-particle.accent-green { color: var(--accent-green); }
+    .code-particle.accent-blue { color: var(--accent-blue); }
+
+    .cp-1 { left: 4%;  top: 18%; font-size: 1.4rem; animation-duration: 14s; animation-delay: 0s; }
+    .cp-2 { left: 10%; top: 64%; font-size: 1rem;   animation-duration: 16s; animation-delay: 1.5s; }
+    .cp-3 { left: 90%; top: 15%; font-size: 1.2rem; animation-duration: 13s; animation-delay: 3s; }
+    .cp-4 { left: 85%; top: 55%; font-size: 1.3rem; animation-duration: 17s; animation-delay: 0.8s; }
+    .cp-5 { left: 6%;  top: 82%; font-size: 1rem;   animation-duration: 15s; animation-delay: 4.2s; }
+    .cp-6 { left: 93%; top: 78%; font-size: 1.1rem; animation-duration: 18s; animation-delay: 2.2s; }
+    .cp-7 { left: 14%; top: 38%; font-size: 0.85rem; animation-duration: 20s; animation-delay: 5s; }
+    .cp-8 { left: 88%; top: 35%; font-size: 1.2rem; animation-duration: 14s; animation-delay: 1s; }
+
+    @keyframes code-particle-drift {
       0% {
         opacity: 0;
-        transform: translateY(100vh) rotate(0deg);
+        transform: translateY(60px);
       }
 
-      10% {
-        opacity: 0.7;
+      12% {
+        opacity: 0.16;
       }
 
-      90% {
-        opacity: 0.7;
+      88% {
+        opacity: 0.16;
       }
 
       100% {
         opacity: 0;
-        transform: translateY(-100px) rotate(360deg);
+        transform: translateY(-60px);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .code-particle {
+        animation: none;
+        opacity: 0.1;
       }
     }
 
@@ -1786,10 +1790,6 @@
         max-width: 100%;
       }
 
-      .hero-logo-container {
-        justify-content: center;
-      }
-
       .hero-ctas {
         justify-content: center;
       }
@@ -1867,15 +1867,6 @@
 
       #hero {
         padding: 110px 1.25rem 50px;
-      }
-
-      .hero-logo-img {
-        height: 72px;
-        width: 72px;
-      }
-
-      .hero-logo-container {
-        margin-bottom: 1rem;
       }
 
       .hero-badge {
@@ -1969,11 +1960,6 @@
         gap: 2rem;
       }
 
-      .hero-logo-img {
-        height: 60px;
-        width: 60px;
-      }
-
       .hero-badge {
         font-size: 0.65rem;
         padding: 0.3rem 0.7rem;
@@ -2051,11 +2037,6 @@
     @media (max-width: 360px) {
       #hero {
         padding: 95px 0.75rem 35px;
-      }
-
-      .hero-logo-img {
-        height: 50px;
-        width: 50px;
       }
 
       .hero-title {
@@ -2492,7 +2473,6 @@
       line-height: 1.5;
       overflow: hidden;
       display: -webkit-box;
-      -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
     }
 
@@ -2723,14 +2703,20 @@
   <section id="hero">
     <div class="hero-bg-gradient"></div>
 
-    <!-- Floating Emoji Particles -->
-    <div class="emoji-particles" id="emoji-particles"></div>
+    <!-- Subtle code-themed decorative background (keywords, braces, snippets) -->
+    <div class="code-particles" aria-hidden="true">
+      <span class="code-particle cp-1">{ }</span>
+      <span class="code-particle cp-2 accent-blue">&lt;/&gt;</span>
+      <span class="code-particle cp-3 accent-saffron">अगर</span>
+      <span class="code-particle cp-4">=&gt;</span>
+      <span class="code-particle cp-5 accent-green">बोलो()</span>
+      <span class="code-particle cp-6">01</span>
+      <span class="code-particle cp-7">// jugaad</span>
+      <span class="code-particle cp-8">[ ]</span>
+    </div>
 
     <div class="hero-content">
       <div class="hero-text">
-        <div class="hero-logo-container">
-          <img src="assets/icon.svg?v=4" alt="JugaadLang Logo" class="hero-logo-img">
-        </div>
         <div class="hero-badge">
           <span>🇮🇳</span>
           <span>Made in Bharat</span>
@@ -2750,10 +2736,16 @@
         </p>
         <div class="hero-ctas">
           <a href="#install" class="btn-primary">
-            <span>⚡</span> Install Karo
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+              <path
+                d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z" />
+            </svg> Install Karo
           </a>
           <a href="#examples" class="btn-secondary">
-            <span>📖</span> Docs Padho
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+              <path
+                d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z" />
+            </svg> Docs Padho
           </a>
           <a href="https://marketplace.visualstudio.com/items?itemName=jugaadlang.jugaadlang" target="_blank"
             class="btn-secondary" title="JugaadLang VS Code Extension">
@@ -4410,21 +4402,8 @@ web.chalao(port=5001)`;
       });
     })();
 
-    // ===== FLOATING EMOJI PARTICLES =====
-    (function initEmojiParticles() {
-      const container = document.getElementById('emoji-particles');
-      const emojis = ['🇮🇳', '☕', '🚀', '💻', '⌨️', '🛠️', '🙏', '⚡', '🎯', '💡'];
-      emojis.forEach((emoji, i) => {
-        const el = document.createElement('span');
-        el.className = 'emoji-particle';
-        el.textContent = emoji;
-        el.style.left = `${5 + Math.random() * 90}%`;
-        el.style.setProperty('--duration', `${8 + Math.random() * 8}s`);
-        el.style.setProperty('--delay', `${i * 0.8 + Math.random() * 2}s`);
-        el.style.fontSize = `${1 + Math.random() * 1.2}rem`;
-        container.appendChild(el);
-      });
-    })();
+    // Code-themed background decoration is now pure CSS/HTML —
+    // see .code-particles / .cp-1..cp-8 — no JS needed.
 
     // ===== GITHUB STARS =====
     async function fetchGitHubStars() {
