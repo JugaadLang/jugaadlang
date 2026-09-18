@@ -610,19 +610,15 @@
       display: flex;
       gap: 0.75rem;
       flex-wrap: wrap;
+      align-items: center;
     }
 
-    @media (min-width: 992px) {
-      .hero-ctas {
-        flex-wrap: nowrap;
-        white-space: nowrap;
-      }
-
-      .hero-ctas .btn-primary,
-      .hero-ctas .btn-secondary {
-        padding: 0.75rem 1.25rem;
-        font-size: 0.95rem;
-      }
+    .hero-ctas .btn-primary,
+    .hero-ctas .btn-secondary {
+      padding: 0.75rem 1.35rem;
+      font-size: 0.92rem;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .btn-primary {
@@ -2629,6 +2625,7 @@
       <li><a href="#errors">Errors</a></li>
       <li><a href="#install">Install</a></li>
       <li><a href="#stdlib">Stdlib</a></li>
+      <li><a href="/jugonline" style="color: var(--accent-saffron); font-weight: 700;">Playground 🚀</a></li>
       <li><a href="https://github.com/JugaadLang/jugaadlang" class="nav-cta" target="_blank" rel="noopener"><svg
             class="github-icon" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false">
             <path
@@ -2682,6 +2679,7 @@
     <a href="#errors" onclick="closeMobileMenu()">Errors</a>
     <a href="#install" onclick="closeMobileMenu()">Install</a>
     <a href="#stdlib" onclick="closeMobileMenu()">Stdlib</a>
+    <a href="/jugonline" onclick="closeMobileMenu()" style="color: var(--accent-saffron); font-weight: 700;">🚀 Playground (Online)</a>
     <!-- Mobile search trigger — Issue #47 -->
     <button id="mobile-search-btn" class="mobile-search-trigger" type="button" aria-label="Search documentation">
       <svg width="16" height="16" viewBox="0 0 15 15" fill="none" aria-hidden="true">
@@ -2749,6 +2747,10 @@
           <strong style="color: var(--accent-saffron);">Jugaad-first. Always.</strong>
         </p>
         <div class="hero-ctas">
+          <!-- NEW "Try Online" BUTTON -->
+           <a href="/jugonline" class="btn-primary" style="background: linear-gradient(135deg, #FF9933, #FF6600);">
+            <span>🚀</span> Try Now Online
+          </a>
           <a href="#install" class="btn-primary">
             <span>⚡</span> Install Karo
           </a>
@@ -2815,6 +2817,11 @@
       </div>
 
       <div class="features-grid">
+        <div class="feature-card reveal" style="border: 1px solid rgba(255, 153, 51, 0.4); background: rgba(255, 153, 51, 0.04);">
+          <span class="feature-icon">🚀</span>
+          <div class="feature-title">Online Playground (No Install)</div>
+          <p class="feature-desc">Code directly in your browser using WebAssembly (Pyodide) & Monaco Editor. Inspect the translated Python code, view instant error markers, and download your <code class="s-keyword">.jug</code> and <code class="s-keyword">.py</code> files. <a href="/jugonline" style="color: var(--accent-saffron); font-weight: 700; text-decoration: none;">Try Online ↗</a></p>
+        </div>
         <div class="feature-card reveal">
           <span class="feature-icon">🇮🇳</span>
           <div class="feature-title">Hindi Keywords</div>
