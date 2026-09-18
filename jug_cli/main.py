@@ -29,7 +29,15 @@ for _stream in (sys.stdout, sys.stderr):
             pass
 
 
-@click.group()
+@click.group(epilog="""
+Examples:
+  jug run hello.jug
+  jug compile hello.jug
+  jug repl
+  jug install web
+  jug search http
+  jug doctor
+""")
 @click.version_option(version=__version__, message="JugaadLang v%(version)s 🇮🇳")
 def main() -> None:
     """JugaadLang — The Hindi-keyword programming language. 🚀"""
