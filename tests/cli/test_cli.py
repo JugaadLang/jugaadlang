@@ -15,6 +15,37 @@ def test_cli_help(runner):
     result = runner.invoke(main, ['--help'])
     assert result.exit_code == 0
     assert "JugaadLang" in result.output
+    assert "Examples:" in result.output
+    assert "jug run <file.jug>" in result.output
+    assert "jug compile <file.jug>" in result.output
+    assert "jug repl" in result.output
+    assert "jug install <package>" in result.output
+    assert "jug search <query>" in result.output
+    assert "jug doctor" in result.output
+    # Check that short help for install is cleanly displayed without truncation
+    assert "Install a package or custom bundle." in result.output
+
+
+def test_cli_help_short_flag(runner):
+    result = runner.invoke(main, ['-h'])
+    assert result.exit_code == 0
+    assert "JugaadLang" in result.output
+    assert "Examples:" in result.output
+
+
+def test_cli_subcommand_help_examples(runner):
+    for cmd, expected_example in [
+        ('run', 'jug run hello.jug'),
+        ('compile', 'jug compile hello.jug'),
+        ('repl', 'jug repl'),
+        ('install', 'jug install chai'),
+        ('search', 'jug search chai'),
+        ('doctor', 'jug doctor'),
+    ]:
+        result = runner.invoke(main, [cmd, '--help'])
+        assert result.exit_code == 0
+        assert "Examples:" in result.output
+        assert expected_example in result.output
 
 def test_cli_run(runner, tmp_path):
     jug_file = tmp_path / "hello.jug"
