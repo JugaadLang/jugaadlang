@@ -105,3 +105,11 @@ def test_cli_repl(mock_repl, runner):
     result = runner.invoke(main, ['repl'])
     assert result.exit_code == 0
     mock_repl.assert_called_once()
+
+
+def test_cli_version():
+    runner = CliRunner()
+    result = runner.invoke(main, ["--version"])
+
+    assert result.exit_code == 0
+    assert "JugaadLang v" in result.output
