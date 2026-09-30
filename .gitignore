@@ -62,3 +62,4 @@ node_modules/
 jug.spec
 build/
 dist/
+__jugcache__/
