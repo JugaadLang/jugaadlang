@@ -202,7 +202,8 @@ def check(file: str) -> None:
         parser.parse()
 
         console.print("[bold green]✓ Code bilkul sahi hai! (Syntax is valid)[/bold green]")
-    except Exception:
+    except Exception as e:
+        console_stderr.print(f"[bold red]✗ Syntax check failed: {e}[/bold red]")
         sys.exit(1)
 
 
