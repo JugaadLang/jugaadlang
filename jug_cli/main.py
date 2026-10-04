@@ -7,7 +7,7 @@ from __future__ import annotations
 import ast
 import os
 import sys
-from importlib.util import find_spec
+from typing import Any
 
 import click
 from rich.console import Console
@@ -334,10 +334,6 @@ def typecheck(file: str) -> None:
 
     console.print("[bold green]🕵️ JugaadLang Type Checker[/bold green]")
     console.print(f"Type checking [cyan]{file}[/cyan]...")
-    if find_spec("mypy") is None:
-        console.print("mypy is not installed. Skipping type check.")
-        return
-
     try:
         with open(file, "r", encoding="utf-8") as f:
             source = f.read()
