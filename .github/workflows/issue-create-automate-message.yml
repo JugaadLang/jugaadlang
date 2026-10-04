@@ -3,15 +3,10 @@ name: Auto Comment on Issue
 on:
   issues:
     types: [opened]
-  workflow_dispatch:
-    inputs:
-      issue_number:
-        description: Issue number to comment on
-        required: true
-        type: number
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
   comment:
@@ -20,10 +15,14 @@ jobs:
       - name: Add Comment to Issue
         uses: actions/github-script@v9
         with:
-          github-token: ${{ secrets.PR_COMMENT_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const issueNumber = context.issue?.number
-              ?? Number(context.payload.inputs?.issue_number);
+            if (context.eventName === 'issues' && context.payload.action !== 'opened') {
+              console.log(`Skipping: event action is "${context.payload.action}", only "opened" runs.`);
+              return;
+            }
+
+            const issueNumber = context.issue.number;
 
             if (!issueNumber) {
               core.setFailed("An issue number is required.");
