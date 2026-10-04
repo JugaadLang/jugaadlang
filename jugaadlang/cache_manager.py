@@ -1,4 +1,8 @@
-from .manager import (
+﻿"""
+JugaadLang AST and Precompiled Representation Cache Manager.
+"""
+
+from .cache.manager import (
     CACHE_VERSION,
     CacheManager,
     cache_manager,
@@ -10,6 +14,6 @@ __all__ = [
     "CACHE_VERSION",
     "CacheManager",
     "cache_manager",
-    "deserialize_ast",
     "serialize_ast",
+    "deserialize_ast",
 ]
