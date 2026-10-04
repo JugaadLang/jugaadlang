@@ -91,20 +91,20 @@ def test_cli_check_invalid(runner, tmp_path):
     result = runner.invoke(main, ['check', str(jug_file)])
     assert result.exit_code != 0
     assert "Syntax check failed" in result.output
-def test_cli_new(runner, tmp_path):
-    with runner.isolated_filesystem(temp_dir=tmp_path):
-        result = runner.invoke(main, ['new', 'myproject'])
-        assert result.exit_code == 0
-        assert os.path.exists("myproject")
-        assert os.path.exists(os.path.join("myproject", "main.jug"))
-        assert os.path.exists(os.path.join("myproject", "README.md"))
+def test_cli_new(runner, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    result = runner.invoke(main, ['new', 'myproject'])
+    assert result.exit_code == 0
+    assert os.path.exists("myproject")
+    assert os.path.exists(os.path.join("myproject", "main.jug"))
+    assert os.path.exists(os.path.join("myproject", "README.md"))
 
-def test_cli_new_existing_dir(runner, tmp_path):
-    with runner.isolated_filesystem(temp_dir=tmp_path):
-        os.mkdir("myproject")
-        result = runner.invoke(main, ['new', 'myproject'])
-        assert result.exit_code != 0
-        assert "pehle se hi hai" in result.output
+def test_cli_new_existing_dir(runner, tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    os.mkdir("myproject")
+    result = runner.invoke(main, ['new', 'myproject'])
+    assert result.exit_code != 0
+    assert "pehle se hi hai" in result.output
 
 # Mock PackageManager for install, remove, update, search
 @patch("jugaadlang.package_manager.manager.JugaadPackageManager.search")
