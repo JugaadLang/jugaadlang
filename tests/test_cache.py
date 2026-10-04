@@ -1,6 +1,7 @@
 import json
 import os
 import time
+from types import CodeType
 from unittest.mock import patch
 
 from jugaadlang.cache.manager import (
@@ -18,35 +19,45 @@ from jugaadlang.runtime.interpreter import JugaadInterpreter
 def test_cache_l1_set_get():
     manager = CacheManager(cache_dir=".test_cache_1")
     manager.clear()
-
-    manager.set("print('hello')", "print('hello')")
-    assert manager.get("print('hello')") == "print('hello')"
-    assert manager.get("print('world')") is None
+    
+    code_obj = compile("print('hello')", "<string>", "exec")
+    manager.set_bytecode("print('hello')", code_obj)
+    
+    cached = manager.get_bytecode("print('hello')")
+    assert isinstance(cached, CodeType)
+    assert cached.co_code == code_obj.co_code
+    assert manager.get_bytecode("print('world')") is None
 
 
 def test_cache_l2_persistence():
     manager = CacheManager(cache_dir=".test_cache_2")
     manager.clear()
-
-    manager.set("x = 1", "x = 1\n")
-
+    
+    code_obj = compile("x = 1\n", "<string>", "exec")
+    manager.set_bytecode("x = 1", code_obj)
+    
     # Create a new manager with the same directory to simulate restarting the app
     new_manager = CacheManager(cache_dir=".test_cache_2")
-    assert new_manager.get("x = 1") == "x = 1\n"
+    cached = new_manager.get_bytecode("x = 1")
+    assert isinstance(cached, CodeType)
+    assert cached.co_code == code_obj.co_code
 
 
 def test_cache_clear():
     manager = CacheManager(cache_dir=".test_cache_3")
     manager.clear()
-
-    manager.set("bolo('hi')", "print('hi')")
-    assert manager.get("bolo('hi')") == "print('hi')"
-
+    
+    code_obj = compile("print('hi')", "<string>", "exec")
+    manager.set_bytecode("bolo('hi')", code_obj)
+    
+    cached = manager.get_bytecode("bolo('hi')")
+    assert isinstance(cached, CodeType)
+    
     manager.clear()
-    assert manager.get("bolo('hi')") is None
-
+    assert manager.get_bytecode("bolo('hi')") is None
+    
     new_manager = CacheManager(cache_dir=".test_cache_3")
-    assert new_manager.get("bolo('hi')") is None
+    assert new_manager.get_bytecode("bolo('hi')") is None
 
 
 def test_cache_module_reexport():
@@ -93,7 +104,7 @@ def test_second_execution_uses_cache(tmp_path):
         interp1 = JugaadInterpreter(filename=file_path)
         interp1.run(source)
         assert interp1.globals["y"] == 84
-        assert custom_manager.misses == 1
+        assert custom_manager.misses == 2
         assert custom_manager.hits == 0
 
         # Second execution: Lexer and Parser should be completely bypassed!
