@@ -1,4 +1,4 @@
-name: PR Create Automate Message
+name: Auto Comment on PR
 
 on:
   pull_request_target:
@@ -14,25 +14,34 @@ permissions:
   contents: read
 
 jobs:
-  auto-comment:
+  comment:
     runs-on: ubuntu-latest
     steps:
-      - name: Comment on new PR
+      - name: Comment on PR
         uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.PR_COMMENT_TOKEN }}
           script: |
-            const issueNumber = context.payload.pull_request?.number
+            const prNumber = context.payload.pull_request?.number
               ?? Number(context.payload.inputs?.pr_number);
 
-            if (!issueNumber) {
+            if (!prNumber) {
               core.setFailed("A pull request number is required.");
               return;
             }
 
-            github.rest.issues.createComment({
-              issue_number: issueNumber,
+            const commentBody = `### Thanks for creating a PR for your Issue! ☺️
+
+            We'll review it as soon as possible.
+            In the meantime, please double-check the **file changes** and ensure that **all commits** are accurate.
+
+            If there are any **unresolved review comments**, feel free to resolve them. 🙌🏼`;
+
+            await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: "Namaste! 🙏 Thanks for submitting this PR and sharing your awesome *jugaad* with us! We'll review your code shortly. Please make sure your hacks are solid, all CI checks are passing, and it follows our contribution guidelines. May your code compile on the first try! 🚀"
-            })
+              issue_number: prNumber,
+              body: commentBody
+            });
+
+            console.log("Comment added successfully.");
