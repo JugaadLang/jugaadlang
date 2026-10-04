@@ -39,7 +39,12 @@ def test_cli_subcommand_help_examples(runner):
         ('compile', 'jug compile hello.jug'),
         ('repl', 'jug repl'),
         ('install', 'jug install chai'),
+        ('remove', 'jug remove chai'),
+        ('update', 'jug update chai'),
         ('search', 'jug search chai'),
+        ('new', 'jug new my_project'),
+        ('check', 'jug check hello.jug'),
+        ('typecheck', 'jug typecheck hello.jug'),
         ('doctor', 'jug doctor'),
     ]:
         result = runner.invoke(main, [cmd, '--help'])
