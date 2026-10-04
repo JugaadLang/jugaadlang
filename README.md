@@ -37,19 +37,36 @@ JugaadLang transpiles directly to native Python AST, meaning it runs with zero r
 </div>
 
 ## Table of Contents
-1. [Core Philosophy](#core-philosophy)
-2. [Installation](#installation)
-3. [Language Keywords Reference](#language-keywords-reference)
-4. [Example Usage](#example-usage)
-5. [Built-in Fun Functions](#built-in-fun-functions)
-6. [Ecosystem & Tooling](#ecosystem--tooling)
+1. [Online Playground (Try Without Installing!)](#-online-playground-try-without-installing)
+2. [Core Philosophy](#core-philosophy)
+3. [Installation](#installation)
+4. [Language Keywords Reference](#language-keywords-reference)
+5. [Example Usage](#example-usage)
+6. [Built-in Fun Functions](#built-in-fun-functions)
+7. [Ecosystem & Tooling](#ecosystem--tooling)
    - [CLI Runner](#cli-runner)
    - [Interactive REPL](#interactive-repl)
    - [Package Manager](#package-manager)
    - [VS Code Extension](#vs-code-extension)
-7. [Standard Library (Stdlib)](#standard-library-stdlib)
-8. [Funny Error System](#funny-error-system)
-9. [Automated Testing](#automated-testing)
+8. [Standard Library (Stdlib)](#standard-library-stdlib)
+9. [Funny Error System](#funny-error-system)
+10. [Automated Testing](#automated-testing)
+
+---
+
+## 🌐 Online Playground (Try Without Installing!)
+
+Want to code in JugaadLang immediately without installing Python or setting up a local environment?
+Use our free, in-browser interactive compiler & playground:
+
+👉 **[Launch JugaadLang Online Playground 🚀](https://jugaadlang.netlify.app/jugonline/)**
+
+### Playground Features:
+- **⚡ 100% Client-Side**: Powered by WebAssembly (Pyodide) — zero server dependencies, instant execution.
+- **🎨 Monaco Editor**: Full VS Code-like coding environment with custom syntax highlighting and indentation.
+- **🔍 Dual-Pane Transpiler**: View your generated standard Python code side-by-side in real time.
+- **💡 Desi Error Diagnostics**: Hilarious and helpful error diagnostics with real-time red squiggly error markers pointing to the exact line.
+- **💾 Export & Download**: Download your program as `.jug` (source) or `.py` (transpiled Python) with a single click.
 
 ---
 

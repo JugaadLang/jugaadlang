@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en" style="color-scheme: dark;">
+
+<head>
+  <!-- Synchronize Theme with Main Website before render -->
+  <script>
+    (function () {
+      var localTheme = localStorage.getItem('theme');
+      if (localTheme) {
+        document.documentElement.setAttribute('data-theme', localTheme);
+      } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JugaadLang Playground — Code Karo Online 🚀</title>
+  <meta name="description" content="Online interactive compiler and playground for JugaadLang. Write Hindi-keyword code and run it instantly in your browser." />
+  <link rel="icon" type="image/png" href="../assets/icon.png" />
+
+  <!-- Google Fonts: Same as main site -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;700&display=swap" rel="stylesheet" />
+
+  <!-- Monaco Editor Loader -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+
+  <!-- Pyodide (Wasm Python Engine) -->
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"></script>
+
+  <style>
+    /* ===== EXACT COLOR SYSTEM & VARIABLES FROM INDEX.HTML ===== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-primary: #F5F5FA;
+      --bg-secondary: #FFFFFF;
+      --bg-tertiary: #EBEBEF;
+      --bg-card: rgba(13, 13, 26, 0.04);
+      --bg-card-hover: rgba(13, 13, 26, 0.08);
+      --accent-saffron: #FF9933;
+      --accent-green: #138808;
+      --accent-gold: #FFD700;
+      --accent-blue: #4FC3F7;
+      --accent-purple: #9B59B6;
+      --text-primary: #121224;
+      --text-secondary: #555577;
+      --text-muted: #8888AA;
+      --border: rgba(0, 0, 0, 0.08);
+      --border-hover: rgba(255, 153, 51, 0.6);
+      --gradient-saffron: linear-gradient(135deg, #FF9933, #FF6600);
+      --gradient-green: linear-gradient(135deg, #2ECC71, #138808);
+      --font-heading: 'Outfit', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-devanagari: 'Noto Sans Devanagari', sans-serif;
+      --radius-xs: 6px;
+      --radius-sm: 12px;
+      --radius-md: 20px;
+      --radius-full: 9999px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --bg-nav: rgba(245, 245, 250, 0.92);
+      --bg-code: #FFFFFF;
+      --bg-code-header: rgba(0, 0, 0, 0.03);
+      --border-code: rgba(0, 0, 0, 0.08);
+      --text-terminal: #121224;
+      --bg-terminal: #F5F5FA;
+
+      /* Syntax tokens */
+      --s-keyword: #E65100;
+      --s-string: #138808;
+      --s-comment: #7F8C8D;
+      --s-number: #006699;
+      --s-function: #8E44AD;
+    }
+
+    [data-theme="dark"] {
+      --bg-primary: #0F1115;
+      --bg-secondary: #181C22;
+      --bg-tertiary: #222831;
+      --bg-card: rgba(255, 255, 255, 0.03);
+      --bg-card-hover: rgba(255, 255, 255, 0.07);
+      --text-primary: #F5F5F5;
+      --text-secondary: #C9CDD2;
+      --text-muted: #8888AA;
+      --border: #343A40;
+      --border-hover: rgba(255, 153, 51, 0.7);
+      --bg-nav: rgba(15, 17, 21, 0.92);
+      --bg-code: #181C22;
+      --bg-code-header: rgba(0, 0, 0, 0.35);
+      --border-code: #343A40;
+      --text-terminal: #F5F5F5;
+      --bg-terminal: #12151B;
+
+      /* Syntax tokens */
+      --s-keyword: #FF9933;
+      --s-string: #2ECC71;
+      --s-comment: #7F8C8D;
+      --s-number: #4FC3F7;
+      --s-function: #9B59B6;
+    }
+
+    body {
+      font-family: var(--font-heading);
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* ===== NAVBAR ===== */
+    header.playground-nav {
+      height: 60px;
+      background: var(--bg-nav);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.5rem;
+      z-index: 100;
+      flex-shrink: 0;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      text-decoration: none;
+      color: var(--text-primary);
+      font-weight: 800;
+      font-size: 1.2rem;
+    }
+
+    .nav-logo img {
+      width: 28px;
+      height: 28px;
+    }
+
+    .pill-badge {
+      background: rgba(255, 153, 51, 0.12);
+      border: 1px solid rgba(255, 153, 51, 0.3);
+      color: var(--accent-saffron);
+      padding: 0.2rem 0.65rem;
+      border-radius: var(--radius-full);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .nav-center {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .select-template {
+      background-color: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      font-family: var(--font-heading);
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 0.45rem 0.9rem;
+      border-radius: var(--radius-sm);
+      outline: none;
+      cursor: pointer;
+      transition: var(--transition);
+      color-scheme: light dark;
+    }
+
+    .select-template:hover {
+      border-color: var(--accent-saffron);
+    }
+
+    .select-template option {
+      background-color: var(--bg-secondary);
+      color: var(--text-primary);
+      padding: 8px 12px;
+    }
+
+    [data-theme="dark"] .select-template,
+    [data-theme="dark"] .select-template option {
+      background-color: #181C22;
+      color: #F5F5F5;
+      color-scheme: dark;
+    }
+
+    [data-theme="light"] .select-template,
+    [data-theme="light"] .select-template option {
+      background-color: #FFFFFF;
+      color: #121224;
+      color-scheme: light;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    /* Primary Run Button */
+    .btn-run {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--gradient-saffron);
+      color: #000;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 0.5rem 1.4rem;
+      border-radius: var(--radius-full);
+      border: none;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: 0 4px 15px rgba(255, 153, 51, 0.3);
+    }
+
+    .btn-run:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 153, 51, 0.5);
+    }
+
+    .btn-run:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Secondary Action Buttons */
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding: 0.45rem 1rem;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      text-decoration: none;
+      transition: var(--transition);
+    }
+
+    .btn-action:hover {
+      color: var(--text-primary);
+      border-color: var(--border-hover);
+      background: var(--bg-card);
+    }
+
+    /* Dropdown Menu */
+    .dropdown-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 6px);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-card);
+      min-width: 175px;
+      z-index: 1000;
+      overflow: hidden;
+      padding: 4px;
+    }
+
+    .dropdown-item {
+      width: 100%;
+      text-align: left;
+      padding: 0.55rem 0.85rem;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-xs);
+      color: var(--text-primary);
+      font-family: var(--font-heading);
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .dropdown-item:hover {
+      background: var(--bg-card-hover);
+      color: var(--accent-saffron);
+    }
+
+    /* Theme Toggle */
+    .theme-toggle {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      border-radius: var(--radius-full);
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .theme-toggle:hover {
+      color: var(--accent-saffron);
+      border-color: var(--accent-saffron);
+      background: rgba(255, 153, 51, 0.1);
+    }
+
+    .theme-toggle svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    [data-theme="dark"] .icon-sun { display: block; }
+    [data-theme="dark"] .icon-moon { display: none; }
+    [data-theme="light"] .icon-sun { display: none; }
+    [data-theme="light"] .icon-moon { display: block; }
+
+    /* ===== MAIN WORKSPACE (SPLIT VIEW) ===== */
+    .workspace {
+      flex: 1;
+      display: flex;
+      gap: 1rem;
+      padding: 1rem;
+      overflow: hidden;
+    }
+
+    /* Container Windows (Cards) */
+    .window-card {
+      background: var(--bg-code);
+      border: 1px solid var(--border-code);
+      border-radius: var(--radius-md);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: border-color 0.2s ease;
+    }
+
+    .window-card:hover {
+      border-color: rgba(255, 153, 51, 0.3);
+    }
+
+    .editor-pane {
+      flex: 1.15;
+      min-width: 0;
+    }
+
+    .terminal-pane {
+      flex: 0.85;
+      min-width: 0;
+    }
+
+    /* macOS Window Bar */
+    .window-bar {
+      height: 42px;
+      background: var(--bg-code-header);
+      border-bottom: 1px solid var(--border-code);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1rem;
+      user-select: none;
+    }
+
+    .window-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .dot-red { background: #FF5F56; }
+    .dot-yellow { background: #FFBD2E; }
+    .dot-green { background: #27C93F; }
+
+    .window-title {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-heading);
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 0.3rem 0.65rem;
+      border-radius: var(--radius-xs);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .tab-btn.active {
+      color: var(--accent-saffron);
+      background: rgba(255, 153, 51, 0.12);
+    }
+
+    /* Monaco Mount Point */
+    #monaco-container {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Terminal View */
+    #terminal-view {
+      flex: 1;
+      background: var(--bg-terminal);
+      color: var(--text-terminal);
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      line-height: 1.6;
+      padding: 1rem;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    /* Transpiled Python View */
+    #python-view {
+      display: none;
+      flex: 1;
+      background: var(--bg-terminal);
+      color: var(--text-terminal);
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      line-height: 1.6;
+      padding: 1rem;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+
+    .log-err { color: #FF6B6B; }
+    .log-success { color: #2ECC71; font-weight: 600; }
+    .log-hint { color: var(--text-muted); }
+
+    /* Loader progress bar */
+    .init-loader {
+      padding: 1.5rem 0.5rem;
+      max-width: 480px;
+    }
+
+    .progress-bar-track {
+      width: 100%;
+      height: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+      margin: 0.65rem 0;
+    }
+
+    .progress-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #FF9933, #FF6600, #2ECC71);
+      border-radius: var(--radius-full);
+      transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Footer Status Strip */
+    footer.status-strip {
+      height: 32px;
+      background: var(--bg-nav);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.25rem;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #E67E22;
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    .status-indicator.ready {
+      background: #2ECC71;
+      animation: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .workspace {
+        flex-direction: column;
+      }
+      .editor-pane, .terminal-pane {
+        flex: 1;
+      }
+      .nav-center { display: none; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ===== NAVBAR ===== -->
+  <header class="playground-nav">
+    <div class="nav-left">
+      <a href="../index.html" class="nav-logo">
+        <img src="../assets/icon.svg" alt="JugaadLang" onerror="this.src='../assets/icon.png'">
+        <span>JugaadLang</span>
+      </a>
+      <span class="pill-badge">Playground</span>
+    </div>
+
+    <div class="nav-center">
+      <select id="example-select" class="select-template" onchange="loadTemplate(this.value)">
+        <option value="new">📄 Naya Code (Blank)</option>
+        <option value="namaste" selected>✨ Namaste Duniya (Hello World)</option>
+        <option value="fibonacci">🔢 Fibonacci Series (Ghumo Loop)</option>
+        <option value="oop">🏛️ Ustad & Shuru (Classes & OOP)</option>
+        <option value="pattern">🎯 Match & Kaand (Pattern Matching)</option>
+        <option value="chai">☕ Chai & Kismat (Desi Stdlib)</option>
+      </select>
+    </div>
+
+    <div class="nav-right">
+      <button id="run-btn" class="btn-run" disabled onclick="runCode()">
+        <span>⚡</span> Run Code
+      </button>
+
+      <!-- Download Dropdown -->
+      <div class="dropdown-wrapper">
+        <button class="btn-action" id="download-btn" onclick="toggleDownloadMenu(event)" title="Download Code">
+          <span>💾</span> Download ▾
+        </button>
+        <div id="download-menu" class="dropdown-menu">
+          <button class="dropdown-item" onclick="downloadJug()">
+            <span>📄</span> Source (<strong>.jug</strong>)
+          </button>
+          <button class="dropdown-item" onclick="downloadPy()">
+            <span>🐍</span> Transpiled (<strong>.py</strong>)
+          </button>
+        </div>
+      </div>
+
+      <a href="../index.html" class="btn-action">
+        <span>📖</span> Docs
+      </a>
+      <button class="theme-toggle" id="theme-btn" aria-label="Toggle dark mode" onclick="toggleTheme()">
+        <svg class="icon-sun" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== WORKSPACE ===== -->
+  <main class="workspace">
+    
+    <!-- LEFT: MONACO EDITOR -->
+    <div class="window-card editor-pane">
+      <div class="window-bar">
+        <div class="window-dots">
+          <div class="dot dot-red"></div>
+          <div class="dot dot-yellow"></div>
+          <div class="dot dot-green"></div>
+        </div>
+        <span class="window-title">main.jug</span>
+        <div style="display: flex; gap: 0.4rem;">
+          <button class="btn-action" style="padding: 0.2rem 0.6rem; font-size: 0.75rem;" onclick="newCode()">+ Naya Code</button>
+          <button class="btn-action" style="padding: 0.2rem 0.6rem; font-size: 0.75rem;" onclick="resetCode()">Reset</button>
+          <button class="btn-action" style="padding: 0.2rem 0.6rem; font-size: 0.75rem;" onclick="downloadJug()" title="Download as main.jug">💾 .jug</button>
+        </div>
+      </div>
+      <div id="monaco-container"></div>
+    </div>
+
+    <!-- RIGHT: OUTPUT TERMINAL & TRANSLATED PYTHON -->
+    <div class="window-card terminal-pane">
+      <div class="window-bar">
+        <div class="tabs">
+          <button id="tab-term" class="tab-btn active" onclick="switchTab('term')">Console Output</button>
+          <button id="tab-py" class="tab-btn" onclick="switchTab('py')">Transpiled Python (AST)</button>
+        </div>
+        <div style="display: flex; gap: 0.4rem;">
+          <!--<button class="btn-action" style="padding: 0.2rem 0.6rem; font-size: 0.75rem;" onclick="downloadPy()" title="Download compiled Python as main.py">🐍 .py</button> -->
+          <button class="btn-action" style="padding: 0.2rem 0.6rem; font-size: 0.75rem;" onclick="clearConsole()">Clear</button>
+        </div>
+      </div>
+      
+      <div id="terminal-view">
+        <div class="init-loader" id="init-loader">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span id="progress-text" style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">🚀 Starting WebAssembly Engine...</span>
+            <span id="progress-percent" style="font-size: 0.85rem; font-family: var(--font-mono); font-weight: 700; color: var(--accent-saffron);">0%</span>
+          </div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="progress-fill"></div>
+          </div>
+          <div id="progress-subtext" style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);">
+            Loading Pyodide runtime...
+          </div>
+        </div>
+      </div>
+
+      <div id="python-view"># Python transpilation will appear here after Run.</div>
+    </div>
+
+  </main>
+
+  <!-- ===== STATUS STRIP ===== -->
+  <footer class="status-strip">
+    <div class="status-left">
+      <span class="status-indicator" id="status-indicator"></span>
+      <span id="status-label">Loading compiler engine...</span>
+    </div>
+    <div>Shortcut: <kbd style="font-family: var(--font-mono); background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px;">Ctrl + Enter</kbd> to run</div>
+  </footer>
+
+  <!-- ===== LOGIC & SCRIPT ===== -->
+  <script>
+    // Templates
+    const TEMPLATES = {
+      new: `# Naya JugaadLang Code 🇮🇳
+# Yahan apna desi code shuru karo...
+
+bolo("Namaste Duniya! 🙏")
+`,
+      namaste: `# Namaste Duniya! 🙏
+# JugaadLang uses Hindi keywords with Python syntax.
+
+naam = "Sumangal"
+
+agar naam == "Sumangal":
+    bolo("Legend mil gaya! 😎")
+warna:
+    bolo("Namaste, " + naam)
+
+bolo("Code karo Hindi mein, Duniya hila do! 🚀")
+`,
+      fibonacci: `# Fibonacci Sequence in JugaadLang 🔢
+
+banao fib(n):
+    agar n <= 1:
+        wapas n
+    wapas fib(n - 1) + fib(n - 2)
+
+bolo("First 7 Fibonacci Numbers:")
+ghumo i mein suchi([0, 1, 2, 3, 4, 5, 6]):
+    bolo("fib(" + shabd(i) + ") = " + shabd(fib(i)))
+`,
+      oop: `# Object Oriented Programming (Ustad & Shuru) 🏛️
+
+ustad Gadi:
+    banao shuru(khud, model, speed):
+        khud.model = model
+        khud.speed = speed
+
+    banao bhagao(khud):
+        bolo(khud.model + " chal rahi hai at " + shabd(khud.speed) + " km/h! 🏎️")
+
+meri_car = Gadi("Thar", 120)
+meri_car.bhagao()
+`,
+      pattern: `# Pattern Matching (Agar Match & Kaand) 🎯
+
+command = "shuru"
+
+agar_match command:
+    kaand "shuru":
+        bolo("Engine Start ho gaya! 🏎️")
+    kaand "ruk":
+        bolo("Break laga diya! 🛑")
+    kaand _:
+        bolo("Mujhe nahi samajh aaya 🤔")
+`,
+      chai: `# Desi Builtins ☕
+namaste()
+chai()
+jugaad()
+
+k = kismat(1, 100)
+bolo("Aapka lucky number aaj hai: " + shabd(k))
+`
+    };
+
+    let editor = null;
+    let pyodide = null;
+    let currentTab = 'term';
+
+    const termView = document.getElementById("terminal-view");
+    const pyView = document.getElementById("python-view");
+    const statusLabel = document.getElementById("status-label");
+    const statusIndicator = document.getElementById("status-indicator");
+    const runBtn = document.getElementById("run-btn");
+
+    function log(text, isErr = false, isSuccess = false) {
+      const line = document.createElement("div");
+      line.textContent = text;
+      if (isErr) line.className = "log-err";
+      if (isSuccess) line.className = "log-success";
+      termView.appendChild(line);
+      termView.scrollTop = termView.scrollHeight;
+    }
+
+    function clearConsole() {
+      termView.innerHTML = "";
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.getElementById("tab-term").classList.toggle("active", tab === 'term');
+      document.getElementById("tab-py").classList.toggle("active", tab === 'py');
+      termView.style.display = (tab === 'term') ? 'block' : 'none';
+      pyView.style.display = (tab === 'py') ? 'block' : 'none';
+    }
+
+    function loadTemplate(key) {
+      if (editor && TEMPLATES[key]) {
+        editor.setValue(TEMPLATES[key]);
+      }
+    }
+
+    function resetCode() {
+      const select = document.getElementById("example-select");
+      loadTemplate(select.value);
+    }
+
+    function newCode() {
+      const select = document.getElementById("example-select");
+      select.value = "new";
+      loadTemplate("new");
+    }
+
+    // ===== DOWNLOAD HELPERS =====
+    function downloadFile(content, filename, mime = "text/plain;charset=utf-8") {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadJug() {
+      if (!editor) return;
+      const code = editor.getValue();
+      downloadFile(code, "main.jug");
+      const menu = document.getElementById("download-menu");
+      if (menu) menu.style.display = "none";
+    }
+
+    function downloadPy() {
+      let pyCode = "";
+      if (pyodide) {
+        try {
+          const compileFn = pyodide.globals.get("compile_to_python");
+          if (compileFn) {
+            pyCode = compileFn(editor.getValue());
+          }
+        } catch (e) {
+          // Fallback if compilation throws an error
+        }
+      }
+      if (!pyCode || pyCode.startsWith("# Python transpilation")) {
+        pyCode = pyView.textContent;
+        if (!pyCode || pyCode.startsWith("# Python transpilation")) {
+          pyCode = "# Pehle '⚡ Run Code' dabao taaki Python code generate ho sake.\n";
+        }
+      }
+      downloadFile(pyCode, "main.py");
+      const menu = document.getElementById("download-menu");
+      if (menu) menu.style.display = "none";
+    }
+
+    function toggleDownloadMenu(e) {
+      e.stopPropagation();
+      const menu = document.getElementById("download-menu");
+      if (menu) {
+        menu.style.display = (menu.style.display === "block") ? "none" : "block";
+      }
+    }
+
+    window.addEventListener("click", (e) => {
+      const menu = document.getElementById("download-menu");
+      if (menu && !e.target.closest("#download-btn")) {
+        menu.style.display = "none";
+      }
+    });
+
+    // Theme toggler
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      if (editor) {
+        monaco.editor.setTheme(next === 'dark' ? 'jugaad-dark' : 'jugaad-light');
+      }
+    }
+
+    // ==========================================
+    // 1. INITIALIZE MONACO EDITOR
+    // ==========================================
+    require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs' } });
+    require(['vs/editor/editor.main'], function () {
+
+      monaco.languages.register({ id: 'jugaadlang' });
+
+      // Language configuration
+      monaco.languages.setLanguageConfiguration('jugaadlang', {
+        comments: { lineComment: '#', blockComment: ['/*', '*/'] },
+        brackets: [['{', '}'], ['[', ']'], ['(', ')']],
+        autoClosingPairs: [
+          { open: '{', close: '}' }, { open: '[', close: ']' },
+          { open: '(', close: ')' }, { open: '"', close: '"' },
+          { open: "'", close: "'" }
+        ]
+      });
+
+      // Monarch Tokenizer with colors matching main website
+      monaco.languages.setMonarchTokensProvider('jugaadlang', {
+        keywords: [
+          'agar', 'shayad', 'warna', 'ghumo', 'jabtak', 'banao', 'wapas',
+          'ustad', 'khud', 'lao', 'se', 'rukja', 'chalte_raho', 'koshish',
+          'gadbad', 'aakhir_me', 'udao', 'sahi', 'galat', 'kuch_nahi',
+          'aur', 'ya', 'nahi', 'tez', 'intezaar', 'baanto', 'theek_hai',
+          'mein', 'hai', 'bulawo', 'hatao', 'ke_saath', 'jaise', 'pakka',
+          'agar_match', 'kaand'
+        ],
+        builtins: [
+          'bolo', 'poochho', 'purnank', 'shabd', 'suchi', 'kosh', 'satyata',
+          'prakar', 'yog', 'adhiktam', 'nyuntam', 'maan', 'lambaee',
+          'kismat', 'sikka', 'saaf', 'ruk', 'namaste', 'chai', 'jugaad', 'fortune'
+        ],
+        tokenizer: {
+          root: [
+            [/[a-zA-Z_]\w*/, {
+              cases: {
+                '@keywords': 'keyword',
+                '@builtins': 'type.identifier',
+                '@default': 'identifier'
+              }
+            }],
+            [/#.*$/, 'comment'],
+            [/\/\*/, 'comment', '@comment'],
+            [/"([^"\\]|\\.)*"/, 'string'],
+            [/'([^'\\]|\\.)*'/, 'string'],
+            [/\d+(\.\d+)?/, 'number'],
+            [/[=><!~?&|+\-*\/^%]+/, 'operator']
+          ],
+          comment: [
+            [/[^\/*]+/, 'comment'],
+            [/\*\//, 'comment', '@pop'],
+            [/[\/*]/, 'comment']
+          ]
+        }
+      });
+
+      // Define Dark & Light Themes
+      monaco.editor.defineTheme('jugaad-dark', {
+        base: 'vs-dark',
+        inherit: true,
+        rules: [
+          { token: 'keyword', foreground: 'FF9933', fontStyle: 'bold' },
+          { token: 'type.identifier', foreground: '9B59B6', fontStyle: 'bold' },
+          { token: 'string', foreground: '2ECC71' },
+          { token: 'number', foreground: '4FC3F7' },
+          { token: 'comment', foreground: '7F8C8D', fontStyle: 'italic' },
+          { token: 'operator', foreground: 'FF6B6B' }
+        ],
+        colors: {
+          'editor.background': '#181C22',
+          'editor.foreground': '#F5F5F5',
+          'editorLineNumber.foreground': '#555577',
+          'editorLineNumber.activeForeground': '#FF9933',
+          'editor.selectionBackground': '#222831',
+          'editorCursor.foreground': '#FF9933'
+        }
+      });
+
+      monaco.editor.defineTheme('jugaad-light', {
+        base: 'vs',
+        inherit: true,
+        rules: [
+          { token: 'keyword', foreground: 'E65100', fontStyle: 'bold' },
+          { token: 'type.identifier', foreground: '8E44AD', fontStyle: 'bold' },
+          { token: 'string', foreground: '138808' },
+          { token: 'number', foreground: '006699' },
+          { token: 'comment', foreground: '7F8C8D', fontStyle: 'italic' },
+          { token: 'operator', foreground: 'C0392B' }
+        ],
+        colors: {
+          'editor.background': '#FFFFFF',
+          'editor.foreground': '#121224',
+          'editorLineNumber.foreground': '#8888AA',
+          'editorLineNumber.activeForeground': '#FF9933',
+          'editorCursor.foreground': '#FF9933'
+        }
+      });
+
+      const currentTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'jugaad-dark' : 'jugaad-light';
+
+      editor = monaco.editor.create(document.getElementById('monaco-container'), {
+        value: TEMPLATES.namaste,
+        language: 'jugaadlang',
+        theme: currentTheme,
+        automaticLayout: true,
+        fontFamily: "'JetBrains Mono', monospace",
+        fontSize: 14,
+        lineHeight: 22,
+        minimap: { enabled: false },
+        renderLineHighlight: 'line',
+        padding: { top: 12, bottom: 12 }
+      });
+
+      // Shortcut: Ctrl + Enter / Cmd + Enter to Run
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+        if (!runBtn.disabled) runCode();
+      });
+    });
+
+    // ==========================================
+    // 2. INITIALIZE PYODIDE & JUGAADLANG
+    // ==========================================
+    function updateProgress(pct, text, subtext) {
+      const fill = document.getElementById("progress-fill");
+      const pText = document.getElementById("progress-percent");
+      const title = document.getElementById("progress-text");
+      const sub = document.getElementById("progress-subtext");
+      if (fill) fill.style.width = pct + "%";
+      if (pText) pText.textContent = pct + "%";
+      if (title && text) title.textContent = text;
+      if (sub && subtext) sub.textContent = subtext;
+      statusLabel.textContent = text || `Loading (${pct}%)...`;
+    }
+
+    async function initPyodide() {
+      try {
+        updateProgress(15, "🚀 Loading WebAssembly Engine...", "Fetching Pyodide Python 3.12 runtime...");
+        pyodide = await loadPyodide({
+          stdout: (text) => log(text),
+          stderr: (text) => log(text, true)
+        });
+
+        updateProgress(45, "📦 Preparing Package System...", "Loading micropip package manager...");
+        await pyodide.loadPackage("micropip");
+        
+        updateProgress(70, "🇮🇳 Installing JugaadLang Core...", "Installing jugaadlang-1.1.6-py3-none-any.whl & rich...");
+        await pyodide.runPythonAsync(`
+import micropip
+await micropip.install("rich")
+try:
+    await micropip.install("../assets/jugaadlang-1.1.6-py3-none-any.whl", deps=False)
+except Exception:
+    await micropip.install("/assets/jugaadlang-1.1.6-py3-none-any.whl", deps=False)
+`);
+
+        updateProgress(90, "⚡ Setting up Compiler Harness...", "Configuring AST parser, lexer and persistent session...");
+        pyodide.runPython(`
+import sys
+import ast
+import json
+import re
+import io
+from jugaadlang.lexer.lexer import Lexer
+from jugaadlang.parser.parser import Parser
+from jugaadlang.transformer.to_python import JugaadToPythonTransformer
+from jugaadlang.runtime.interpreter import JugaadInterpreter
+from jugaadlang.errors.messages import format_error, extract_original_line_no
+
+# Persistent interpreter session
+interpreter = JugaadInterpreter(filename="<playground.jug>")
+
+def clean_ansi(text: str) -> str:
+    return re.sub(r'\x1b\[[0-9;]*[a-zA-Z]', '', text)
+
+def run_jugaad(source: str) -> str:
+    # 1. Transpile to Python AST
+    py_code = ""
+    try:
+        lexer = Lexer(source, "<playground.jug>")
+        tokens = lexer.tokenize()
+        parser = Parser(tokens, "<playground.jug>", source)
+        ast_mod = parser.parse()
+        transformer = JugaadToPythonTransformer("<playground.jug>")
+        py_ast = transformer.transform(ast_mod)
+        py_code = ast.unparse(py_ast)
+    except Exception as exc:
+        formatted = format_error(exc, source=source, filename="<playground.jug>")
+        line = getattr(exc, "line", 1)
+        col = getattr(exc, "col", 1)
+        return json.dumps({
+            "success": False,
+            "error": clean_ansi(formatted),
+            "line": line or 1,
+            "col": col or 1,
+            "py_code": ""
+        })
+
+    # 2. Execute with output capture
+    old_stderr = sys.stderr
+    sys.stderr = io.StringIO()
+    try:
+        interpreter.run(source)
+        sys.stderr = old_stderr
+        return json.dumps({
+            "success": True,
+            "error": "",
+            "line": None,
+            "col": None,
+            "py_code": py_code
+        })
+    except Exception as exc:
+        sys.stderr = old_stderr
+        formatted = format_error(exc, source=source, filename="<playground.jug>")
+        line = getattr(exc, "line", None)
+        if line is None:
+            if isinstance(exc, SyntaxError):
+                line = exc.lineno
+            else:
+                line = extract_original_line_no(exc)
+        col = getattr(exc, "col", 1)
+        return json.dumps({
+            "success": False,
+            "error": clean_ansi(formatted),
+            "line": line or 1,
+            "col": col or 1,
+            "py_code": py_code
+        })
+`);
+
+        updateProgress(100, "✅ Engine Ready!", "Initialization complete.");
+
+        setTimeout(() => {
+          termView.innerHTML = `<span class="log-success">✓ JugaadLang v1.1.6 Engine Ready! 🇮🇳</span>\n<span class="log-hint">Code likho aur "⚡ Run Code" button dabao (ya Ctrl+Enter press karo).</span>\n\n`;
+          statusLabel.textContent = "Ready";
+          statusIndicator.classList.add("ready");
+          runBtn.disabled = false;
+        }, 350);
+      } catch (err) {
+        termView.innerHTML = `<span class="log-err">✗ Engine Initialization Failed:\n${err.message}</span>`;
+        statusLabel.textContent = "Engine Failed";
+      }
+    }
+
+    initPyodide();
+
+    // ==========================================
+    // 3. EXECUTION HANDLER
+    // ==========================================
+    async function runCode() {
+      if (!pyodide || !editor) return;
+
+      const code = editor.getValue();
+      clearConsole();
+      runBtn.disabled = true;
+      statusLabel.textContent = "Running code...";
+
+      // Clear any previous Monaco error squiggles
+      monaco.editor.setModelMarkers(editor.getModel(), 'jugaadlang', []);
+
+      try {
+        const runner = pyodide.globals.get("run_jugaad");
+        const resStr = runner(code);
+        const res = JSON.parse(resStr);
+
+        if (res.py_code) {
+          pyView.textContent = res.py_code;
+        }
+
+        if (res.success) {
+          statusLabel.textContent = "Execution Finished";
+        } else {
+          // Display the authentic JugaadLang desi error message
+          log(res.error, true);
+          statusLabel.textContent = res.line ? `Error on Line ${res.line}` : "Error in code";
+
+          // Add red squiggly underline in Monaco Editor on the exact line
+          if (res.line) {
+            monaco.editor.setModelMarkers(editor.getModel(), 'jugaadlang', [{
+              startLineNumber: res.line,
+              startColumn: res.col || 1,
+              endLineNumber: res.line,
+              endColumn: 120,
+              message: res.error.split('\n')[0] || "JugaadLang Error",
+              severity: monaco.MarkerSeverity.Error
+            }]);
+          }
+        }
+      } catch (err) {
+        log(err.message, true);
+        statusLabel.textContent = "Error";
+      } finally {
+        runBtn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
