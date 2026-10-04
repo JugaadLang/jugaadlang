@@ -4,6 +4,8 @@ __pycache__/
 *$py.class
 .jug_mypy_cache/
 .jug_cache/
+__jugcache__/
+.test_cache_*/
 .test_cache_1/
 .test_cache_2/
 .test_cache_3/

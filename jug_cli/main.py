@@ -156,15 +156,23 @@ def compile(file: str, output: str | None) -> None:
         with open(file, "r", encoding="utf-8") as f:
             source = f.read()
 
+        from jugaadlang.cache.manager import cache_manager
         from jugaadlang.lexer.lexer import Lexer
         from jugaadlang.parser.parser import Parser
         from jugaadlang.transformer.to_python import JugaadToPythonTransformer
 
-        # Transpile pipeline
-        lexer = Lexer(source, file)
-        tokens = lexer.tokenize()
-        parser = Parser(tokens, file, source)
-        ast_mod = parser.parse()
+        # Transpile pipeline with AST caching
+        ast_mod = cache_manager.get_ast(source, filename=file)
+        if ast_mod is None:
+            lexer = Lexer(source, file)
+            tokens = lexer.tokenize()
+            parser = Parser(tokens, file, source)
+            ast_mod = parser.parse()
+            try:
+                cache_manager.set_ast(source, ast_mod, filename=file)
+            except Exception:
+                pass
+
         transformer = JugaadToPythonTransformer(file)
         py_ast = transformer.transform(ast_mod)
 
@@ -193,16 +201,22 @@ def check(file: str) -> None:
         with open(file, "r", encoding="utf-8") as f:
             source = f.read()
 
+        from jugaadlang.cache.manager import cache_manager
         from jugaadlang.lexer.lexer import Lexer
         from jugaadlang.parser.parser import Parser
 
         lexer = Lexer(source, file)
         tokens = lexer.tokenize()
         parser = Parser(tokens, file, source)
-        parser.parse()
+        ast_mod = parser.parse()
+        try:
+            cache_manager.set_ast(source, ast_mod, filename=file)
+        except Exception:
+            pass
 
         console.print("[bold green]✓ Code bilkul sahi hai! (Syntax is valid)[/bold green]")
-    except Exception:
+    except Exception as e:
+        console_stderr.print(f"[bold red]✗ Syntax check failed: {e}[/bold red]")
         sys.exit(1)
 
 

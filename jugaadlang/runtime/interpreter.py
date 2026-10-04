@@ -13,6 +13,7 @@ import time
 from typing import Any
 
 from ..ast_nodes.nodes import ExprStmt
+from ..cache.manager import cache_manager
 from ..errors.messages import format_error
 from ..lexer.lexer import Lexer
 from ..parser.parser import Parser
@@ -292,13 +293,20 @@ class JugaadInterpreter:
                 # 1. Lexical analysis
                 lexer = Lexer(source, self.filename)
                 tokens = lexer.tokenize()
-    
+
                 # 2. Syntax analysis
                 parser = Parser(tokens, self.filename, source)
                 ast_mod = parser.parse()
-    
-                # 3. Transpile to Python AST
-                transformer = JugaadToPythonTransformer(self.filename)
+
+                # 3. Cache the parsed AST
+                try:
+                    cache_manager.set_ast(source, ast_mod, filename=self.filename)
+                except Exception:
+                    pass
+
+            # 4. Transpile to Python AST
+            transformer = JugaadToPythonTransformer(self.filename)
+            try:
                 py_ast = transformer.transform(ast_mod)
                 
                 # 4. Compile Python AST to bytecode
@@ -307,7 +315,7 @@ class JugaadInterpreter:
                 # 5. Cache the compiled bytecode
                 cache_manager.set(source, code_obj)
 
-            # Execute bytecode in the persistent namespace
+            # 5. Execute bytecode in the persistent namespace
             exec(code_obj, self.globals, self.globals)
             event_bus.emit("EXECUTION_COMPLETED", {"filename": self.filename, "mode": "exec"})
         except Exception as e:
