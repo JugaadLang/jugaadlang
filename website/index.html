@@ -3347,7 +3347,10 @@
             <div class="editor-body">
               <div class="editor-line-numbers" id="editor-line-numbers" aria-hidden="true">1</div>
               <label for="jug-editor" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;">JugaadLang Code Editor</label>
-              <textarea id="jug-editor" class="editor-textarea" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="JugaadLang Code Editor" placeholder="Apna JugaadLang code yahan likho..."></textarea>
+              <div class="editor-stack">
+                <pre id="editor-highlight" class="editor-highlight" aria-hidden="true"></pre>
+                <textarea id="jug-editor" class="editor-textarea editor-textarea--overlay" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="JugaadLang Code Editor" placeholder="Apna JugaadLang code yahan likho..."></textarea>
+              </div>
             </div>
 
             <div class="pane-footer">

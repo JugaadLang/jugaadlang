@@ -82,7 +82,7 @@ bolo("Square root of 144: " + shabd(ganit.sqrt(144)))
   let activeTab = 'output'; // 'output' | 'python'
 
   // ===== DOM REFS =====
-  let editorEl, lineNumbersEl, runBtn, runBtnIcon, runBtnText;
+  let editorEl, lineNumbersEl, runBtn, runBtnIcon, runBtnText, highlightEl;
   let downloadJugBtn, downloadPyBtn, outputEl, pythonCodeEl;
   let statusDotEl, statusTextEl, tabOutputBtn, tabPythonBtn;
   let outputSectionEl, pythonSectionEl, outputMetaEl;
@@ -91,6 +91,7 @@ bolo("Square root of 144: " + shabd(ganit.sqrt(144)))
   function init() {
     editorEl = document.getElementById('jug-editor');
     lineNumbersEl = document.getElementById('editor-line-numbers');
+    highlightEl = document.getElementById('editor-highlight');
     runBtn = document.getElementById('run-btn');
     runBtnIcon = document.getElementById('run-btn-icon');
     runBtnText = document.getElementById('run-btn-text');
@@ -111,10 +112,11 @@ bolo("Square root of 144: " + shabd(ganit.sqrt(144)))
     // Load initial code
     editorEl.value = SAMPLES.namaste;
     updateLineNumbers();
+    updateHighlight();
 
     // Editor event listeners
-    editorEl.addEventListener('input', updateLineNumbers);
-    editorEl.addEventListener('scroll', syncLineNumberScroll);
+    editorEl.addEventListener('input', () => { updateLineNumbers(); updateHighlight(); });
+    editorEl.addEventListener('scroll', () => { syncLineNumberScroll(); syncHighlightScroll(); });
     editorEl.addEventListener('keydown', handleEditorKeydown);
 
     // Run button
@@ -135,6 +137,7 @@ bolo("Square root of 144: " + shabd(ganit.sqrt(144)))
         if (SAMPLES[key]) {
           editorEl.value = SAMPLES[key];
           updateLineNumbers();
+          updateHighlight();
           document.querySelectorAll('.sample-btn').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
           editorEl.focus();
@@ -158,6 +161,7 @@ bolo("Square root of 144: " + shabd(ganit.sqrt(144)))
       clearEditorBtn.addEventListener('click', () => {
         editorEl.value = '';
         updateLineNumbers();
+        updateHighlight();
         editorEl.focus();
       });
     }
@@ -168,6 +172,7 @@ bolo("Square root of 144: " + shabd(ganit.sqrt(144)))
       resetEditorBtn.addEventListener('click', () => {
         editorEl.value = SAMPLES.namaste;
         updateLineNumbers();
+        updateHighlight();
         document.querySelectorAll('.sample-btn').forEach(b => b.classList.remove('active'));
         const defaultSampleBtn = document.querySelector('.sample-btn[data-sample="namaste"]');
         if (defaultSampleBtn) defaultSampleBtn.classList.add('active');
@@ -233,6 +238,22 @@ bolo("Square root of 144: " + shabd(ganit.sqrt(144)))
     lineNumbersEl.scrollTop = editorEl.scrollTop;
   }
 
+  function syncHighlightScroll() {
+    if (!editorEl || !highlightEl) return;
+    highlightEl.scrollTop = editorEl.scrollTop;
+    highlightEl.scrollLeft = editorEl.scrollLeft;
+  }
+
+  function updateHighlight() {
+    if (!editorEl || !highlightEl) return;
+    if (typeof highlightJugaad === 'function') {
+      highlightEl.innerHTML = highlightJugaad(editorEl.value) + '\n';
+    } else {
+      highlightEl.textContent = editorEl.value;
+    }
+    syncHighlightScroll();
+  }
+
   // ===== EDITOR KEYBOARD CONTROLS =====
   function handleEditorKeydown(e) {
     // Ctrl+Enter or Cmd+Enter -> Run
@@ -255,6 +276,7 @@ bolo("Square root of 144: " + shabd(ganit.sqrt(144)))
         const linePrefix = val.slice(lineStart, lineStart + 4);
         if (linePrefix === '    ') {
           editorEl.value = val.slice(0, lineStart) + val.slice(lineStart + 4);
+          updateHighlight();
           editorEl.selectionStart = Math.max(lineStart, start - 4);
           editorEl.selectionEnd = Math.max(lineStart, end - 4);
         }
@@ -263,6 +285,7 @@ bolo("Square root of 144: " + shabd(ganit.sqrt(144)))
         document.execCommand('insertText', false, '    ');
       }
       updateLineNumbers();
+      updateHighlight();
       return;
     }
 
@@ -284,6 +307,7 @@ bolo("Square root of 144: " + shabd(ganit.sqrt(144)))
         e.preventDefault();
         document.execCommand('insertText', false, '\n' + indent);
         updateLineNumbers();
+        updateHighlight();
       }
     }
   }

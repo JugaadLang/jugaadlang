@@ -306,6 +306,44 @@
   outline: none;
 }
 
+.editor-stack {
+  position: relative;
+  flex: 1;
+  display: flex;
+  min-width: 0;
+}
+
+.editor-highlight {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 1rem 1.2rem;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  white-space: pre;
+  tab-size: 4;
+  overflow: hidden;
+  pointer-events: none;
+  color: var(--text-code);
+}
+
+.editor-textarea--overlay {
+  position: relative;
+  color: transparent;
+  caret-color: var(--text-code);
+  background: transparent;
+  z-index: 1;
+}
+
+.editor-textarea--overlay::placeholder {
+  color: var(--text-muted);
+}
+
+.editor-textarea--overlay::selection {
+  background: rgba(255, 153, 51, 0.25);
+}
+
 /* ===== PANE FOOTER / ACTION BAR ===== */
 .pane-footer {
   display: flex;
