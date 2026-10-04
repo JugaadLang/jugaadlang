@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import re
 from pathlib import Path
 
 import markdown
@@ -103,6 +104,13 @@ def build() -> dict[str, str]:
             extension_configs={"toc": {"toc_depth": "2-3"}},
         )
         body = converter.convert(text)
+        # Wrap wide tables in a horizontal scroll container for small screens.
+        body = re.sub(
+            r"(<table>.*?</table>)",
+            r'<div class="table-scroll">\1</div>',
+            body,
+            flags=re.DOTALL,
+        )
         parser = SearchSections(title, f"{slug}.html")
         parser.feed(body)
         parser.flush()

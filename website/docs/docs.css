@@ -42,6 +42,8 @@ body {
 a {
   color:var(--accent);
   text-underline-offset:4px;
+  overflow-wrap:anywhere;
+  word-break:break-word;
 }
 
 button,input {
@@ -364,10 +366,12 @@ article h4 {
 
 article p {
   margin:15px 0;
+  overflow-wrap:anywhere;
 }
 
 article li {
   margin:6px 0;
+  overflow-wrap:anywhere;
 }
 
 article ul,article ol {

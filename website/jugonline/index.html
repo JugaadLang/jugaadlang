@@ -544,9 +544,42 @@
         flex-direction: column;
       }
       .editor-pane, .terminal-pane {
-        flex: 1;
+        flex: none;
+        min-height: 320px;
       }
       .nav-center { display: none; }
+    }
+
+    @media (max-width: 640px) {
+      .playground-nav {
+        flex-wrap: wrap;
+        height: auto;
+        min-height: 56px;
+        padding: 0.5rem 0.75rem;
+        gap: 0.5rem;
+      }
+      .nav-right {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        width: 100%;
+        justify-content: center;
+      }
+      .workspace {
+        padding: 0.5rem;
+        gap: 0.5rem;
+        overflow-x: hidden;
+      }
+      .window-card {
+        min-width: 0;
+      }
+      #monaco-container {
+        overflow: hidden;
+        min-height: 260px;
+      }
+      #terminal-view {
+        padding: 0.75rem;
+        font-size: 0.78rem;
+      }
     }
   </style>
 </head>

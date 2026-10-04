@@ -71,7 +71,7 @@ __license__ = &quot;MIT&quot;
 - <code>"jaise"</code> → <code>TokenType.AS</code> (alternative for <code>as</code>)
 - <code>"pakka"</code> → <code>TokenType.ASSERT</code> (alternative for <code>assert</code>)</p>
 <p><strong><code>@dataclass class Token</code></strong></p>
-<table>
+<div class="table-scroll"><table>
 <thead>
 <tr>
 <th>Field</th>
@@ -101,11 +101,11 @@ __license__ = &quot;MIT&quot;
 <td>Source column number</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <p>Methods: <code>is_keyword() -&gt; bool</code></p>
 <h3 id="jugaadlanglexerlexer"><code>jugaadlang.lexer.lexer</code></h3>
 <p><strong><code>class Lexer</code></strong></p>
-<table>
+<div class="table-scroll"><table>
 <thead>
 <tr>
 <th>Method</th>
@@ -125,7 +125,7 @@ __license__ = &quot;MIT&quot;
 <td>Tokenize the entire source</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <p>Internal: Uses INDENT/DEDENT stack for indentation-based block detection. Supports <code>#</code>, <code>//</code>, <code>/* */</code> comments, all string types (single, double, triple, f-strings), and all number formats.</p>
 <hr />
 <h2 id="module-jugaadlangast_nodes">Module: <code>jugaadlang.ast_nodes</code></h2>
@@ -144,7 +144,7 @@ __license__ = &quot;MIT&quot;
 <h2 id="module-jugaadlangparser">Module: <code>jugaadlang.parser</code></h2>
 <h3 id="jugaadlangparserparser"><code>jugaadlang.parser.parser</code></h3>
 <p><strong><code>class Parser</code></strong></p>
-<table>
+<div class="table-scroll"><table>
 <thead>
 <tr>
 <th>Method</th>
@@ -164,7 +164,7 @@ __license__ = &quot;MIT&quot;
 <td>Parse the entire token stream into an AST</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <p>Internal recursive-descent parser with these parse methods:
 - <code>.parse_statement()</code> — Top-level statement dispatcher
 - <code>.parse_expression()</code> — Expression entry (precedence climbing)
@@ -182,7 +182,7 @@ __license__ = &quot;MIT&quot;
 <h2 id="module-jugaadlangtransformer">Module: <code>jugaadlang.transformer</code></h2>
 <h3 id="jugaadlangtransformerto_python"><code>jugaadlang.transformer.to_python</code></h3>
 <p><strong><code>class JugaadToPythonTransformer</code></strong></p>
-<table>
+<div class="table-scroll"><table>
 <thead>
 <tr>
 <th>Method</th>
@@ -207,7 +207,7 @@ __license__ = &quot;MIT&quot;
 <td>Dispatch visitor by node type</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <p>Each <code>visit_{NodeType}</code> method handles a specific JL AST node and returns the corresponding Python AST node.</p>
 <p>Key translations:
 - <code>shuru</code> → <code>__init__</code>
@@ -219,7 +219,7 @@ __license__ = &quot;MIT&quot;
 <h2 id="module-jugaadlangruntime">Module: <code>jugaadlang.runtime</code></h2>
 <h3 id="jugaadlangruntimeinterpreter"><code>jugaadlang.runtime.interpreter</code></h3>
 <p><strong><code>class JugaadInterpreter</code></strong></p>
-<table>
+<div class="table-scroll"><table>
 <thead>
 <tr>
 <th>Method</th>
@@ -244,10 +244,10 @@ __license__ = &quot;MIT&quot;
 <td>Evaluate expression (eval mode) or execute statements</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <p>The interpreter maintains a <code>globals</code> dict that persists across calls (important for REPL).</p>
 <p><strong>Built-in Functions</strong> (injected at interpreter init):</p>
-<table>
+<div class="table-scroll"><table>
 <thead>
 <tr>
 <th>Group</th>
@@ -280,7 +280,7 @@ __license__ = &quot;MIT&quot;
 <td><code>maan</code> → <code>abs</code>, <code>sab</code> → <code>all</code>, <code>lambaee</code> → <code>len</code>, etc.</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <hr />
 <h2 id="module-jugaadlangerrors">Module: <code>jugaadlang.errors</code></h2>
 <h3 id="jugaadlangerrorsmessages"><code>jugaadlang.errors.messages</code></h3>
@@ -291,7 +291,7 @@ __license__ = &quot;MIT&quot;
 <strong><code>class JugaadTypeError(JugaadRuntimeError)</code></strong> — Type errors.
 <strong><code>class JugaadZeroDivisionError(JugaadRuntimeError)</code></strong> — Division by zero.</p>
 <p><strong>Functions:</strong></p>
-<table>
+<div class="table-scroll"><table>
 <thead>
 <tr>
 <th>Function</th>
@@ -308,13 +308,13 @@ __license__ = &quot;MIT&quot;
 <td>Format syntax errors with caret highlighting</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <p><strong><code>FUNNY_ERRORS</code> dict</strong> — Maps Python exception type names to humorous Hindi titles and descriptions.</p>
 <hr />
 <h2 id="module-jugaadlangrepl">Module: <code>jugaadlang.repl</code></h2>
 <h3 id="jugaadlangreplrepl"><code>jugaadlang.repl.repl</code></h3>
 <p><strong><code>class JugaadREPL</code></strong></p>
-<table>
+<div class="table-scroll"><table>
 <thead>
 <tr>
 <th>Method</th>
@@ -331,7 +331,7 @@ __license__ = &quot;MIT&quot;
 <td>Launch interactive REPL loop</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <p>Uses <code>prompt_toolkit.PromptSession</code> with:
 - <code>PygmentsLexer(JugaadPygmentsLexer)</code> — Syntax highlighting
 - <code>WordCompleter(KEYWORDS_LIST)</code> — Auto-completion
@@ -342,7 +342,7 @@ __license__ = &quot;MIT&quot;
 <h3 id="jugaadlangpackage_managermanager"><code>jugaadlang.package_manager.manager</code></h3>
 <p><strong><code>class JugaadPackageManager</code></strong></p>
 <p>All methods are static:</p>
-<table>
+<div class="table-scroll"><table>
 <thead>
 <tr>
 <th>Method</th>
@@ -367,7 +367,7 @@ __license__ = &quot;MIT&quot;
 <td>Search PyPI and stdlib</td>
 </tr>
 </tbody>
-</table>
+</table></div>
 <p><strong><code>PACKAGE_MAP</code></strong> — Bundle definitions mapping short aliases to pip packages.</p></article>
         <nav class="pager" aria-label="Previous and next articles"><a href="architecture.html"><span>Previous</span>Architecture</a></nav>
         <footer><a href="https://github.com/JugaadLang/jugaadlang/edit/main/docs/api.md">Edit this page ↗</a><span>Code karo Hindi mein.</span></footer>
