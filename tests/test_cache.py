@@ -1,6 +1,19 @@
-import marshal
+import json
+import os
+import time
 from types import CodeType
-from jugaadlang.cache.manager import CacheManager
+from unittest.mock import patch
+
+from jugaadlang.cache.manager import (
+    CACHE_VERSION,
+    CacheManager,
+    deserialize_ast,
+    serialize_ast,
+)
+from jugaadlang.cache_manager import CacheManager as CacheManagerFromModule
+from jugaadlang.lexer.lexer import Lexer
+from jugaadlang.parser.parser import Parser
+from jugaadlang.runtime.interpreter import JugaadInterpreter
 
 
 def test_cache_l1_set_get():
@@ -8,12 +21,12 @@ def test_cache_l1_set_get():
     manager.clear()
     
     code_obj = compile("print('hello')", "<string>", "exec")
-    manager.set("print('hello')", code_obj)
+    manager.set_bytecode("print('hello')", code_obj)
     
-    cached = manager.get("print('hello')")
+    cached = manager.get_bytecode("print('hello')")
     assert isinstance(cached, CodeType)
     assert cached.co_code == code_obj.co_code
-    assert manager.get("print('world')") is None
+    assert manager.get_bytecode("print('world')") is None
 
 
 def test_cache_l2_persistence():
@@ -21,29 +34,30 @@ def test_cache_l2_persistence():
     manager.clear()
     
     code_obj = compile("x = 1\n", "<string>", "exec")
-    manager.set("x = 1", code_obj)
+    manager.set_bytecode("x = 1", code_obj)
     
     # Create a new manager with the same directory to simulate restarting the app
     new_manager = CacheManager(cache_dir=".test_cache_2")
-    cached = new_manager.get("x = 1")
+    cached = new_manager.get_bytecode("x = 1")
     assert isinstance(cached, CodeType)
     assert cached.co_code == code_obj.co_code
-    
+
+
 def test_cache_clear():
     manager = CacheManager(cache_dir=".test_cache_3")
     manager.clear()
     
     code_obj = compile("print('hi')", "<string>", "exec")
-    manager.set("bolo('hi')", code_obj)
+    manager.set_bytecode("bolo('hi')", code_obj)
     
-    cached = manager.get("bolo('hi')")
+    cached = manager.get_bytecode("bolo('hi')")
     assert isinstance(cached, CodeType)
     
     manager.clear()
-    assert manager.get("bolo('hi')") is None
-
+    assert manager.get_bytecode("bolo('hi')") is None
+    
     new_manager = CacheManager(cache_dir=".test_cache_3")
-    assert new_manager.get("bolo('hi')") is None
+    assert new_manager.get_bytecode("bolo('hi')") is None
 
 
 def test_cache_module_reexport():
@@ -90,7 +104,7 @@ def test_second_execution_uses_cache(tmp_path):
         interp1 = JugaadInterpreter(filename=file_path)
         interp1.run(source)
         assert interp1.globals["y"] == 84
-        assert custom_manager.misses == 1
+        assert custom_manager.misses == 2
         assert custom_manager.hits == 0
 
         # Second execution: Lexer and Parser should be completely bypassed!
