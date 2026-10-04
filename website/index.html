@@ -600,6 +600,65 @@
       flex-shrink: 0;
     }
 
+    /* ===== HERO LIVE CONTRIBUTORS ===== */
+    .hero-contributors {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .hero-contributors-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      color: var(--text-secondary, #8b949e);
+      font-size: 0.85rem;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s ease;
+    }
+
+    .hero-contributors-label:hover {
+      color: var(--accent-saffron, #FF9933);
+    }
+
+    .hero-contributors-avatars {
+      display: flex;
+      align-items: center;
+    }
+
+    .hero-contributors-avatars a {
+      display: inline-block;
+      margin-left: -8px;
+      border-radius: 50%;
+      border: 2px solid var(--bg-primary, #0F1115);
+      overflow: hidden;
+      transition: transform 0.2s ease;
+    }
+
+    .hero-contributors-avatars a:first-child {
+      margin-left: 0;
+    }
+
+    .hero-contributors-avatars a:hover {
+      transform: translateY(-4px) scale(1.08);
+      z-index: 2;
+    }
+
+    .hero-contributors-avatars img {
+      width: 36px;
+      height: 36px;
+      display: block;
+      border-radius: 50%;
+    }
+
+    .hero-contributors-loading {
+      font-size: 0.8rem;
+      color: var(--text-secondary, #8b949e);
+    }
+
     .btn-primary {
       display: inline-flex;
       align-items: center;
@@ -1802,6 +1861,10 @@
         justify-content: center;
       }
 
+      .hero-contributors {
+        justify-content: center;
+      }
+
       .hero-code-preview {
         animation: none;
         max-width: 520px;
@@ -1999,6 +2062,21 @@
         gap: 0.6rem;
       }
 
+      .hero-contributors {
+        justify-content: center;
+        gap: 0.6rem;
+        margin-top: 1.25rem;
+      }
+
+      .hero-contributors-avatars a {
+        margin-left: -6px;
+      }
+
+      .hero-contributors-avatars img {
+        width: 30px;
+        height: 30px;
+      }
+
       .btn-primary,
       .btn-secondary {
         width: 100%;
@@ -2064,6 +2142,15 @@
       .btn-secondary {
         max-width: 100%;
         font-size: 0.85rem;
+      }
+
+      .hero-contributors-label {
+        font-size: 0.78rem;
+      }
+
+      .hero-contributors-avatars img {
+        width: 26px;
+        height: 26px;
       }
     }
 
@@ -2753,7 +2840,7 @@
         </p>
         <div class="hero-ctas">
           <!-- NEW "Try Online" BUTTON -->
-           <a href="/jugonline" class="btn-primary" style="background: linear-gradient(135deg, #FF9933, #FF6600);">
+           <a href="/jugonline" class="btn-primary">
             <span>🚀</span> Try Now Online
           </a>
           <a href="#install" class="btn-primary">
@@ -2764,20 +2851,27 @@
           </a>
           <a href="docs/index.html" class="btn-secondary">
             <span>📖</span> Docs Padho
-          <!-- <a href="#examples" class="btn-secondary">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
-              <path
-                d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z" />
-            </svg> Docs Padho
-          </a> -->
+          </a>
           <a href="https://marketplace.visualstudio.com/items?itemName=jugaadlang.jugaadlang" target="_blank"
             class="btn-secondary" title="JugaadLang VS Code Extension">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"
-              style="margin-right: 4px; vertical-align: middle;">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
               <path
                 d="M23.15 2.587L18.21.21a1.494 1.494 0 0 0-1.705.29l-9.46 8.63-4.12-3.128a.999.999 0 0 0-1.276.057L.327 7.261A1 1 0 0 0 .326 8.74L3.899 12 .326 15.26a1 1 0 0 0 .001 1.479L1.65 17.94a.999.999 0 0 0 1.276.057l4.12-3.128 9.46 8.63a1.492 1.492 0 0 0 1.704.29l4.942-2.377A1.5 1.5 0 0 0 24 20.06V3.939a1.5 1.5 0 0 0-.85-1.352zm-5.146 14.861L10.826 12l7.178-5.448v10.896z" />
             </svg> VS Code Extension
           </a>
+        </div>
+
+        <!-- Live contributors strip -->
+        <div class="hero-contributors" id="hero-contributors">
+          <a class="hero-contributors-label" href="https://github.com/JugaadLang/jugaadlang/graphs/contributors" target="_blank" rel="noopener" title="View all contributors on GitHub">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+              <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55v-2.15c-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.75 2.69 1.25 3.35.95.1-.75.4-1.25.72-1.54-2.55-.29-5.23-1.28-5.23-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.13v3.16c0 .31.21.67.8.55A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/>
+            </svg>
+            <span id="hero-contributors-count">Contributors</span>
+          </a>
+          <div class="hero-contributors-avatars" id="hero-contributors-avatars">
+            <span class="hero-contributors-loading">Loading…</span>
+          </div>
         </div>
       </div>
 
@@ -4585,6 +4679,28 @@ web.chalao(port=5001)`;
       }
     }
 
+    // ===== LIVE CONTRIBUTORS =====
+    async function fetchHeroContributors() {
+      const wrap = document.getElementById('hero-contributors-avatars');
+      try {
+        const res = await fetch("https://api.github.com/repos/JugaadLang/jugaadlang/contributors?per_page=12");
+        if (!res.ok || !wrap) return;
+        const contributors = await res.json();
+        if (!Array.isArray(contributors) || contributors.length === 0) return;
+
+        const countEl = document.getElementById('hero-contributors-count');
+        if (countEl) countEl.textContent = contributors.length + (contributors.length >= 12 ? '+' : '') + ' Contributors';
+
+        wrap.innerHTML = contributors.map(c =>
+          `<a href="${c.html_url}" target="_blank" rel="noopener" title="${c.login} — ${c.contributions} contributions">` +
+          `<img src="${c.avatar_url}&s=72" alt="${c.login}" loading="lazy" width="36" height="36"></a>`
+        ).join('');
+      } catch (err) {
+        console.error("Error fetching contributors:", err);
+        if (wrap) wrap.innerHTML = '';
+      }
+    }
+
     // ===== INIT =====
     document.addEventListener('DOMContentLoaded', () => {
       // Render code blocks
@@ -4613,6 +4729,9 @@ web.chalao(port=5001)`;
 
       // Fetch live GitHub stars
       fetchGitHubStars();
+
+      // Fetch live contributors
+      fetchHeroContributors();
     });
 
     // ===== THEME MANAGER =====
