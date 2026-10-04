@@ -168,7 +168,13 @@
     }
 
     html {
-      scroll-behavior: smooth;
+      scroll-behavior: auto;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      html {
+        scroll-behavior: smooth;
+      }
     }
 
     body {
@@ -2597,7 +2603,10 @@
     }
   </style>
   <link rel="stylesheet" href="cursor.css" />
+  <link rel="stylesheet" href="compiler.css" />
   <script src="cursor.js" defer></script>
+  <script src="assets/jugaad_bundle.js" defer></script>
+  <script src="compiler.js" defer></script>
 </head>
 
 <body>
@@ -2625,6 +2634,7 @@
     <ul class="nav-links">
       <li><a href="#features">Features</a></li>
       <li><a href="#examples">Examples</a></li>
+      <li><a href="#try-online">Try Online</a></li>
       <li><a href="#keywords">Keywords</a></li>
       <li><a href="#errors">Errors</a></li>
       <li><a href="#install">Install</a></li>
@@ -2678,6 +2688,7 @@
   <div class="mobile-menu" id="mobile-menu">
     <a href="#features" onclick="closeMobileMenu()">Features</a>
     <a href="#examples" onclick="closeMobileMenu()">Examples</a>
+    <a href="#try-online" onclick="closeMobileMenu()">Try Online</a>
     <a href="#keywords" onclick="closeMobileMenu()">Keywords</a>
     <a href="#errors" onclick="closeMobileMenu()">Errors</a>
     <a href="#install" onclick="closeMobileMenu()">Install</a>
@@ -2749,7 +2760,10 @@
           <strong style="color: var(--accent-saffron);">Jugaad-first. Always.</strong>
         </p>
         <div class="hero-ctas">
-          <a href="#install" class="btn-primary">
+          <a href="#try-online" class="btn-primary">
+            <span>🚀</span> Try Online
+          </a>
+          <a href="#install" class="btn-secondary">
             <span>⚡</span> Install Karo
           </a>
           <a href="#examples" class="btn-secondary">
@@ -3164,6 +3178,128 @@
                 <span class="chip">body</span>
                 <span class="chip">chalao</span>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="flag-divider"></div>
+
+  <!-- ===== TRY ONLINE / COMPILER ===== -->
+  <section id="try-online">
+    <div class="section-container">
+      <div class="section-header reveal">
+        <div class="section-tag">Online Compiler</div>
+        <h2 class="section-title">Try JugaadLang Online 🚀</h2>
+        <p class="section-subtitle">
+          Code in Hindi directly inside your browser! Transpiles to standard Python and executes locally via WebAssembly (Pyodide).
+          No server execution, 100% private and client-side.
+        </p>
+        <div class="compiler-badges">
+          <span class="compiler-badge wasm">
+            <span>⚡</span> 100% Client-Side WebAssembly
+          </span>
+          <span class="compiler-badge">
+            <span class="status-dot ready" id="compiler-status-dot"></span>
+            <span id="compiler-status-text">Ready</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="compiler-container reveal">
+        <!-- Sample Program Selector Toolbar -->
+        <div class="compiler-sample-bar" role="toolbar" aria-label="Sample Code Selector">
+          <div class="sample-buttons-wrapper">
+            <span class="sample-label">Samples:</span>
+            <button class="sample-btn active" data-sample="namaste" type="button" aria-label="Load Namaste Duniya sample">🙏 Namaste</button>
+            <button class="sample-btn" data-sample="variables" type="button" aria-label="Load Variables sample">📦 Variables</button>
+            <button class="sample-btn" data-sample="loops" type="button" aria-label="Load Loops sample">🔁 Loops</button>
+            <button class="sample-btn" data-sample="functions" type="button" aria-label="Load Functions sample">🔢 Functions</button>
+            <button class="sample-btn" data-sample="match" type="button" aria-label="Load Pattern Matching sample">🎯 Match</button>
+            <button class="sample-btn" data-sample="ganit" type="button" aria-label="Load Ganit math sample">📐 Ganit</button>
+          </div>
+          <div class="pane-header-actions">
+            <button class="icon-btn-tiny" id="reset-editor-btn" type="button" aria-label="Reset editor to default">🔄 Reset</button>
+            <button class="icon-btn-tiny" id="clear-editor-btn" type="button" aria-label="Clear editor">🗑️ Clear</button>
+          </div>
+        </div>
+
+        <!-- Main 2-Column Workspace -->
+        <div class="compiler-workspace">
+          <!-- Left Pane: .jug Editor -->
+          <div class="compiler-pane" id="editor-pane">
+            <div class="pane-header">
+              <div class="pane-header-left">
+                <div class="code-block-dots">
+                  <div class="dot dot-red"></div>
+                  <div class="dot dot-yellow"></div>
+                  <div class="dot dot-green"></div>
+                </div>
+                <span class="pane-title">
+                  <span>📄</span> program.jug
+                </span>
+              </div>
+              <div class="pane-header-actions">
+                <button class="icon-btn-tiny" id="copy-editor-btn" type="button" aria-label="Copy .jug source code">📋 Copy</button>
+              </div>
+            </div>
+
+            <div class="editor-body">
+              <div class="editor-line-numbers" id="editor-line-numbers" aria-hidden="true">1</div>
+              <label for="jug-editor" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;">JugaadLang Code Editor</label>
+              <textarea id="jug-editor" class="editor-textarea" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="JugaadLang Code Editor" placeholder="Apna JugaadLang code yahan likho..."></textarea>
+            </div>
+
+            <div class="pane-footer">
+              <div class="pane-footer-actions">
+                <button class="btn-primary" id="run-btn" type="button" aria-label="Run Code (Ctrl+Enter)">
+                  <span id="run-btn-icon">⚡</span>
+                  <span id="run-btn-text">Chalao (Run)</span>
+                  <span class="kbd-hint" aria-hidden="true">Ctrl+Enter</span>
+                </button>
+              </div>
+              <div class="pane-footer-actions">
+                <button class="btn-secondary" id="download-jug-btn" type="button" aria-label="Download .jug file">
+                  <span>📥</span> Download .jug
+                </button>
+                <button class="btn-secondary" id="download-py-btn" type="button" aria-label="Download transpiled Python .py file" disabled>
+                  <span>🐍</span> Download .py
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Pane: Output & Transpiled Python -->
+          <div class="compiler-pane" id="output-pane">
+            <div class="pane-header">
+              <div class="pane-tabs" role="tablist" aria-label="Output View Selector">
+                <button class="pane-tab-btn active" id="tab-btn-output" role="tab" aria-selected="true" aria-controls="panel-compiler-output" type="button">
+                  <span>🖥️</span> Output
+                </button>
+                <button class="pane-tab-btn" id="tab-btn-python" role="tab" aria-selected="false" aria-controls="panel-compiler-python" type="button">
+                  <span>🐍</span> Python (Transpiled)
+                </button>
+              </div>
+              <div class="pane-header-actions">
+                <button class="icon-btn-tiny" id="copy-output-btn" type="button" aria-label="Copy execution output">📋 Copy</button>
+                <button class="icon-btn-tiny" id="clear-output-btn" type="button" aria-label="Clear output terminal">🗑️ Clear</button>
+              </div>
+            </div>
+
+            <!-- Tab 1: Terminal Output -->
+            <div class="pane-content" id="panel-compiler-output" role="tabpanel" aria-labelledby="tab-btn-output" aria-live="polite">
+              <pre class="terminal-display placeholder" id="compiler-output">Press &quot;Chalao (Run)&quot; to execute your JugaadLang code.</pre>
+              <div class="output-meta-bar" id="output-meta"></div>
+            </div>
+
+            <!-- Tab 2: Transpiled Python -->
+            <div class="pane-content" id="panel-compiler-python" role="tabpanel" aria-labelledby="tab-btn-python" style="display: none;">
+              <div style="display: flex; justify-content: flex-end; margin-bottom: 0.5rem;">
+                <button class="icon-btn-tiny" id="copy-py-btn" type="button" aria-label="Copy transpiled Python code">📋 Copy Python</button>
+              </div>
+              <pre class="python-transpiled-code" id="transpiled-python"># Transpiled Python code will appear here after running...</pre>
             </div>
           </div>
         </div>

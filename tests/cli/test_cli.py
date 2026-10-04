@@ -90,7 +90,7 @@ def test_cli_check_invalid(runner, tmp_path):
     jug_file.write_text("bolo('namaste'", encoding="utf-8")  # missing paren
     result = runner.invoke(main, ['check', str(jug_file)])
     assert result.exit_code != 0
-
+    assert "Syntax check failed" in result.output
 def test_cli_new(runner, tmp_path):
     with runner.isolated_filesystem(temp_dir=tmp_path):
         result = runner.invoke(main, ['new', 'myproject'])
@@ -141,3 +141,11 @@ def test_cli_repl(mock_repl, runner):
     result = runner.invoke(main, ['repl'])
     assert result.exit_code == 0
     mock_repl.assert_called_once()
+
+
+def test_cli_version():
+    runner = CliRunner()
+    result = runner.invoke(main, ["--version"])
+
+    assert result.exit_code == 0
+    assert "JugaadLang v" in result.output

@@ -592,9 +592,57 @@ def test_catfacts_module_importable() -> None:
     from jugaadlang.stdlib import catfacts  # noqa: F401
 
 
-def test_whatsapp_module_importable() -> None:
-    """Verify whatsapp module can be imported without error."""
-    from jugaadlang.stdlib import whatsapp  # noqa: F401
+class TestWhatsapp:
+    """Tests for jugaadlang.stdlib.whatsapp (webbrowser is mocked, no browser opens)."""
+
+    @pytest.fixture
+    def opened_urls(self, monkeypatch: pytest.MonkeyPatch) -> list[str]:
+        """Replace webbrowser.open with a recorder and return the list of URLs."""
+        from jugaadlang.stdlib import whatsapp
+
+        urls: list[str] = []
+        monkeypatch.setattr(whatsapp.webbrowser, "open", lambda url: urls.append(url))
+        return urls
+
+    def test_bhejo_opens_whatsapp_url(self, opened_urls: list[str]) -> None:
+        from jugaadlang.stdlib import whatsapp
+
+        whatsapp.bhejo("+919876543210", "Hello")
+        assert opened_urls == ["https://web.whatsapp.com/send?phone=+919876543210&text=Hello"]
+
+    def test_bhejo_url_encodes_message(self, opened_urls: list[str]) -> None:
+        from jugaadlang.stdlib import whatsapp
+
+        whatsapp.bhejo("+919876543210", "Namaste Duniya & friends!")
+        assert len(opened_urls) == 1
+        assert "text=Namaste%20Duniya%20%26%20friends%21" in opened_urls[0]
+
+    def test_bhejo_prints_status_messages(
+        self, opened_urls: list[str], capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        from jugaadlang.stdlib import whatsapp
+
+        whatsapp.bhejo("+919876543210", "Hi")
+        out = capsys.readouterr().out
+        assert "+919876543210" in out
+        assert "WhatsApp Web opened" in out
+
+    def test_spam_opens_only_one_tab(self, opened_urls: list[str]) -> None:
+        from jugaadlang.stdlib import whatsapp
+
+        whatsapp.spam("+919876543210", "Hi", 50)
+        assert len(opened_urls) == 1
+        assert "phone=+919876543210" in opened_urls[0]
+
+    def test_spam_prints_warning_with_count(
+        self, opened_urls: list[str], capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        from jugaadlang.stdlib import whatsapp
+
+        whatsapp.spam("+919876543210", "Hi", 50)
+        out = capsys.readouterr().out
+        assert "SPAM WARNING" in out
+        assert "50 messages" in out
 
 
 # ═══════════════════════════════════════════════════════════════════════════

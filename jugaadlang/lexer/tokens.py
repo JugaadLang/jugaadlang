@@ -19,100 +19,100 @@ class TokenType(Enum):
     IDENTIFIER = auto()
 
     # ── JugaadLang Keywords ──────────────────────────────────────────
-    BOLO = auto()  # print
-    POOCHHO = auto()  # input
-    AGAR = auto()  # if
-    SHAYAD = auto()  # elif
-    WARNA = auto()  # else
-    GHUMO = auto()  # for
-    JABTAK = auto()  # while
-    BANAO = auto()  # def
-    WAPAS = auto()  # return
-    USTAD = auto()  # class
-    KHUD = auto()  # self
-    LAO = auto()  # import
-    SE = auto()  # from
-    RUKJA = auto()  # break
-    CHALTE_RAHO = auto()  # continue
-    KOSHISH = auto()  # try
-    GADBAD = auto()  # except
-    AAKHIR_ME = auto()  # finally
-    UDAO = auto()  # raise
-    SAHI = auto()  # True
-    GALAT = auto()  # False
-    KUCH_NAHI = auto()  # None
-    AUR = auto()  # and
-    YA = auto()  # or
-    NAHI = auto()  # not
-    TEZ = auto()  # async
-    INTEZAAR = auto()  # await
-    BAANTO = auto()  # yield
-    THEEK_HAI = auto()  # pass
-    SABKA = auto()  # global
-    CHOTA_FUNKSHAN = auto()  # lambda
-    MEIN = auto()  # in
-    MEIN_NAHI = auto()  # not in  (compound keyword)
-    HAI = auto()  # is
-    NAHI_HAI = auto()  # is not  (compound keyword)
-    BULAWO = auto()  # call (optional sugar)
-    DEL = auto()  # del (kept as English for now)
-    NONLOCAL = auto()  # nonlocal
-    WITH = auto()  # with
-    AS = auto()  # as
-    ASSERT = auto()  # assert
-    AGAR_MATCH = auto()  # match
-    KAAND = auto()  # case
+    BOLO = auto()              # print
+    POOCHHO = auto()           # input
+    AGAR = auto()              # if
+    SHAYAD = auto()            # elif
+    WARNA = auto()             # else
+    GHUMO = auto()             # for
+    JABTAK = auto()            # while
+    BANAO = auto()             # def
+    WAPAS = auto()             # return
+    USTAD = auto()             # class
+    KHUD = auto()              # self
+    LAO = auto()               # import
+    SE = auto()                # from
+    RUKJA = auto()             # break
+    CHALTE_RAHO = auto()      # continue
+    KOSHISH = auto()           # try
+    GADBAD = auto()            # except
+    AAKHIR_ME = auto()         # finally
+    UDAO = auto()              # raise
+    SAHI = auto()              # True
+    GALAT = auto()             # False
+    KUCH_NAHI = auto()        # None
+    AUR = auto()               # and
+    YA = auto()                # or
+    NAHI = auto()              # not
+    TEZ = auto()               # async
+    INTEZAAR = auto()          # await
+    BAANTO = auto()            # yield
+    THEEK_HAI = auto()        # pass
+    SABKA = auto()             # global
+    CHOTA_FUNKSHAN = auto()   # lambda
+    MEIN = auto()              # in
+    MEIN_NAHI = auto()        # not in
+    HAI = auto()               # is
+    NAHI_HAI = auto()         # is not
+    BULAWO = auto()            # call
+    DEL = auto()               # del
+    NONLOCAL = auto()          # nonlocal
+    WITH = auto()              # with
+    AS = auto()                # as
+    ASSERT = auto()            # assert
+    AGAR_MATCH = auto()       # match
+    KAAND = auto()             # case
 
     # ── Operators ────────────────────────────────────────────────────
-    PLUS = auto()  # +
-    MINUS = auto()  # -
-    STAR = auto()  # *
-    SLASH = auto()  # /
-    DOUBLESLASH = auto()  # //
-    PERCENT = auto()  # %
-    DOUBLESTAR = auto()  # **
-    EQ = auto()  # ==
-    NEQ = auto()  # !=
-    LT = auto()  # <
-    GT = auto()  # >
-    LTE = auto()  # <=
-    GTE = auto()  # >=
-    ASSIGN = auto()  # =
-    PLUS_ASSIGN = auto()  # +=
-    MINUS_ASSIGN = auto()  # -=
-    STAR_ASSIGN = auto()  # *=
-    SLASH_ASSIGN = auto()  # /=
-    PERCENT_ASSIGN = auto()  # %=
-    DOUBLESTAR_ASSIGN = auto()  # **=
-    DOUBLESLASH_ASSIGN = auto()  # //=
-    ARROW = auto()  # ->
-    WALRUS = auto()  # :=
-    AT = auto()  # @
-    AT_ASSIGN = auto()  # @=
-    TILDE = auto()  # ~
-    AMP = auto()  # &
-    PIPE = auto()  # |
-    CARET = auto()  # ^
-    LSHIFT = auto()  # <<
-    RSHIFT = auto()  # >>
-    AMP_ASSIGN = auto()  # &=
-    PIPE_ASSIGN = auto()  # |=
-    CARET_ASSIGN = auto()  # ^=
-    LSHIFT_ASSIGN = auto()  # <<=
-    RSHIFT_ASSIGN = auto()  # >>=
+    PLUS = auto()              # +
+    MINUS = auto()             # -
+    STAR = auto()              # *
+    SLASH = auto()             # /
+    DOUBLESLASH = auto()      # //
+    PERCENT = auto()           # %
+    DOUBLESTAR = auto()       # **
+    EQ = auto()                # ==
+    NEQ = auto()               # !=
+    LT = auto()                # <
+    GT = auto()                # >
+    LTE = auto()               # <=
+    GTE = auto()               # >=
+    ASSIGN = auto()            # =
+    PLUS_ASSIGN = auto()       # +=
+    MINUS_ASSIGN = auto()      # -=
+    STAR_ASSIGN = auto()       # *=
+    SLASH_ASSIGN = auto()      # /=
+    PERCENT_ASSIGN = auto()    # %=
+    DOUBLESTAR_ASSIGN = auto() # **=
+    DOUBLESLASH_ASSIGN = auto() # //=
+    ARROW = auto()             # ->
+    WALRUS = auto()            # :=
+    AT = auto()                # @
+    AT_ASSIGN = auto()         # @=
+    TILDE = auto()             # ~
+    AMP = auto()               # &
+    PIPE = auto()              # |
+    CARET = auto()             # ^
+    LSHIFT = auto()            # <<
+    RSHIFT = auto()            # >>
+    AMP_ASSIGN = auto()        # &=
+    PIPE_ASSIGN = auto()       # |=
+    CARET_ASSIGN = auto()      # ^=
+    LSHIFT_ASSIGN = auto()    # <<=
+    RSHIFT_ASSIGN = auto()    # >>=
 
     # ── Delimiters ───────────────────────────────────────────────────
-    LPAREN = auto()  # (
-    RPAREN = auto()  # )
-    LBRACKET = auto()  # [
-    RBRACKET = auto()  # ]
-    LBRACE = auto()  # {
-    RBRACE = auto()  # }
-    COMMA = auto()  # ,
-    DOT = auto()  # .
-    COLON = auto()  # :
-    SEMICOLON = auto()  # ;
-    ELLIPSIS = auto()  # ...
+    LPAREN = auto()            # (
+    RPAREN = auto()            # )
+    LBRACKET = auto()          # [
+    RBRACKET = auto()          # ]
+    LBRACE = auto()            # {
+    RBRACE = auto()            # }
+    COMMA = auto()              # ,
+    DOT = auto()                # .
+    COLON = auto()              # :
+    SEMICOLON = auto()         # ;
+    ELLIPSIS = auto()           # ...
 
     # ── Layout ───────────────────────────────────────────────────────
     NEWLINE = auto()
@@ -125,6 +125,7 @@ class TokenType(Enum):
 
 
 # ── Keyword string → TokenType mapping ───────────────────────────────
+
 KEYWORDS: dict[str, TokenType] = {
     "bolo": TokenType.BOLO,
     "poochho": TokenType.POOCHHO,
@@ -176,27 +177,41 @@ KEYWORDS: dict[str, TokenType] = {
     "kaand": TokenType.KAAND,
 }
 
-# Human-readable names for error messages
+
+# ── Human-readable names for error messages ──────────────────────────
+
 TOKEN_NAMES: dict[TokenType, str] = {
     TokenType.INT: "integer",
     TokenType.FLOAT: "float",
     TokenType.STRING: "string",
+    TokenType.FSTRING: "f-string",
     TokenType.IDENTIFIER: "identifier",
+
     TokenType.NEWLINE: "newline",
     TokenType.INDENT: "indent",
     TokenType.DEDENT: "dedent",
     TokenType.EOF: "end of file",
+
     TokenType.LPAREN: "'('",
     TokenType.RPAREN: "')'",
     TokenType.LBRACKET: "'['",
     TokenType.RBRACKET: "']'",
     TokenType.LBRACE: "'{'",
     TokenType.RBRACE: "'}'",
+
     TokenType.COMMA: "','",
     TokenType.DOT: "'.'",
     TokenType.COLON: "':'",
+    TokenType.SEMICOLON: "';'",
+    TokenType.ELLIPSIS: "'...'",
+
     TokenType.ASSIGN: "'='",
     TokenType.EQ: "'=='",
+    TokenType.NEQ: "'!='",
+    TokenType.LT: "'<'",
+    TokenType.GT: "'>'",
+    TokenType.LTE: "'<='",
+    TokenType.GTE: "'>='",
     TokenType.ARROW: "'->'",
 }
 
@@ -211,7 +226,11 @@ class Token:
     col: int
 
     def __repr__(self) -> str:
-        return f"Token({self.type.name}, {self.value!r}, {self.line}:{self.col})"
+        return (
+            f"Token({self.type.name}, "
+            f"{self.value!r}, "
+            f"{self.line}:{self.col})"
+        )
 
     def is_keyword(self) -> bool:
         return self.type in KEYWORDS.values()
