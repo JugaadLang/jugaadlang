@@ -6,7 +6,7 @@
   "publisher": "jugaadlang",
   "icon": "icon.png",
   "engines": {
-    "vscode": "^1.125.0"
+    "vscode": "^1.140.0"
   },
   "categories": [
     "Programming Languages",
