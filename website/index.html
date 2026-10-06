@@ -946,6 +946,98 @@
       font-weight: 500;
     }
 
+    /* ===== MEMBERS SECTION ===== */
+    #members {
+      background: var(--bg-secondary);
+    }
+
+    .members-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .member-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem 1.25rem;
+      text-align: center;
+      transition: var(--transition);
+    }
+
+    .member-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--border-hover);
+      box-shadow: var(--shadow-card), 0 0 30px var(--glow);
+    }
+
+    .member-avatar {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      border: 2px solid var(--border-hover);
+      margin-bottom: 1rem;
+      object-fit: cover;
+    }
+
+    .member-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+      word-break: break-word;
+    }
+
+    .member-contributions {
+      font-size: 0.8rem;
+      color: var(--accent-saffron);
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      display: block;
+    }
+
+    .member-link {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: var(--transition);
+    }
+
+    .member-link:hover {
+      color: var(--accent-saffron);
+    }
+
+    .members-loading,
+    .members-error {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: var(--text-muted);
+      padding: 2rem;
+    }
+
+    @media (max-width: 768px) {
+      .members-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+      }
+
+      .member-card {
+        padding: 1.25rem 0.75rem;
+      }
+
+      .member-avatar {
+        width: 64px;
+        height: 64px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .members-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
     /* ===== SECTIONS ===== */
     section {
       position: relative;
@@ -2705,6 +2797,7 @@
       <li><a href="#keywords">Keywords</a></li>
       <li><a href="#errors">Errors</a></li>
       <li><a href="#install">Install</a></li>
+      <li><a href="#members">Members</a></li>
       <li><a href="#stdlib">Stdlib</a></li>
       <li><a href="docs/index.html">Docs</a></li>
       <li><a href="/jugonline" style="color: var(--accent-saffron); font-weight: 700;">Playground 🚀</a></li>
@@ -2761,6 +2854,7 @@
     <a href="#keywords" onclick="closeMobileMenu()">Keywords</a>
     <a href="#errors" onclick="closeMobileMenu()">Errors</a>
     <a href="#install" onclick="closeMobileMenu()">Install</a>
+    <a href="#members" onclick="closeMobileMenu()">Members</a>
     <a href="#stdlib" onclick="closeMobileMenu()">Stdlib</a>
     <a href="docs/index.html">Docs</a>
     <a href="/jugonline" onclick="closeMobileMenu()" style="color: var(--accent-saffron); font-weight: 700;">🚀 Playground (Online)</a>
@@ -2910,6 +3004,20 @@
       </div>
     </div>
   </div>
+
+  <!-- ===== MEMBERS ===== -->
+  <section id="members">
+    <div class="section-container">
+      <div class="section-header reveal">
+        <div class="section-tag">Members</div>
+        <h2 class="section-title">Humare Mehanti Makhans 💪</h2>
+        <p class="section-subtitle">The awesome people building JugaadLang — loaded live from GitHub.</p>
+      </div>
+      <div class="members-grid" id="members-grid">
+        <div class="members-loading">Loading members…</div>
+      </div>
+    </div>
+  </section>
 
   <!-- ===== FEATURES ===== -->
   <section id="features">
@@ -4702,6 +4810,32 @@ web.chalao(port=5001)`;
       }
     }
 
+    // ===== MEMBERS SECTION =====
+    async function fetchMembers() {
+      const wrap = document.getElementById('members-grid');
+      try {
+        const res = await fetch("https://api.github.com/repos/JugaadLang/jugaadlang/contributors?per_page=24");
+        if (!res.ok || !wrap) return;
+        const contributors = await res.json();
+        if (!Array.isArray(contributors) || contributors.length === 0) {
+          if (wrap) wrap.innerHTML = '<div class="members-error">No members found.</div>';
+          return;
+        }
+
+        wrap.innerHTML = contributors.map(c =>
+          `<div class="member-card">` +
+          `<a href="${c.html_url}" target="_blank" rel="noopener"><img class="member-avatar" src="${c.avatar_url}&s=176" alt="${c.login}" loading="lazy" width="88" height="88"></a>` +
+          `<div class="member-name">${c.login}</div>` +
+          `<span class="member-contributions">${c.contributions} contributions</span>` +
+          `<a class="member-link" href="${c.html_url}" target="_blank" rel="noopener">View profile →</a>` +
+          `</div>`
+        ).join('');
+      } catch (err) {
+        console.error("Error fetching members:", err);
+        if (wrap) wrap.innerHTML = '<div class="members-error">Members abhi available nahi hain. Try again later.</div>';
+      }
+    }
+
     // ===== INIT =====
     document.addEventListener('DOMContentLoaded', () => {
       // Render code blocks
@@ -4733,6 +4867,7 @@ web.chalao(port=5001)`;
 
       // Fetch live contributors
       fetchHeroContributors();
+      fetchMembers();
     });
 
     // ===== THEME MANAGER =====
