@@ -1,4 +1,5 @@
 import os
+import re
 from unittest.mock import patch
 
 import pytest
@@ -53,7 +54,12 @@ def test_cli_check_invalid(runner, tmp_path):
     jug_file = tmp_path / "hello.jug"
     jug_file.write_text("bolo('namaste'", encoding="utf-8")  # missing paren
     result = runner.invoke(main, ['check', str(jug_file)])
-    assert result.exit_code != 0
+    output = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+    assert result.exit_code == 1
+    assert "ParseError" in output
+    assert "Line 1" in output
+    assert "bolo('namaste'" in output
+    assert "after call arguments" in output
 
 def test_cli_new(runner, tmp_path):
     with runner.isolated_filesystem(temp_dir=tmp_path):
