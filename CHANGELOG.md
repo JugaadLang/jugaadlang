@@ -19,6 +19,69 @@ All notable changes to **JugaadLang** will be documented in this file.
 - **Remove `kholo` (open)**: Removed `"kholo": open` from the interpreter globals and the `"kholo": "open"` mapping from the transformer name map. JugaadLang users can no longer open arbitrary files via `kholo()`. Closes issue #53 (vector 2).
 - **Hardened `tantra.shell_chalao`**: Changed from `subprocess.run(command, shell=True)` to `shlex.split(command)` with `shell=False`, preventing shell injection attacks. Closes issue #53 (vector 4).
 
+## [1.2.6] - 2026-10-06
+
+### Added
+- Syntax highlighting in try-online compiler editor
+- Live contributors strip in hero with GitHub icons
+- Implement marshal-based bytecode serialization for AST cache (fixes #124)
+- Add online JugaadLang compiler
+- Implement AST caching layer
+- Improve help output with examples
+- Improve CLI help output with command descriptions and examples (fixes #115)
+- Add searchable documentation portal
+- Add interactive mascot cursor pair
+- Add paath (text/string) module
+
+### Changed
+- Update version to 1.2.6 in README, __init__.py, pyproject.toml, package.json, and website files
+- Bump @typescript-eslint/parser in /vscode_extension
+- Bump @types/node in /vscode_extension
+- Bump @typescript-eslint/eslint-plugin
+- Remove custom cursor animation
+- Bump dawidd6/action-homebrew-bump-formula from 8 to 10
+- Bump @typescript-eslint/eslint-plugin
+- Bump @types/node in /vscode_extension
+- Bump eslint from 10.7.0 to 10.9.0 in /vscode_extension
+- Bump aiohttp in the uv group across 1 directory
+
+### Fixed
+- Full responsive overflow audit - wrap tables in scroll containers, fix long text wrapping in docs, fix jugonline mobile nav and editor panes
+- Update button titles for better accessibility and consistency
+- Repair hero CTA button sequence and consistent button styles
+- Resolve merge conflicts between AST JSON cache and Marshal bytecode cache
+- Streamline issue and PR automation workflows by removing unnecessary inputs and ensuring proper event handling
+- Update issue and PR automation workflows to enhance comment messages and input handling
+- Update PR automation workflow to include input for pull request number and adjust permissions
+- Move permissions to the top level in PR automation workflow
+- Change pull_request to pull_request_target for automated PR comments
+- Show syntax errors in jug check
+- Adjust scroll behavior for reduced motion preference
+- Improve mobile search focus and touch targets
+
+### Documentation
+- Document CLI architecture, technical specifications, and updated commands table
+
+### Tests
+- Add unit tests for whatsapp.bhejo and spam
+- Add CLI version flag test
+
+### CI/CD
+- Update both scoop bucket manifests on release
+
+### Other
+- Fix spelling in code examples and comment out unused button link in index.html
+- Add changelog workflow and script for automatic CHANGELOG.md updates
+- Refactor code structure for improved readability and maintainability
+- Refactor CLI tests to use monkeypatch for directory changes
+- Refactor code structure for improved readability and maintainability
+- Add new commands to CLI test cases
+- Refactor token definitions and improve formatting
+- Add kadak chai function to stdlib/chai
+- Feature #114 Adding Online Compiler to JugaadLang Website is done
+- Improve JugaadLang hero section
+- Fix typecheck when mypy is not installed
+
 ## [1.1.6] - 2026-08-23
 
 ### Added
