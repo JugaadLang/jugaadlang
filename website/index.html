@@ -946,9 +946,21 @@
       font-weight: 500;
     }
 
+    /* ===== TEAM SECTION ===== */
+    #team {
+      background: var(--bg-secondary);
+    }
+
+    .team-subtitle {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 2.5rem 0 1.25rem;
+    }
+
     /* ===== MEMBERS SECTION ===== */
     #members {
-      background: var(--bg-secondary);
+      scroll-margin-top: 5rem;
     }
 
     .members-grid {
@@ -3005,16 +3017,48 @@
     </div>
   </div>
 
-  <!-- ===== MEMBERS ===== -->
-  <section id="members">
+  <!-- ===== TEAM ===== -->
+  <section id="team">
     <div class="section-container">
       <div class="section-header reveal">
-        <div class="section-tag">Members</div>
-        <h2 class="section-title">Humare Mehanti Makhans 💪</h2>
-        <p class="section-subtitle">The awesome people building JugaadLang — loaded live from GitHub.</p>
+        <div class="section-tag">Team</div>
+        <h2 class="section-title">Team JugaadLang 🇮🇳</h2>
+        <p class="section-subtitle">The co-founders, members, and other teams behind JugaadLang.</p>
       </div>
+
+      <h3 class="team-subtitle">Co-Founder</h3>
+      <div class="members-grid">
+        <div class="member-card">
+          <a href="https://github.com/Sumangal44" target="_blank" rel="noopener"><img class="member-avatar" src="https://avatars.githubusercontent.com/u/123644743?v=4&s=176" alt="Sumangal44" loading="lazy" width="88" height="88"></a>
+          <div class="member-name">Sumangal Karan</div>
+          <span class="member-contributions">Co-Founder &amp; Maintainer</span>
+          <a class="member-link" href="https://github.com/Sumangal44" target="_blank" rel="noopener">View profile →</a>
+        </div>
+        <div class="member-card">
+          <a href="https://github.com/atreyeeghorai" target="_blank" rel="noopener"><img class="member-avatar" src="https://avatars.githubusercontent.com/u/263129791?v=4&s=176" alt="atreyeeghorai" loading="lazy" width="88" height="88"></a>
+          <div class="member-name">Atreyee Ghorai</div>
+          <span class="member-contributions">Co-Founder — Main Idea &amp; Concept </span>
+          <a class="member-link" href="https://github.com/atreyeeghorai" target="_blank" rel="noopener">View profile →</a>
+        </div>
+      </div>
+
+      <h3 class="team-subtitle" id="members">🛠️ Members</h3>
       <div class="members-grid" id="members-grid">
         <div class="members-loading">Loading members…</div>
+      </div>
+
+      <h3 class="team-subtitle">🤝 Other Team</h3>
+      <div class="members-grid">
+        <div class="member-card">
+          <div class="member-name">Frontedninjas</div>
+          <span class="member-contributions">Student dev community</span>
+          <a class="member-link" href="https://github.com/Frontedninjas" target="_blank" rel="noopener">View on GitHub →</a>
+        </div>
+        <div class="member-card">
+          <div class="member-name">SapphireUI</div>
+          <span class="member-contributions">UI component project</span>
+          <a class="member-link" href="https://github.com/Sumangal44" target="_blank" rel="noopener">View on GitHub →</a>
+        </div>
       </div>
     </div>
   </section>
