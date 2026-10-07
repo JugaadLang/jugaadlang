@@ -13,6 +13,7 @@ import click
 from rich.console import Console
 
 from jugaadlang import __version__
+from jugaadlang.errors.messages import format_error
 from jugaadlang.package_manager.manager import JugaadPackageManager
 from jugaadlang.repl.repl import JugaadREPL
 from jugaadlang.runtime.interpreter import JugaadInterpreter
@@ -298,6 +299,7 @@ def compile(file: str, output: str | None) -> None:
 @click.argument("file", type=click.Path(exists=True))
 def check(file: str) -> None:
     """Validate JugaadLang file syntax without executing it."""
+    source = ""
     try:
         with open(file, "r", encoding="utf-8") as f:
             source = f.read()
@@ -317,7 +319,7 @@ def check(file: str) -> None:
 
         console.print("[bold green]✓ Code bilkul sahi hai! (Syntax is valid)[/bold green]")
     except Exception as e:
-        console_stderr.print(f"[bold red]✗ Syntax check failed: {e}[/bold red]")
+        print(format_error(e, source, file), file=sys.stderr)
         sys.exit(1)
 
 

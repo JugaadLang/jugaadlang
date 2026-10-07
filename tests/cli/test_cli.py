@@ -1,4 +1,5 @@
 import os
+import re
 from unittest.mock import patch
 
 import pytest
@@ -89,22 +90,27 @@ def test_cli_check_invalid(runner, tmp_path):
     jug_file = tmp_path / "hello.jug"
     jug_file.write_text("bolo('namaste'", encoding="utf-8")  # missing paren
     result = runner.invoke(main, ['check', str(jug_file)])
-    assert result.exit_code != 0
-    assert "Syntax check failed" in result.output
-def test_cli_new(runner, tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-    result = runner.invoke(main, ['new', 'myproject'])
-    assert result.exit_code == 0
-    assert os.path.exists("myproject")
-    assert os.path.exists(os.path.join("myproject", "main.jug"))
-    assert os.path.exists(os.path.join("myproject", "README.md"))
+    output = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+    assert result.exit_code == 1
+    assert "ParseError" in output
+    assert "Line 1" in output
+    assert "bolo('namaste'" in output
+    assert "after call arguments" in output
 
-def test_cli_new_existing_dir(runner, tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-    os.mkdir("myproject")
-    result = runner.invoke(main, ['new', 'myproject'])
-    assert result.exit_code != 0
-    assert "pehle se hi hai" in result.output
+def test_cli_new(runner, tmp_path):
+    with runner.isolated_filesystem(temp_dir=tmp_path):
+        result = runner.invoke(main, ['new', 'myproject'])
+        assert result.exit_code == 0
+        assert os.path.exists("myproject")
+        assert os.path.exists(os.path.join("myproject", "main.jug"))
+        assert os.path.exists(os.path.join("myproject", "README.md"))
+
+def test_cli_new_existing_dir(runner, tmp_path):
+    with runner.isolated_filesystem(temp_dir=tmp_path):
+        os.mkdir("myproject")
+        result = runner.invoke(main, ['new', 'myproject'])
+        assert result.exit_code != 0
+        assert "pehle se hi hai" in result.output
 
 # Mock PackageManager for install, remove, update, search
 @patch("jugaadlang.package_manager.manager.JugaadPackageManager.search")
