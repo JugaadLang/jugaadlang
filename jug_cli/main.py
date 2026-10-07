@@ -7,6 +7,7 @@ from __future__ import annotations
 import ast
 import os
 import sys
+from typing import Any
 
 import click
 from rich.console import Console
@@ -30,14 +31,78 @@ for _stream in (sys.stdout, sys.stderr):
             pass
 
 
-@click.group()
+class JugaadCommand(click.Command):
+    """Click Command supporting an Examples section in help output."""
+
+    def __init__(
+        self,
+        *args: Any,
+        examples: list[tuple[str, str]] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.examples = examples or []
+
+    def format_epilog(self, ctx: click.Context, formatter: click.HelpFormatter) -> None:
+        if self.examples:
+            with formatter.section("Examples"):
+                formatter.write_dl(self.examples)
+        super().format_epilog(ctx, formatter)
+
+
+class JugaadGroup(click.Group):
+    """Click Group supporting custom command class and an Examples section."""
+
+    command_class = JugaadCommand
+
+    def __init__(
+        self,
+        *args: Any,
+        examples: list[tuple[str, str]] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.examples = examples or []
+
+    def format_epilog(self, ctx: click.Context, formatter: click.HelpFormatter) -> None:
+        if self.examples:
+            with formatter.section("Examples"):
+                formatter.write_dl(self.examples)
+        super().format_epilog(ctx, formatter)
+
+
+ROOT_EXAMPLES: list[tuple[str, str]] = [
+    ("jug run <file.jug>", "Run a JugaadLang program"),
+    ("jug compile <file.jug>", "Compile a JugaadLang program to Python"),
+    ("jug repl", "Start the interactive REPL"),
+    ("jug install <package>", "Install a package"),
+    ("jug search <query>", "Search for packages"),
+    ("jug doctor", "Diagnose common setup issues"),
+    ("jug new <project_name>", "Create a new project boilerplate"),
+    ("jug check <file.jug>", "Validate syntax without executing"),
+]
+
+CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+
+
+@click.group(
+    cls=JugaadGroup,
+    context_settings=CONTEXT_SETTINGS,
+    examples=ROOT_EXAMPLES,
+)
 @click.version_option(version=__version__, message="JugaadLang v%(version)s 🇮🇳")
 def main() -> None:
     """JugaadLang — The Hindi-keyword programming language. 🚀"""
     pass
 
 
-@main.command(context_settings=dict(ignore_unknown_options=True, allow_extra_args=True))
+@main.command(
+    context_settings=dict(ignore_unknown_options=True, allow_extra_args=True),
+    examples=[
+        ("jug run hello.jug", "Run a JugaadLang program"),
+        ("jug run app.jug arg1 arg2", "Run with command-line arguments"),
+    ],
+)
 @click.argument("file", type=click.Path(exists=True))
 @click.pass_context
 def run(ctx: click.Context, file: str) -> None:
@@ -60,7 +125,11 @@ def run(ctx: click.Context, file: str) -> None:
         sys.exit(1)
 
 
-@main.command()
+@main.command(
+    examples=[
+        ("jug repl", "Start the interactive REPL shell"),
+    ],
+)
 def repl() -> None:
     """Start the JugaadLang interactive REPL."""
     try:
@@ -70,35 +139,58 @@ def repl() -> None:
         console.print("\n[bold orange1]Namaste! Chalte hain! 🙏[/bold orange1]")
 
 
-@main.command()
+@main.command(
+    short_help="Install a package or custom bundle.",
+    examples=[
+        ("jug install chai", "Install a package from index"),
+        ("jug install web", "Install the 'web' bundle (Flask, HTTPX, aiohttp)"),
+    ],
+)
 @click.argument("package")
 def install(package: str) -> None:
     """Install a package or custom bundle (e.g. 'web')."""
     JugaadPackageManager.install(package)
 
 
-@main.command()
+@main.command(
+    examples=[
+        ("jug remove chai", "Uninstall a package"),
+    ],
+)
 @click.argument("package")
 def remove(package: str) -> None:
     """Uninstall a package."""
     JugaadPackageManager.remove(package)
 
 
-@main.command()
+@main.command(
+    examples=[
+        ("jug update chai", "Update a package to the latest version"),
+    ],
+)
 @click.argument("package")
 def update(package: str) -> None:
     """Update a package."""
     JugaadPackageManager.update(package)
 
 
-@main.command()
+@main.command(
+    short_help="Search for packages in the JugaadLang index.",
+    examples=[
+        ("jug search chai", "Search for packages matching a query"),
+    ],
+)
 @click.argument("query")
 def search(query: str) -> None:
-    """Search for packages."""
+    """Search for packages in the JugaadLang index."""
     JugaadPackageManager.search(query)
 
 
-@main.command()
+@main.command(
+    examples=[
+        ("jug new my_project", "Create a new project folder with starter boilerplate"),
+    ],
+)
 @click.argument("project_name")
 def new(project_name: str) -> None:
     """Create a new JugaadLang project boilerplate."""
@@ -146,7 +238,12 @@ def new(project_name: str) -> None:
         sys.exit(1)
 
 
-@main.command()
+@main.command(
+    examples=[
+        ("jug compile hello.jug", "Transpile and output Python code to stdout"),
+        ("jug compile hello.jug -o hello.py", "Transpile and save Python code to a file"),
+    ],
+)
 @click.argument("file", type=click.Path(exists=True))
 @click.option(
     "--output", "-o", type=click.Path(), help="Output file to write transpiled Python code."
@@ -157,15 +254,23 @@ def compile(file: str, output: str | None) -> None:
         with open(file, "r", encoding="utf-8") as f:
             source = f.read()
 
+        from jugaadlang.cache.manager import cache_manager
         from jugaadlang.lexer.lexer import Lexer
         from jugaadlang.parser.parser import Parser
         from jugaadlang.transformer.to_python import JugaadToPythonTransformer
 
-        # Transpile pipeline
-        lexer = Lexer(source, file)
-        tokens = lexer.tokenize()
-        parser = Parser(tokens, file, source)
-        ast_mod = parser.parse()
+        # Transpile pipeline with AST caching
+        ast_mod = cache_manager.get_ast(source, filename=file)
+        if ast_mod is None:
+            lexer = Lexer(source, file)
+            tokens = lexer.tokenize()
+            parser = Parser(tokens, file, source)
+            ast_mod = parser.parse()
+            try:
+                cache_manager.set_ast(source, ast_mod, filename=file)
+            except Exception:
+                pass
+
         transformer = JugaadToPythonTransformer(file)
         py_ast = transformer.transform(ast_mod)
 
@@ -186,7 +291,11 @@ def compile(file: str, output: str | None) -> None:
         sys.exit(1)
 
 
-@main.command()
+@main.command(
+    examples=[
+        ("jug check hello.jug", "Validate syntax without executing"),
+    ],
+)
 @click.argument("file", type=click.Path(exists=True))
 def check(file: str) -> None:
     """Validate JugaadLang file syntax without executing it."""
@@ -195,13 +304,18 @@ def check(file: str) -> None:
         with open(file, "r", encoding="utf-8") as f:
             source = f.read()
 
+        from jugaadlang.cache.manager import cache_manager
         from jugaadlang.lexer.lexer import Lexer
         from jugaadlang.parser.parser import Parser
 
         lexer = Lexer(source, file)
         tokens = lexer.tokenize()
         parser = Parser(tokens, file, source)
-        parser.parse()
+        ast_mod = parser.parse()
+        try:
+            cache_manager.set_ast(source, ast_mod, filename=file)
+        except Exception:
+            pass
 
         console.print("[bold green]✓ Code bilkul sahi hai! (Syntax is valid)[/bold green]")
     except Exception as e:
@@ -209,7 +323,11 @@ def check(file: str) -> None:
         sys.exit(1)
 
 
-@main.command()
+@main.command(
+    examples=[
+        ("jug typecheck hello.jug", "Type check transpiled code using mypy"),
+    ],
+)
 @click.argument("file", type=click.Path(exists=True))
 def typecheck(file: str) -> None:
     """Type check a JugaadLang file using mypy."""
@@ -218,7 +336,6 @@ def typecheck(file: str) -> None:
 
     console.print("[bold green]🕵️ JugaadLang Type Checker[/bold green]")
     console.print(f"Type checking [cyan]{file}[/cyan]...")
-
     try:
         with open(file, "r", encoding="utf-8") as f:
             source = f.read()
@@ -278,9 +395,13 @@ def typecheck(file: str) -> None:
         sys.exit(1)
 
 
-@main.command()
+@main.command(
+    examples=[
+        ("jug doctor", "Diagnose environment, Python version, and dependencies"),
+    ],
+)
 def doctor() -> None:
-    """Diagnose the JugaadLang installation."""
+    """Diagnose the JugaadLang installation and dependencies."""
     from importlib import import_module
     from importlib.util import find_spec
 

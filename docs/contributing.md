@@ -211,6 +211,26 @@ feat: add kismat() built-in for random number generation
 
 ---
 
+## Working on the documentation website
+
+The documentation portal is a static site at `website/docs/`. Its HTML and search index are generated from the Markdown files in `docs/` and `docs/guides/`. Navigation and page order are defined in `scripts/build_docs.py`; the shared layout lives in `docs/site/template.html`. Styles and browser behavior live in `website/docs/docs.css`, `theme.js`, and `docs.js`.
+
+Install the build dependency and regenerate after editing Markdown or the template:
+
+```bash
+python -m pip install -e ".[dev]" -r docs/requirements.txt
+python scripts/build_docs.py
+python scripts/build_docs.py --check
+python -m pytest tests/test_documentation.py
+python -m http.server 8000 --directory website
+```
+
+Open `http://localhost:8000/docs/`. Commit the generated HTML and search index along with source changes, so existing static hosting can serve the portal without a build step. CI checks that generated files match their sources. Do not edit generated HTML directly.
+
+Guide code blocks marked `jugaadlang` followed by an expected `text` output block are executed in the documentation tests. Keep these examples deterministic and independent of network access. Check navigation, search, copy buttons, keyboard access, light/dark themes, and narrow screens when changing the portal UI.
+
+Related: [architecture](architecture.html), [internal API](api.html), and [coding guidelines](practices.html).
+
 ## Getting Help
 
 - **Issues**: https://github.com/JugaadLang/jugaadlang/issues

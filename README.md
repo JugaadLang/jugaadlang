@@ -37,19 +37,36 @@ JugaadLang transpiles directly to native Python AST, meaning it runs with zero r
 </div>
 
 ## Table of Contents
-1. [Core Philosophy](#core-philosophy)
-2. [Installation](#installation)
-3. [Language Keywords Reference](#language-keywords-reference)
-4. [Example Usage](#example-usage)
-5. [Built-in Fun Functions](#built-in-fun-functions)
-6. [Ecosystem & Tooling](#ecosystem--tooling)
+1. [Online Playground (Try Without Installing!)](#-online-playground-try-without-installing)
+2. [Core Philosophy](#core-philosophy)
+3. [Installation](#installation)
+4. [Language Keywords Reference](#language-keywords-reference)
+5. [Example Usage](#example-usage)
+6. [Built-in Fun Functions](#built-in-fun-functions)
+7. [Ecosystem & Tooling](#ecosystem--tooling)
    - [CLI Runner](#cli-runner)
    - [Interactive REPL](#interactive-repl)
    - [Package Manager](#package-manager)
    - [VS Code Extension](#vs-code-extension)
-7. [Standard Library (Stdlib)](#standard-library-stdlib)
-8. [Funny Error System](#funny-error-system)
-9. [Automated Testing](#automated-testing)
+8. [Standard Library (Stdlib)](#standard-library-stdlib)
+9. [Funny Error System](#funny-error-system)
+10. [Automated Testing](#automated-testing)
+
+---
+
+## 🌐 Online Playground (Try Without Installing!)
+
+Want to code in JugaadLang immediately without installing Python or setting up a local environment?
+Use our free, in-browser interactive compiler & playground:
+
+👉 **[Launch JugaadLang Online Playground 🚀](https://jugaadlang.netlify.app/jugonline/)**
+
+### Playground Features:
+- **⚡ 100% Client-Side**: Powered by WebAssembly (Pyodide) — zero server dependencies, instant execution.
+- **🎨 Monaco Editor**: Full VS Code-like coding environment with custom syntax highlighting and indentation.
+- **🔍 Dual-Pane Transpiler**: View your generated standard Python code side-by-side in real time.
+- **💡 Desi Error Diagnostics**: Hilarious and helpful error diagnostics with real-time red squiggly error markers pointing to the exact line.
+- **💾 Export & Download**: Download your program as `.jug` (source) or `.py` (transpiled Python) with a single click.
 
 ---
 
@@ -103,7 +120,7 @@ jug --version
 Expected output:
 
 ```text
-JugaadLang v1.0.2 🇮🇳
+JugaadLang v1.2.6 🇮🇳
 
 ```
 
@@ -256,18 +273,21 @@ Namaste
 
 # 🔧 Common Commands
 
-| Command                | Description           |
-| ---------------------- | --------------------- |
-| `jug run file.jug`  | Run a program         |
-| `jug compile file.jug` | Transpile to Python |
-| `jug repl`          | Open REPL             |
-| `jug install pkg`   | Install package       |
-| `jug update pkg`    | Update a package      |
-| `jug search pkg`    | Search package        |
-| `jug remove pkg`    | Remove package        |
-| `jug doctor`        | Diagnose installation |
-| `jug --version`     | Show version          |
-| `jug --help`        | Show help             |
+| Command | Description |
+| :--- | :--- |
+| `jug run <file.jug>` | Run a JugaadLang program |
+| `jug compile <file.jug>` | Transpile a JugaadLang program to native Python |
+| `jug repl` | Start the interactive REPL shell |
+| `jug install <pkg>` | Install a package or bundle (e.g., `web`) |
+| `jug update <pkg>` | Update an installed package |
+| `jug search <pkg>` | Search for packages in index |
+| `jug remove <pkg>` | Uninstall a package |
+| `jug new <project>` | Create a new project boilerplate |
+| `jug check <file.jug>` | Validate syntax without executing |
+| `jug typecheck <file.jug>` | Type check using mypy |
+| `jug doctor` | Diagnose environment and dependencies |
+| `jug -h, --help` | Show CLI help with descriptions & examples |
+| `jug --version` | Show JugaadLang version |
 
 ---
 
@@ -534,6 +554,52 @@ For local development and testing, we provide a unified helper script `run.sh` t
 
 # Install JugaadLang locally in editable mode with all development dependencies
 ./run.sh install
+All test cases are written using `pytest` inside the `tests/` directory.
+
+---
+
+## Architecture & Project Technical Specification
+
+### 🏗️ Project Architecture & Pipeline
+JugaadLang transpiles Roman Hindi syntax into native Python AST with zero runtime overhead:
+```text
+Source (.jug) ──► Lexer (Token Stream) ──► Parser (JL AST) ──► Transformer (Python AST) ──► compile() / exec()
 ```
 
-All test cases are written using `pytest` inside the `tests/` directory.
+### 🧰 Tech Stack
+- **Language**: Python 3.10+ (Tested across Python 3.10, 3.11, 3.12, 3.13, 3.14)
+- **CLI Engine**: `click` with custom `JugaadGroup` and `JugaadCommand`
+- **Terminal UI & Diagnostics**: `rich`
+- **Linting & Code Quality**: `ruff`
+- **Testing & Coverage**: `pytest` & `pytest-cov` (81%+ code coverage)
+
+### 📦 Key Components & APIs
+- **`jug_cli.main:main`**: Central Click group supporting `-h/--help`, formatted command descriptions, and an interactive `Examples` section.
+- **`jugaadlang.lexer.lexer.Lexer`**: Indentation-aware tokenizer converting Hindi keywords to tokens.
+- **`jugaadlang.parser.parser.Parser`**: Recursive descent parser producing language AST.
+- **`jugaadlang.transformer.to_python.JugaadToPythonTransformer`**: AST transformer rewriting JugaadLang constructs to standard `ast` nodes.
+- **`jugaadlang.runtime.interpreter.JugaadInterpreter`**: Execution engine handling bytecode compilation and runtime error traps.
+- **`jugaadlang.package_manager.manager.JugaadPackageManager`**: Package installation, removal, update, and search engine.
+
+### 🐛 Fixed Bugs & Enhancements (Issue #115)
+- **Enhanced CLI Help Output**: Implemented native definition list rendering (`write_dl`) for examples in `jug --help` and subcommands.
+- **Dual Flag Support**: Enabled `-h` alias alongside standard `--help`.
+- **Clean Command Summaries**: Fixed Click sentence-splitting bug that previously truncated the `install` command description.
+
+### 🚀 Setup & Verification Commands
+```bash
+# 1. Setup virtual environment
+python -m venv .venv
+.venv\Scripts\activate   # Windows
+source .venv/bin/activate # Linux/macOS
+
+# 2. Install editable with development extras
+pip install -e .[dev,all]
+
+# 3. Linting check
+ruff check .
+
+# 4. Run test suite with coverage
+pytest --cov=jugaadlang
+```
+

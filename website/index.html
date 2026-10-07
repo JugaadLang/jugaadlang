@@ -168,7 +168,13 @@
     }
 
     html {
-      scroll-behavior: smooth;
+      scroll-behavior: auto;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      html {
+        scroll-behavior: smooth;
+      }
     }
 
     body {
@@ -583,19 +589,74 @@
       display: flex;
       gap: 0.75rem;
       flex-wrap: wrap;
+      align-items: center;
     }
 
-    @media (min-width: 992px) {
-      .hero-ctas {
-        flex-wrap: nowrap;
-        white-space: nowrap;
-      }
+    .hero-ctas .btn-primary,
+    .hero-ctas .btn-secondary {
+      padding: 0.75rem 1.35rem;
+      font-size: 0.92rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
 
-      .hero-ctas .btn-primary,
-      .hero-ctas .btn-secondary {
-        padding: 0.75rem 1.25rem;
-        font-size: 0.95rem;
-      }
+    /* ===== HERO LIVE CONTRIBUTORS ===== */
+    .hero-contributors {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .hero-contributors-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      color: var(--text-secondary, #8b949e);
+      font-size: 0.85rem;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.2s ease;
+    }
+
+    .hero-contributors-label:hover {
+      color: var(--accent-saffron, #FF9933);
+    }
+
+    .hero-contributors-avatars {
+      display: flex;
+      align-items: center;
+    }
+
+    .hero-contributors-avatars a {
+      display: inline-block;
+      margin-left: -8px;
+      border-radius: 50%;
+      border: 2px solid var(--bg-primary, #0F1115);
+      overflow: hidden;
+      transition: transform 0.2s ease;
+    }
+
+    .hero-contributors-avatars a:first-child {
+      margin-left: 0;
+    }
+
+    .hero-contributors-avatars a:hover {
+      transform: translateY(-4px) scale(1.08);
+      z-index: 2;
+    }
+
+    .hero-contributors-avatars img {
+      width: 36px;
+      height: 36px;
+      display: block;
+      border-radius: 50%;
+    }
+
+    .hero-contributors-loading {
+      font-size: 0.8rem;
+      color: var(--text-secondary, #8b949e);
     }
 
     .btn-primary {
@@ -883,6 +944,98 @@
       color: var(--text-secondary);
       margin-top: 0.25rem;
       font-weight: 500;
+    }
+
+    /* ===== MEMBERS SECTION ===== */
+    #members {
+      background: var(--bg-secondary);
+    }
+
+    .members-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .member-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem 1.25rem;
+      text-align: center;
+      transition: var(--transition);
+    }
+
+    .member-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--border-hover);
+      box-shadow: var(--shadow-card), 0 0 30px var(--glow);
+    }
+
+    .member-avatar {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      border: 2px solid var(--border-hover);
+      margin-bottom: 1rem;
+      object-fit: cover;
+    }
+
+    .member-name {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+      word-break: break-word;
+    }
+
+    .member-contributions {
+      font-size: 0.8rem;
+      color: var(--accent-saffron);
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      display: block;
+    }
+
+    .member-link {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: var(--transition);
+    }
+
+    .member-link:hover {
+      color: var(--accent-saffron);
+    }
+
+    .members-loading,
+    .members-error {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: var(--text-muted);
+      padding: 2rem;
+    }
+
+    @media (max-width: 768px) {
+      .members-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+      }
+
+      .member-card {
+        padding: 1.25rem 0.75rem;
+      }
+
+      .member-avatar {
+        width: 64px;
+        height: 64px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .members-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
 
     /* ===== SECTIONS ===== */
@@ -1769,6 +1922,12 @@
     }
 
     /* ===== RESPONSIVE ===== */
+    /* Leave room for Docs and search before the navigation starts to overflow. */
+    @media (max-width: 1180px) {
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+    }
+
     @media (max-width: 900px) {
       .hero-content {
         grid-template-columns: 1fr;
@@ -1791,6 +1950,10 @@
       }
 
       .hero-ctas {
+        justify-content: center;
+      }
+
+      .hero-contributors {
         justify-content: center;
       }
 
@@ -1991,6 +2154,21 @@
         gap: 0.6rem;
       }
 
+      .hero-contributors {
+        justify-content: center;
+        gap: 0.6rem;
+        margin-top: 1.25rem;
+      }
+
+      .hero-contributors-avatars a {
+        margin-left: -6px;
+      }
+
+      .hero-contributors-avatars img {
+        width: 30px;
+        height: 30px;
+      }
+
       .btn-primary,
       .btn-secondary {
         width: 100%;
@@ -2056,6 +2234,15 @@
       .btn-secondary {
         max-width: 100%;
         font-size: 0.85rem;
+      }
+
+      .hero-contributors-label {
+        font-size: 0.78rem;
+      }
+
+      .hero-contributors-avatars img {
+        width: 26px;
+        height: 26px;
       }
     }
 
@@ -2576,8 +2763,9 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="cursor.css" />
-  <script src="cursor.js" defer></script>
+  <link rel="stylesheet" href="compiler.css" />
+  <script src="assets/jugaad_bundle.js" defer></script>
+  <script src="compiler.js" defer></script>
 </head>
 
 <body>
@@ -2588,7 +2776,7 @@
       <span class="banner-badge">published</span>
     </div>
     <div class="banner-marquee-container">
-      <span class="banner-text">🚀 JugaadLang v1.1.6 is in development with new standard modules &amp; optimized
+      <span class="banner-text">🚀 JugaadLang v1.2.6 is in development with new standard modules &amp; optimized
         compiler speed!</span>
     </div>
   </div>
@@ -2605,10 +2793,14 @@
     <ul class="nav-links">
       <li><a href="#features">Features</a></li>
       <li><a href="#examples">Examples</a></li>
+      <li><a href="#try-online">Try Online</a></li>
       <li><a href="#keywords">Keywords</a></li>
       <li><a href="#errors">Errors</a></li>
       <li><a href="#install">Install</a></li>
+      <li><a href="#members">Members</a></li>
       <li><a href="#stdlib">Stdlib</a></li>
+      <li><a href="docs/index.html">Docs</a></li>
+      <li><a href="/jugonline" style="color: var(--accent-saffron); font-weight: 700;">Playground 🚀</a></li>
       <li><a href="https://github.com/JugaadLang/jugaadlang" class="nav-cta" target="_blank" rel="noopener"><svg
             class="github-icon" viewBox="0 0 16 16" width="16" height="16" fill="currentColor" focusable="false">
             <path
@@ -2658,10 +2850,14 @@
   <div class="mobile-menu" id="mobile-menu">
     <a href="#features" onclick="closeMobileMenu()">Features</a>
     <a href="#examples" onclick="closeMobileMenu()">Examples</a>
+    <a href="#try-online" onclick="closeMobileMenu()">Try Online</a>
     <a href="#keywords" onclick="closeMobileMenu()">Keywords</a>
     <a href="#errors" onclick="closeMobileMenu()">Errors</a>
     <a href="#install" onclick="closeMobileMenu()">Install</a>
+    <a href="#members" onclick="closeMobileMenu()">Members</a>
     <a href="#stdlib" onclick="closeMobileMenu()">Stdlib</a>
+    <a href="docs/index.html">Docs</a>
+    <a href="/jugonline" onclick="closeMobileMenu()" style="color: var(--accent-saffron); font-weight: 700;">🚀 Playground (Online)</a>
     <!-- Mobile search trigger — Issue #47 -->
     <button id="mobile-search-btn" class="mobile-search-trigger" type="button" aria-label="Search documentation">
       <svg width="16" height="16" viewBox="0 0 15 15" fill="none" aria-hidden="true">
@@ -2707,9 +2903,9 @@
     <div class="code-particles" aria-hidden="true">
       <span class="code-particle cp-1">{ }</span>
       <span class="code-particle cp-2 accent-blue">&lt;/&gt;</span>
-      <span class="code-particle cp-3 accent-saffron">अगर</span>
+      <span class="code-particle cp-3 accent-saffron">agar</span>
       <span class="code-particle cp-4">=&gt;</span>
-      <span class="code-particle cp-5 accent-green">बोलो()</span>
+      <span class="code-particle cp-5 accent-green">bolo()</span>
       <span class="code-particle cp-6">01</span>
       <span class="code-particle cp-7">// jugaad</span>
       <span class="code-particle cp-8">[ ]</span>
@@ -2720,7 +2916,7 @@
         <div class="hero-badge">
           <span>🇮🇳</span>
           <span>Made in Bharat</span>
-          <span class="pill-tag pill-new">v1.1.6</span>
+          <span class="pill-tag pill-new">v1.2.6</span>
         </div>
         <h1 class="hero-title">
           <span class="hero-title-main">JugaadLang</span>
@@ -2735,26 +2931,39 @@
           <strong style="color: var(--accent-saffron);">Jugaad-first. Always.</strong>
         </p>
         <div class="hero-ctas">
-          <a href="#install" class="btn-primary">
+          <!-- NEW "Try Online" BUTTON -->
+           <a href="/jugonline" class="btn-primary" title="Try JugaadLang Online in Browser">
+            <span>🚀</span> Try Now Online
+          </a>
+          <a href="#install" class="btn-secondary"title="Install JugaadLang Compiler">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
               <path
                 d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z" />
             </svg> Install Karo
           </a>
-          <a href="#examples" class="btn-secondary">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
-              <path
-                d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z" />
-            </svg> Docs Padho
+          <a href="docs/index.html" class="btn-primary" title="JugaadLang Documentation">
+            <span>📖</span> Docs Padho
           </a>
           <a href="https://marketplace.visualstudio.com/items?itemName=jugaadlang.jugaadlang" target="_blank"
             class="btn-secondary" title="JugaadLang VS Code Extension">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"
-              style="margin-right: 4px; vertical-align: middle;">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
               <path
                 d="M23.15 2.587L18.21.21a1.494 1.494 0 0 0-1.705.29l-9.46 8.63-4.12-3.128a.999.999 0 0 0-1.276.057L.327 7.261A1 1 0 0 0 .326 8.74L3.899 12 .326 15.26a1 1 0 0 0 .001 1.479L1.65 17.94a.999.999 0 0 0 1.276.057l4.12-3.128 9.46 8.63a1.492 1.492 0 0 0 1.704.29l4.942-2.377A1.5 1.5 0 0 0 24 20.06V3.939a1.5 1.5 0 0 0-.85-1.352zm-5.146 14.861L10.826 12l7.178-5.448v10.896z" />
             </svg> VS Code Extension
           </a>
+        </div>
+
+        <!-- Live contributors strip -->
+        <div class="hero-contributors" id="hero-contributors">
+          <a class="hero-contributors-label" href="https://github.com/JugaadLang/jugaadlang/graphs/contributors" target="_blank" rel="noopener" title="View all contributors on GitHub">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+              <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55v-2.15c-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.75 2.69 1.25 3.35.95.1-.75.4-1.25.72-1.54-2.55-.29-5.23-1.28-5.23-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.13v3.16c0 .31.21.67.8.55A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/>
+            </svg>
+            <span id="hero-contributors-count">Contributors</span>
+          </a>
+          <div class="hero-contributors-avatars" id="hero-contributors-avatars">
+            <span class="hero-contributors-loading">Loading…</span>
+          </div>
         </div>
       </div>
 
@@ -2796,6 +3005,20 @@
     </div>
   </div>
 
+  <!-- ===== MEMBERS ===== -->
+  <section id="members">
+    <div class="section-container">
+      <div class="section-header reveal">
+        <div class="section-tag">Members</div>
+        <h2 class="section-title">Humare Mehanti Makhans 💪</h2>
+        <p class="section-subtitle">The awesome people building JugaadLang — loaded live from GitHub.</p>
+      </div>
+      <div class="members-grid" id="members-grid">
+        <div class="members-loading">Loading members…</div>
+      </div>
+    </div>
+  </section>
+
   <!-- ===== FEATURES ===== -->
   <section id="features">
     <div class="section-container">
@@ -2807,6 +3030,11 @@
       </div>
 
       <div class="features-grid">
+        <div class="feature-card reveal" style="border: 1px solid rgba(255, 153, 51, 0.4); background: rgba(255, 153, 51, 0.04);">
+          <span class="feature-icon">🚀</span>
+          <div class="feature-title">Online Playground (No Install)</div>
+          <p class="feature-desc">Code directly in your browser using WebAssembly (Pyodide) & Monaco Editor. Inspect the translated Python code, view instant error markers, and download your <code class="s-keyword">.jug</code> and <code class="s-keyword">.py</code> files. <a href="/jugonline" style="color: var(--accent-saffron); font-weight: 700; text-decoration: none;">Try Online ↗</a></p>
+        </div>
         <div class="feature-card reveal">
           <span class="feature-icon">🇮🇳</span>
           <div class="feature-title">Hindi Keywords</div>
@@ -3165,6 +3393,131 @@
 
   <div class="flag-divider"></div>
 
+  <!-- ===== TRY ONLINE / COMPILER ===== -->
+  <section id="try-online">
+    <div class="section-container">
+      <div class="section-header reveal">
+        <div class="section-tag">Online Compiler</div>
+        <h2 class="section-title">Try JugaadLang Online 🚀</h2>
+        <p class="section-subtitle">
+          Code in Hindi directly inside your browser! Transpiles to standard Python and executes locally via WebAssembly (Pyodide).
+          No server execution, 100% private and client-side.
+        </p>
+        <div class="compiler-badges">
+          <span class="compiler-badge wasm">
+            <span>⚡</span> 100% Client-Side WebAssembly
+          </span>
+          <span class="compiler-badge">
+            <span class="status-dot ready" id="compiler-status-dot"></span>
+            <span id="compiler-status-text">Ready</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="compiler-container reveal">
+        <!-- Sample Program Selector Toolbar -->
+        <div class="compiler-sample-bar" role="toolbar" aria-label="Sample Code Selector">
+          <div class="sample-buttons-wrapper">
+            <span class="sample-label">Samples:</span>
+            <button class="sample-btn active" data-sample="namaste" type="button" aria-label="Load Namaste Duniya sample">🙏 Namaste</button>
+            <button class="sample-btn" data-sample="variables" type="button" aria-label="Load Variables sample">📦 Variables</button>
+            <button class="sample-btn" data-sample="loops" type="button" aria-label="Load Loops sample">🔁 Loops</button>
+            <button class="sample-btn" data-sample="functions" type="button" aria-label="Load Functions sample">🔢 Functions</button>
+            <button class="sample-btn" data-sample="match" type="button" aria-label="Load Pattern Matching sample">🎯 Match</button>
+            <button class="sample-btn" data-sample="ganit" type="button" aria-label="Load Ganit math sample">📐 Ganit</button>
+          </div>
+          <div class="pane-header-actions">
+            <button class="icon-btn-tiny" id="reset-editor-btn" type="button" aria-label="Reset editor to default">🔄 Reset</button>
+            <button class="icon-btn-tiny" id="clear-editor-btn" type="button" aria-label="Clear editor">🗑️ Clear</button>
+          </div>
+        </div>
+
+        <!-- Main 2-Column Workspace -->
+        <div class="compiler-workspace">
+          <!-- Left Pane: .jug Editor -->
+          <div class="compiler-pane" id="editor-pane">
+            <div class="pane-header">
+              <div class="pane-header-left">
+                <div class="code-block-dots">
+                  <div class="dot dot-red"></div>
+                  <div class="dot dot-yellow"></div>
+                  <div class="dot dot-green"></div>
+                </div>
+                <span class="pane-title">
+                  <span>📄</span> program.jug
+                </span>
+              </div>
+              <div class="pane-header-actions">
+                <button class="icon-btn-tiny" id="copy-editor-btn" type="button" aria-label="Copy .jug source code">📋 Copy</button>
+              </div>
+            </div>
+
+            <div class="editor-body">
+              <div class="editor-line-numbers" id="editor-line-numbers" aria-hidden="true">1</div>
+              <label for="jug-editor" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;">JugaadLang Code Editor</label>
+              <div class="editor-stack">
+                <pre id="editor-highlight" class="editor-highlight" aria-hidden="true"></pre>
+                <textarea id="jug-editor" class="editor-textarea editor-textarea--overlay" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="JugaadLang Code Editor" placeholder="Apna JugaadLang code yahan likho..."></textarea>
+              </div>
+            </div>
+
+            <div class="pane-footer">
+              <div class="pane-footer-actions">
+                <button class="btn-primary" id="run-btn" type="button" aria-label="Run Code (Ctrl+Enter)">
+                  <span id="run-btn-icon">⚡</span>
+                  <span id="run-btn-text">Chalao (Run)</span>
+                  <span class="kbd-hint" aria-hidden="true">Ctrl+Enter</span>
+                </button>
+              </div>
+              <div class="pane-footer-actions">
+                <button class="btn-secondary" id="download-jug-btn" type="button" aria-label="Download .jug file">
+                  <span>📥</span> Download .jug
+                </button>
+                <button class="btn-secondary" id="download-py-btn" type="button" aria-label="Download transpiled Python .py file" disabled>
+                  <span>🐍</span> Download .py
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Pane: Output & Transpiled Python -->
+          <div class="compiler-pane" id="output-pane">
+            <div class="pane-header">
+              <div class="pane-tabs" role="tablist" aria-label="Output View Selector">
+                <button class="pane-tab-btn active" id="tab-btn-output" role="tab" aria-selected="true" aria-controls="panel-compiler-output" type="button">
+                  <span>🖥️</span> Output
+                </button>
+                <button class="pane-tab-btn" id="tab-btn-python" role="tab" aria-selected="false" aria-controls="panel-compiler-python" type="button">
+                  <span>🐍</span> Python (Transpiled)
+                </button>
+              </div>
+              <div class="pane-header-actions">
+                <button class="icon-btn-tiny" id="copy-output-btn" type="button" aria-label="Copy execution output">📋 Copy</button>
+                <button class="icon-btn-tiny" id="clear-output-btn" type="button" aria-label="Clear output terminal">🗑️ Clear</button>
+              </div>
+            </div>
+
+            <!-- Tab 1: Terminal Output -->
+            <div class="pane-content" id="panel-compiler-output" role="tabpanel" aria-labelledby="tab-btn-output" aria-live="polite">
+              <pre class="terminal-display placeholder" id="compiler-output">Press &quot;Chalao (Run)&quot; to execute your JugaadLang code.</pre>
+              <div class="output-meta-bar" id="output-meta"></div>
+            </div>
+
+            <!-- Tab 2: Transpiled Python -->
+            <div class="pane-content" id="panel-compiler-python" role="tabpanel" aria-labelledby="tab-btn-python" style="display: none;">
+              <div style="display: flex; justify-content: flex-end; margin-bottom: 0.5rem;">
+                <button class="icon-btn-tiny" id="copy-py-btn" type="button" aria-label="Copy transpiled Python code">📋 Copy Python</button>
+              </div>
+              <pre class="python-transpiled-code" id="transpiled-python"># Transpiled Python code will appear here after running...</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="flag-divider"></div>
+
   <!-- ===== KEYWORD TABLE ===== -->
   <section id="keywords">
     <div class="section-container">
@@ -3338,9 +3691,9 @@
             <div class="terminal-body">
               <div><span class="t-prompt">$</span> <span class="t-cmd">pip install jugaadlang</span></div>
               <div class="t-output">Collecting jugaadlang...</div>
-              <div class="t-output"> Downloading jugaadlang-1.1.6.tar.gz (42 kB)</div>
+              <div class="t-output"> Downloading jugaadlang-1.2.6.tar.gz (42 kB)</div>
               <div class="t-output">Installing collected packages: jugaadlang</div>
-              <div class="t-success">✓ Successfully installed jugaadlang-1.1.6</div>
+              <div class="t-success">✓ Successfully installed jugaadlang-1.2.6</div>
               <br />
               <div><span class="t-prompt">$</span> <span class="t-cmd">jug repl</span></div>
               <div class="t-highlight">🙏 JugaadLang v1.0 — Namaste!</div>
@@ -4435,6 +4788,54 @@ web.chalao(port=5001)`;
       }
     }
 
+    // ===== LIVE CONTRIBUTORS =====
+    async function fetchHeroContributors() {
+      const wrap = document.getElementById('hero-contributors-avatars');
+      try {
+        const res = await fetch("https://api.github.com/repos/JugaadLang/jugaadlang/contributors?per_page=12");
+        if (!res.ok || !wrap) return;
+        const contributors = await res.json();
+        if (!Array.isArray(contributors) || contributors.length === 0) return;
+
+        const countEl = document.getElementById('hero-contributors-count');
+        if (countEl) countEl.textContent = contributors.length + (contributors.length >= 12 ? '+' : '') + ' Contributors';
+
+        wrap.innerHTML = contributors.map(c =>
+          `<a href="${c.html_url}" target="_blank" rel="noopener" title="${c.login} — ${c.contributions} contributions">` +
+          `<img src="${c.avatar_url}&s=72" alt="${c.login}" loading="lazy" width="36" height="36"></a>`
+        ).join('');
+      } catch (err) {
+        console.error("Error fetching contributors:", err);
+        if (wrap) wrap.innerHTML = '';
+      }
+    }
+
+    // ===== MEMBERS SECTION =====
+    async function fetchMembers() {
+      const wrap = document.getElementById('members-grid');
+      try {
+        const res = await fetch("https://api.github.com/repos/JugaadLang/jugaadlang/contributors?per_page=24");
+        if (!res.ok || !wrap) return;
+        const contributors = await res.json();
+        if (!Array.isArray(contributors) || contributors.length === 0) {
+          if (wrap) wrap.innerHTML = '<div class="members-error">No members found.</div>';
+          return;
+        }
+
+        wrap.innerHTML = contributors.map(c =>
+          `<div class="member-card">` +
+          `<a href="${c.html_url}" target="_blank" rel="noopener"><img class="member-avatar" src="${c.avatar_url}&s=176" alt="${c.login}" loading="lazy" width="88" height="88"></a>` +
+          `<div class="member-name">${c.login}</div>` +
+          `<span class="member-contributions">${c.contributions} contributions</span>` +
+          `<a class="member-link" href="${c.html_url}" target="_blank" rel="noopener">View profile →</a>` +
+          `</div>`
+        ).join('');
+      } catch (err) {
+        console.error("Error fetching members:", err);
+        if (wrap) wrap.innerHTML = '<div class="members-error">Members abhi available nahi hain. Try again later.</div>';
+      }
+    }
+
     // ===== INIT =====
     document.addEventListener('DOMContentLoaded', () => {
       // Render code blocks
@@ -4463,6 +4864,10 @@ web.chalao(port=5001)`;
 
       // Fetch live GitHub stars
       fetchGitHubStars();
+
+      // Fetch live contributors
+      fetchHeroContributors();
+      fetchMembers();
     });
 
     // ===== THEME MANAGER =====

@@ -5,7 +5,7 @@
 ### `jugaadlang/__init__.py`
 
 ```python
-__version__ = "1.1.0"
+from jugaadlang import __version__
 __author__ = "JugaadLang Community"
 __license__ = "MIT"
 ```

@@ -21,3 +21,18 @@ def piyo() -> None:
 def status() -> str:
     """Return status of chai."""
     return "☕ Chai is hot and coding is on!"
+
+
+def kadak():
+    """Prints a strong cup of Kadak Chai for deep debugging sessions."""
+    print("""
+      (  )   (  )   (  )
+       ) (    ) (    ) (
+      (   )  (   )  (   )
+    .-------------------.
+    |  ☕  KADAK CHAI   |--.
+    |  Debugging Mode   |  |
+    |   Activated! 🔥   |--'
+    `-------------------'
+    Ab aayega maza! Kitna bhi bada bug ho, ek cup Kadak Chai sab fixed kar degi! ☕🔥
+    """)
