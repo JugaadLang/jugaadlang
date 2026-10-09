@@ -16,6 +16,7 @@ from ..errors.messages import format_error
 from ..lexer.lexer import Lexer
 from ..parser.parser import Parser
 from ..transformer.to_python import JugaadToPythonTransformer
+from ..optimizer.ast_optimizer import JugaadASTOptimizer
 from .fun_builtins import FUN_BUILTINS
 
 #  Safe builtins (explicit allowlist - no exec/eval/compile/open/__import__) 
@@ -97,6 +98,9 @@ class JugaadInterpreter:
 
                     parser = Parser(tokens, self.filename, source)
                     ast_mod = parser.parse()
+                    
+                    # 2.5 AST Optimization
+                    ast_mod = JugaadASTOptimizer().optimize(ast_mod)
 
                     try:
                         cache_manager.set_ast(source, ast_mod, filename=self.filename)
@@ -133,6 +137,7 @@ class JugaadInterpreter:
         from ..events.bus import event_bus
         event_bus.emit("EXECUTION_STARTED", {"filename": self.filename, "mode": "eval"})
         try:
+            # AST Optimizer should run before caching
 
             cache_key = f"expr::{source}"
             code_obj = cache_manager.get_bytecode(cache_key, filename=self.filename)
@@ -146,6 +151,7 @@ class JugaadInterpreter:
                     tokens = lexer.tokenize()
                     parser = Parser(tokens, self.filename, source)
                     ast_mod = parser.parse()
+                    ast_mod = JugaadASTOptimizer().optimize(ast_mod)
                     try:
                         cache_manager.set_ast(cache_key, ast_mod, filename=self.filename)
                     except Exception:
