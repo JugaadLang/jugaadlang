@@ -17,6 +17,7 @@ from ..errors.messages import format_error
 from ..lexer.lexer import Lexer
 from ..parser.parser import Parser
 from ..transformer.to_python import JugaadToPythonTransformer
+from ..optimizer.ast_optimizer import JugaadASTOptimizer
 from .fun_builtins import FUN_BUILTINS
 
 # ── Safe builtins (explicit allowlist — no exec/eval/compile/open/__import__) ─
@@ -296,6 +297,9 @@ class JugaadInterpreter:
                 # 2. Syntax analysis
                 parser = Parser(tokens, self.filename, source)
                 ast_mod = parser.parse()
+                
+                # 2.5 AST Optimization
+                ast_mod = JugaadASTOptimizer().optimize(ast_mod)
     
                 # 3. Transpile to Python AST
                 transformer = JugaadToPythonTransformer(self.filename)
@@ -347,6 +351,9 @@ class JugaadInterpreter:
             tokens = lexer.tokenize()
             parser = Parser(tokens, self.filename, source)
             ast_mod = parser.parse()
+            
+            # AST Optimization
+            ast_mod = JugaadASTOptimizer().optimize(ast_mod)
 
             # If the source is a single expression statement, evaluate it and return the result
             if len(ast_mod.body) == 1 and isinstance(ast_mod.body[0], ExprStmt):
