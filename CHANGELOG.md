@@ -18,6 +18,191 @@ All notable changes to **JugaadLang** will be documented in this file.
 - **Remove `chalao` (exec)**: Removed `"chalao": exec` from the interpreter globals and the `"chalao": "exec"` mapping from the transformer name map. JugaadLang users can no longer execute arbitrary Python code via `chalao()`. Closes issue #53 (vector 1).
 - **Remove `kholo` (open)**: Removed `"kholo": open` from the interpreter globals and the `"kholo": "open"` mapping from the transformer name map. JugaadLang users can no longer open arbitrary files via `kholo()`. Closes issue #53 (vector 2).
 - **Hardened `tantra.shell_chalao`**: Changed from `subprocess.run(command, shell=True)` to `shlex.split(command)` with `shell=False`, preventing shell injection attacks. Closes issue #53 (vector 4).
+
+## [1.2.6] - 2026-10-06
+
+### Added
+- Syntax highlighting in try-online compiler editor
+- Live contributors strip in hero with GitHub icons
+- Implement marshal-based bytecode serialization for AST cache (fixes #124)
+- Add online JugaadLang compiler
+- Implement AST caching layer
+- Improve help output with examples
+- Improve CLI help output with command descriptions and examples (fixes #115)
+- Add searchable documentation portal
+- Add interactive mascot cursor pair
+- Add paath (text/string) module
+
+### Changed
+- Update version to 1.2.6 in README, __init__.py, pyproject.toml, package.json, and website files
+- Bump @typescript-eslint/parser in /vscode_extension
+- Bump @types/node in /vscode_extension
+- Bump @typescript-eslint/eslint-plugin
+- Remove custom cursor animation
+- Bump dawidd6/action-homebrew-bump-formula from 8 to 10
+- Bump @typescript-eslint/eslint-plugin
+- Bump @types/node in /vscode_extension
+- Bump eslint from 10.7.0 to 10.9.0 in /vscode_extension
+- Bump aiohttp in the uv group across 1 directory
+
+### Fixed
+- Full responsive overflow audit - wrap tables in scroll containers, fix long text wrapping in docs, fix jugonline mobile nav and editor panes
+- Update button titles for better accessibility and consistency
+- Repair hero CTA button sequence and consistent button styles
+- Resolve merge conflicts between AST JSON cache and Marshal bytecode cache
+- Streamline issue and PR automation workflows by removing unnecessary inputs and ensuring proper event handling
+- Update issue and PR automation workflows to enhance comment messages and input handling
+- Update PR automation workflow to include input for pull request number and adjust permissions
+- Move permissions to the top level in PR automation workflow
+- Change pull_request to pull_request_target for automated PR comments
+- Show syntax errors in jug check
+- Adjust scroll behavior for reduced motion preference
+- Improve mobile search focus and touch targets
+
+### Documentation
+- Document CLI architecture, technical specifications, and updated commands table
+
+### Tests
+- Add unit tests for whatsapp.bhejo and spam
+- Add CLI version flag test
+
+### CI/CD
+- Update both scoop bucket manifests on release
+
+### Other
+- Fix spelling in code examples and comment out unused button link in index.html
+- Add changelog workflow and script for automatic CHANGELOG.md updates
+- Refactor code structure for improved readability and maintainability
+- Refactor CLI tests to use monkeypatch for directory changes
+- Refactor code structure for improved readability and maintainability
+- Add new commands to CLI test cases
+- Refactor token definitions and improve formatting
+- Add kadak chai function to stdlib/chai
+- Feature #114 Adding Online Compiler to JugaadLang Website is done
+- Improve JugaadLang hero section
+- Fix typecheck when mypy is not installed
+
+## [1.1.6] - 2026-08-23
+
+### Added
+- Enhance shell command execution and add batch scripts for development tasks
+- Implement multi-level AST and code object caching (fixes #61)
+- Implement event bus architecture (fixes #60)
+- Add spotlight search to docs navbar - closes #47
+- Add Open Graph and Twitter metadata
+- Implement dark mode across website
+
+### Changed
+- Reorganize imports and improve code structure across multiple files
+- Bump @typescript-eslint/parser in /vscode_extension
+- Bump @typescript-eslint/eslint-plugin
+- Bump eslint from 8.57.1 to 10.7.0 in /vscode_extension
+- Bump dawidd6/action-homebrew-bump-formula from 7 to 8
+- Bump actions/setup-node from 6 to 7
+- Bump actions/checkout from 6 to 7
+- Bump typescript in /vscode_extension
+- Bump @types/vscode in /vscode_extension
+- Bump eslint from 10.4.1 to 10.6.0 in /vscode_extension
+- Bump @typescript-eslint/eslint-plugin
+- Bump actions/checkout from 4 to 6
+- Bump softprops/action-gh-release from 2 to 3
+- Bump actions/setup-node from 4 to 6
+- Bump dawidd6/action-homebrew-bump-formula from 4 to 7
+- Bump astral-sh/setup-uv from 5 to 7
+- Bump @typescript-eslint/parser in /vscode_extension
+
+### Fixed
+- Update pip install command to avoid editable mode and improve encoding handling in CLI refactor: remove unused imports in cache and event bus modules test: clean up test files by removing unnecessary imports
+- Point issue template question link to correct repo Fixes #83
+- Read jug --version from package metadata
+- Patch 4 RCE vectors (chalao, kholo, builtins, shell_chalao)
+- Implement jug doctor and correct CLI/docs mismatches Add jug doctor diagnostics, fix README command/extension errors, remove unused publish dependency, and exit non-zero on pip failures. Closes #56
+- Make Flask an optional web dependency
+- Align typescript-eslint deps for npm ci
+- Raise LexerError instead of crashing on malformed \u/\x string escapes
+
+### Documentation
+- Add Homebrew tap installation instructions to README and landing page
+
+### Tests
+- Update assertion for tuple unpacking in for loop to accommodate Python 3.10+
+- Add transformer and stdlib test suites
+- Add regression tests and fix Windows SQLite cleanup
+
+### CI/CD
+- Fix env variable scope for conditionals
+- Fix publish job errors and swap to dawidd6 for homebrew bump
+
+### Other
+- Add loops and Variables
+- Fix issues
+- Initial plan
+- Add star request to README
+- Validate VS Code extension CI fix
+- Add Node types to VS Code extension tsconfig
+- Fix VS Code engine version mismatch for extension build
+- Potential fix for pull request finding
+- Remove
+
+## [1.1.5] - 2026-06-14
+
+### Changed
+- Fix homebrew formula bump source and tap name
+
+### Other
+- Vscode extension v1.1.5
+- Update version v1.1.5
+
+## [1.1.4] - 2026-06-13
+
+### Changed
+- Remove slow macos-13 intel runner to speed up releases
+
+### Other
+- Update new version
+- Update version v1.1.3
+
+## [1.1.3] - 2026-06-13
+
+### Changed
+- Remove slow macos-13 intel runner to speed up releases
+
+## [1.1.2] - 2026-06-13
+
+### Added
+- Compile and upload vscode extension to releases
+- Setup multi-platform CI/CD packaging pipelines
+
+### Fixed
+- Remove windows arm64 build as x64 runner cannot install arm64 python natively
+- Install libarchive-tools for pacman fpm package
+- Update ci matrices and scoop config
+
+### Other
+- Fromat code
+
+## [1.1.1] - 2026-06-13
+
+### Changed
+- Commit changes
+
+### Fixed
+- Resolve ruff lint errors in stdlib and fun_builtins
+
+### Documentation
+- Add comprehensive git documentation
+
+### Other
+- Vs code extension
+- Fix code
+- Fix ruff lint errors
+- Update REPL and VSCode Extension to support new stdlib modules
+- Add whatsapp, student, love, and dev stdlib modules
+- Add new Fun Built-ins to website Built-in grid section
+- Update website with 40+ Fun Built-ins feature card
+- Add 40+ fun, productivity, and desi built-in functions
+- Example add
+
 ## [1.1.0] - 2026-06-12
 
 ### Added

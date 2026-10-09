@@ -1,22 +1,44 @@
-name: Issue Create Automate Message
+name: Auto Comment on Issue
 
 on:
   issues:
     types: [opened]
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
-  auto-comment:
+  comment:
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
     steps:
-      - name: Comment on new issue
+      - name: Add Comment to Issue
         uses: actions/github-script@v9
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
+            if (context.eventName === 'issues' && context.payload.action !== 'opened') {
+              console.log(`Skipping: event action is "${context.payload.action}", only "opened" runs.`);
+              return;
+            }
+
+            const issueNumber = context.issue.number;
+
+            if (!issueNumber) {
+              core.setFailed("An issue number is required.");
+              return;
+            }
+
+            const commentBody = `### Thank you for raising this issue!
+            We'll review it as soon as possible. We truly appreciate your contributions! ✨
+
+            > Meanwhile make sure you've visited the README.md, CONTRIBUTING.md, and CODE_OF_CONDUCT.md before creating a PR for this. Also, please do NOT create a PR until this issue has been assigned to you. 😊`;
+
+            await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: "Namaste! 🙏 Thanks for opening this issue! We're always looking for new ways to improve our *jugaad*. We'll review it shortly. In the meantime, please make sure you've provided enough context and steps to reproduce the issue if it's a bug. 🛠️"
-            })
+              issue_number: issueNumber,
+              body: commentBody
+            });
+
+            console.log("Issue comment added successfully.");

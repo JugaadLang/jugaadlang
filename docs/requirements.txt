@@ -1,0 +1,2 @@
+# Build-time dependency only; the published documentation is plain HTML.
+Markdown==3.10.3

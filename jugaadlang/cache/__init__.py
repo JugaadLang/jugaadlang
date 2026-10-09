@@ -1,3 +1,15 @@
-from .manager import CacheManager, cache_manager
+from .manager import (
+    CACHE_VERSION,
+    CacheManager,
+    cache_manager,
+    deserialize_ast,
+    serialize_ast,
+)
 
-__all__ = ["CacheManager", "cache_manager"]
+__all__ = [
+    "CACHE_VERSION",
+    "CacheManager",
+    "cache_manager",
+    "deserialize_ast",
+    "serialize_ast",
+]
