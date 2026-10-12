@@ -174,18 +174,20 @@ class Assert(Stmt):
 
 @dataclass
 class Import(Stmt):
-    """Import statement (lao module)."""
+    """Import statement (lao module); is_lazy marks PEP 810 lazy imports."""
 
     names: list[alias]
+    is_lazy: bool = False
 
 
 @dataclass
 class ImportFrom(Stmt):
-    """From-import statement (se module lao name)."""
+    """From-import statement (se module lao name); is_lazy marks lazy imports."""
 
     module: Optional[str]
     names: list[alias]
     level: int = 0
+    is_lazy: bool = False
 
 
 @dataclass
@@ -315,11 +317,16 @@ class SetComp(Expr):
 
 @dataclass
 class DictComp(Expr):
-    """Dict comprehension ({k: v ghumo k, v mein items})."""
+    """Dict comprehension ({k: v ghumo k, v mein items}).
+
+    ``unpack=True`` marks PEP 798 unpacking ({**d ghumo d mein dicts}): ``key``
+    holds the expression being unpacked and ``value`` stays ``None``.
+    """
 
     key: Expr
-    value: Expr
+    value: Optional[Expr] = None
     generators: list[comprehension] = field(default_factory=list)
+    unpack: bool = False
 
 
 @dataclass
@@ -381,6 +388,23 @@ class FormattedValue(Expr):
 @dataclass
 class JoinedStr(Expr):
     """F-string literal containing string constants and formatted values."""
+
+    values: list[Expr] = field(default_factory=list)
+
+
+@dataclass
+class Interpolation(Expr):
+    """Interpolation inside a t-string (PEP 750), e.g. {x} in t"x is {x}"."""
+
+    value: Expr
+    str: Optional[str] = None
+    conversion: int = -1
+    format_spec: Optional[JoinedStr] = None
+
+
+@dataclass
+class TemplateStr(Expr):
+    """Template string literal (t-string, PEP 750): constants + interpolations."""
 
     values: list[Expr] = field(default_factory=list)
 

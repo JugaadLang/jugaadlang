@@ -312,6 +312,7 @@ Namaste
 | `self` | `khud` | Self |
 | `import` | `lao` | Import / Bring |
 | `from` | `se` | From |
+| `lazy import` (3.15+) | `sust` | Deferred / Suspended |
 | `break` | `rukja` | Stop! |
 | `continue` | `chalte_raho` | Keep going |
 | `try` | `koshish` | Try / Attempt |
@@ -356,6 +357,7 @@ JugaadLang supports Roman Hindi wrappers for standard Python built-in functions.
 | `enumerate` | `ginti` | Counting / Enumerate | Returns indexed list generator |
 | `exec` | `chalao` | Run / Execute | Executes dynamic Python code |
 | `filter` | `chhano` | Filter | Filters elements through a function |
+| `frozendict` | `jamhi_kosh` | Frozen dictionary | Immutable mapping (Python 3.15+) |
 | `getattr` | `gun_lao` | Get attribute | Returns attribute value of object |
 | `hasattr` | `gun_hai` | Has attribute | Checks if attribute exists on object |
 | `help` | `madad` | Help | Starts built-in help text utility |
@@ -372,12 +374,31 @@ JugaadLang supports Roman Hindi wrappers for standard Python built-in functions.
 | `open` | `kholo` | Open | Opens a file handle |
 | `pow` | `ghat` | Power / Exponent | Raises number to power (x ** y) |
 | `reversed` | `ulta` | Reversed | Returns reversed order iterator |
+| `sentinel` | `pahredaar` | Sentinel / Guardian | Unique marker object (Python 3.15+) |
 | `setattr` | `gun_badlo` | Change attribute | Modifies attribute value of object |
 | `slice` | `tukda` | Slice | Returns slice object for indexes |
 | `sorted` | `kramwar` | Sorted / Sequential | Returns sorted copy of iterable |
 | `str` | `shabd` | String / Word | Converts object to string |
 | `sum` | `yog` | Sum / Addition | Returns sum of items in iterable |
 | `type` | `prakar` | Type / Kind | Returns the type of an object |
+
+---
+
+## Python 3.14 & 3.15 Language Features
+
+JugaadLang keeps up with CPython's *What's New* releases. Each feature compiles to the native construct on interpreters that understand it and to an equivalent older construct otherwise, so one `.jug` file runs on every supported Python (3.10+).
+
+| Feature | Python | JugaadLang syntax |
+| :--- | :--- | :--- |
+| Template strings (PEP 750) | 3.14+ | `bolo(roop(t"Namaste {naam}!"))` |
+| `!r` / `!s` / `!a` + format specs in f-strings | — | `bolo(f"{daam:>8.2f}")` |
+| Bracket-less `except` (PEP 758) | 3.14+ | `gadbad ValueError, TypeError:` |
+| Unpacking in comprehensions (PEP 798) | 3.15+ | `[*l ghumo l mein jodon]`, `{**d ghumo d mein daftar}` |
+| Unpacking in literals (PEP 448) | — | `[*sab, 4]`, `{"a": 1, **daftar}` |
+| Lazy imports (PEP 810) | 3.15+ | `sust lao json`, `sust se pathlib lao Path` |
+| `frozendict` / `sentinel` builtins (PEP 814, 661) | 3.15+ | `jamhi_kosh(a=1)`, `pahredaar` |
+
+`roop(template)` renders a `t"..."` back to text; without it `bolo` prints the template object, since templates keep their literal pieces separate for SQL, HTML, or logging. Below Python 3.15 the new builtins raise a JugaadLang error naming the required version.
 
 ---
 
@@ -449,6 +470,7 @@ Enjoy several custom interactive built-ins directly at runtime:
 * `bas_kar_bhai()`: Advises to stop coding and sleep (`🛑 Bas kar bhai! Kitna code likhega? So ja thodi der. 🛑`).
 * `chilla_mat()`: Calms you down during debugging (`🤫 Chilla mat, deep breath le aur debug kar. 🤫`).
 * `kundli()`: Performs astrological diagnostics on your code to see if Shani or Rahu are transit-blocking your variables/loops.
+* `roop(t"...")`: Renders a template string back to text — `bolo(roop(t"Namaste {naam}!"))` (Python 3.14+; a no-op passthrough on older interpreters).
 
 ---
 

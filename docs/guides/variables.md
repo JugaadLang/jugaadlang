@@ -37,6 +37,50 @@ aam
 30
 ```
 
+## Strings and templates
+
+`f"..."` formats values in place, including the `!r`/`!s`/`!a` conversions and width specifiers Python supports. `t"..."` builds a template object (PEP 750, Python 3.14+); `roop` renders any template back to text.
+
+```jugaadlang
+naam = "Asha"
+daam = 12.5
+bolo(f"Namaste {naam}, daam = {daam:.2f}")
+bolo(f"{naam!r:>6}")
+chitthi = t"Namaste {naam}!"
+bolo(roop(chitthi))
+```
+
+Expected output:
+
+```text
+Namaste Asha, daam = 12.50
+'Asha'
+Namaste Asha!
+```
+
+Use templates when the pieces matter as data — SQL, HTML, or log messages are built from `template.strings` and `template.interpolations` instead of one concatenated string. `bolo` on a template prints the object itself, so pass it through `roop` when you want text. On Python 3.13 and older `t"..."` compiles to a plain f-string, and `roop` returns it unchanged.
+
+## Unpack collections
+
+`*` splices list or set elements and `**` merges dictionary keys. The same marks work directly inside comprehensions, so nested containers flatten in one expression.
+
+```jugaadlang
+jodon = [[1, 2], [3]]
+sab = [*l ghumo l mein jodon]
+bolo(sab)
+bolo([*sab, 4])
+daftar = [{"a": 1}, {"b": 2}]
+bolo({**d ghumo d mein daftar})
+```
+
+Expected output:
+
+```text
+[1, 2, 3]
+[1, 2, 3, 4]
+{'a': 1, 'b': 2}
+```
+
 ## Convert explicitly
 
 Input and file contents are text. Use `int`, `float`, or `str` when converting between text and numbers. Invalid numeric text raises `ValueError`.

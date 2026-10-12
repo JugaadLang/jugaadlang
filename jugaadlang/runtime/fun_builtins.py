@@ -1,4 +1,5 @@
 import random
+from typing import Any
 
 
 # ☕ Daily Life
@@ -205,6 +206,35 @@ def leetcode_bachao() -> None:
     print("🆘 LeetCode Rescue:\nHere is the O(1) solution: Just skip the question.")
 
 
+# 🧩 Python 3.14 t-strings (PEP 750)
+def roop(maal: Any) -> str:
+    """Template (t-string) ko render karke text (str) banao — f-string jaisa."""
+    if isinstance(maal, str):
+        return maal  # Python < 3.14: t-strings already degrade to plain strings
+    try:
+        from string.templatelib import Interpolation
+    except ImportError:  # pragma: no cover - guarded by the check above
+        return str(maal)
+
+    parts = []
+    for item in maal:  # iterating a Template yields str + Interpolation chunks
+        if isinstance(item, Interpolation):
+            value = item.value
+            # Runtime conversions are 'r'/'s'/'a' (or None); the AST uses 114/115/97
+            conv = item.conversion
+            if conv in (114, "r"):
+                value = repr(value)
+            elif conv in (97, "a"):
+                value = ascii(value)
+            elif conv in (115, "s"):
+                value = str(value)
+            value = format(value, item.format_spec) if item.format_spec else str(value)
+            parts.append(value)
+        else:
+            parts.append(item)
+    return "".join(parts)
+
+
 FUN_BUILTINS = {
     "chai": chai,
     "pani_pilo": pani_pilo,
@@ -251,4 +281,5 @@ FUN_BUILTINS = {
     "interview_prep": interview_prep,
     "roadmap": roadmap,
     "leetcode_bachao": leetcode_bachao,
+    "roop": roop,
 }

@@ -135,6 +135,11 @@
 <td style="text-align: left;">Sub-module import</td>
 </tr>
 <tr>
+<td style="text-align: left;"><code>sust</code></td>
+<td style="text-align: left;"><code>lazy</code> (3.15+)</td>
+<td style="text-align: left;">Deferred import</td>
+</tr>
+<tr>
 <td style="text-align: left;"><code>rukja</code></td>
 <td style="text-align: left;"><code>break</code></td>
 <td style="text-align: left;">Loop termination</td>
@@ -242,6 +247,7 @@
 * <code>int</code>: Arbitrary-precision integer (e.g. <code>10</code>, <code>0xFA</code>, <code>0b101</code>)
 * <code>float</code>: Double-precision floating-point (e.g. <code>10.5</code>, <code>1e-3</code>)
 * <code>str</code>: Unicode string literals (e.g. <code>"Namaste"</code>, <code>'Duniya'</code>, <code>f"Hi {naam}"</code>)
+* <code>Template</code>: Template literal <code>t"Hi {naam}"</code> (PEP 750, Python 3.14+; degrades to <code>str</code> on older interpreters)
 * <code>bool</code>: Boolean values (<code>sahi</code>, <code>galat</code>)
 * <code>null</code>: Null value (<code>kuch_nahi</code>)
 * <code>list</code>: Resizable array (e.g. <code>[1, 2, 3]</code>)
@@ -269,7 +275,60 @@
 * <code>ghaas_chhoo()</code>: Prints touch grass advice.
 * <code>bachao()</code>: Prints emergency help search.
 * <code>fortune()</code>: Tells a programmer's fortune.
-* <code>jugaad()</code>: Prints funny debugging tips.</p></article>
+* <code>jugaad()</code>: Prints funny debugging tips.
+* <code>roop(t"...")</code>: Renders a template (<code>t"..."</code>) back to text.</p>
+<hr />
+<h2 id="6-python-314-315-syntax">6. Python 3.14 &amp; 3.15 Syntax</h2>
+<p>JugaadLang tracks CPython's "What's New" releases. Each feature below is transpiled to the native construct when the running interpreter understands it, and to an equivalent older construct otherwise — one source file works on every supported Python (3.10+).</p>
+<h3 id="61-template-strings-t-pep-750">6.1 Template strings (<code>t"..."</code>, PEP 750)</h3>
+<p><code>t"..."</code> produces a <code>string.templatelib.Template</code> on Python 3.14+ whose <code>strings</code> and <code>interpolations</code> expose the literal pieces separately. <code>roop(template)</code> renders it the way an f-string would.</p>
+<pre><code class="language-jugaadlang">naam = &quot;Asha&quot;
+bolo(roop(t&quot;Namaste {naam}, {naam!r:&gt;6}!&quot;))
+</code></pre>
+<p>Conversions (<code>!r</code>, <code>!s</code>, <code>!a</code>) and format specs (<code>{:&gt;6}</code>, <code>{:03d}</code>) work in both <code>f"..."</code> and <code>t"..."</code>, including nested specs such as <code>f"{n:0{w}d}"</code>. Literal braces use <code>{{</code> and <code>}}</code>. Raw strings (<code>r"..."</code>) are not supported yet.</p>
+<h3 id="62-bracket-less-except-pep-758">6.2 Bracket-less <code>except</code> (PEP 758)</h3>
+<pre><code class="language-jugaadlang">koshish:
+    1 / 0
+gadbad ZeroDivisionError, ValueError:
+    bolo(&quot;pakda gaya&quot;)
+</code></pre>
+<p>Multiple types with <code>as</code> still require brackets: <code>gadbad (ValueError, TypeError) as e:</code>.</p>
+<h3 id="63-unpacking-in-comprehensions-pep-798-and-literals-pep-448">6.3 Unpacking in comprehensions (PEP 798) and literals (PEP 448)</h3>
+<pre><code class="language-jugaadlang">jodon = [[1, 2], [3]]
+bolo([*l ghumo l mein jodon])
+daftar = [{&quot;a&quot;: 1}, {&quot;b&quot;: 2}]
+bolo({**d ghumo d mein daftar})
+bolo([*jodon[0], 9])
+</code></pre>
+<p><code>*</code> works in list and set comprehensions and generator expressions, <code>**</code> in dict comprehensions, and both in list/set/dict/tuple literals. On Python 3.15+ they are emitted natively; older versions rewrite them as an extra loop, so results and evaluation order are identical.</p>
+<h3 id="64-lazy-imports-sust-pep-810">6.4 Lazy imports (<code>sust</code>, PEP 810)</h3>
+<pre><code class="language-jugaadlang">sust lao json
+sust se pathlib lao Path
+</code></pre>
+<p><code>sust</code> is contextual — it only introduces a <code>lao</code> or <code>se ... lao</code> statement, so it remains usable as a variable name. On Python 3.15+ the import is bound lazily; on older versions it imports eagerly.</p>
+<h3 id="65-new-builtins-pep-814-pep-661">6.5 New builtins (PEP 814, PEP 661)</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th style="text-align: left;">JugaadLang</th>
+<th style="text-align: left;">Python</th>
+<th style="text-align: left;">Minimum version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>jamhi_kosh(...)</code></td>
+<td style="text-align: left;"><code>frozendict(...)</code></td>
+<td style="text-align: left;">3.15</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>pahredaar</code></td>
+<td style="text-align: left;"><code>sentinel</code></td>
+<td style="text-align: left;">3.15</td>
+</tr>
+</tbody>
+</table></div>
+<p>Using either alias below Python 3.15 raises a clear JugaadLang error naming the required version instead of an obscure <code>NameError</code>.</p></article>
         <nav class="pager" aria-label="Previous and next articles"><a href="tutorials.html"><span>Previous</span>Tutorials &amp; learning paths</a><a href="variables.html"><span>Next</span>Variables &amp; data types</a></nav>
         <footer><a href="https://github.com/JugaadLang/jugaadlang/edit/main/docs/spec.md">Edit this page ↗</a><span>Code karo Hindi mein.</span></footer>
       </main>
@@ -289,6 +348,14 @@
 </ul>
 </li>
 <li><a href="#5-built-in-functions">5. built-in Functions</a></li>
+<li><a href="#6-python-314-315-syntax">6. Python 3.14 &amp; 3.15 Syntax</a><ul>
+<li><a href="#61-template-strings-t-pep-750">6.1 Template strings (t"...", PEP 750)</a></li>
+<li><a href="#62-bracket-less-except-pep-758">6.2 Bracket-less except (PEP 758)</a></li>
+<li><a href="#63-unpacking-in-comprehensions-pep-798-and-literals-pep-448">6.3 Unpacking in comprehensions (PEP 798) and literals (PEP 448)</a></li>
+<li><a href="#64-lazy-imports-sust-pep-810">6.4 Lazy imports (sust, PEP 810)</a></li>
+<li><a href="#65-new-builtins-pep-814-pep-661">6.5 New builtins (PEP 814, PEP 661)</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </nav></aside>

@@ -10,6 +10,20 @@ All notable changes to **JugaadLang** will be documented in this file.
 - **CI/CD**: OS matrix expanded to `[ubuntu-latest, windows-latest, macos-latest]` in `.github/workflows/ci.yml`.
 - **Coverage Enforcement**: `[tool.coverage.report] fail_under = 60` added to `pyproject.toml`.
 - **Python 3.14 & 3.15 Support**: PyPI classifiers, Black `target-version`, CI test matrix (`3.10`–`3.15`), and documentation now cover Python 3.14 and 3.15.
+- **T-strings (PEP 750)**: `t"..."` lexes as a new `TSTRING` token and parses into `TemplateStr`/`Interpolation` nodes, emitted as native templates on Python 3.14+ and as f-strings on older interpreters. New `roop(template)` runtime builtin renders a template back to text.
+- **Interpolation conversions & specs**: `f"..."` and `t"..."` now support `!r`, `!s`, `!a` conversions, format specs (`{:>6}`, `{:03d}`) and nested specs (`{n:0{w}d}`), plus correct `{{`/`}}` literal-brace escaping.
+- **Bracket-less `except` (PEP 758)**: `gadbad ValueError, TypeError:` parses without parentheses and emits a `Tuple` exception type that compiles on every supported Python; `as` with multiple types still requires brackets and now reports a clear message.
+- **Unpacking in comprehensions (PEP 798)**: `[*l ghumo l mein lists]`, `{*s ghumo s mein sets}`, `(*l ghumo l mein lists)` and `{**d ghumo d mein dicts}` — native `ast.Starred`/`DictComp.value = None` on Python 3.15+, lowered to an extra loop elsewhere.
+- **Unpacking in literals (PEP 448)**: leading `*`/`**` now work in list, set, dict, and tuple literals (`[*sab, 4]`, `{"a": 1, **daftar}`), including subsequent elements.
+- **Lazy imports (PEP 810)**: contextual `sust lao json` / `sust se pathlib lao Path` marks `Import`/`ImportFrom` with `is_lazy`, emitted only on Python 3.15+; `sust` stays usable as a variable name and is registered for REPL autocomplete.
+- **New builtins (PEP 814, PEP 661)**: `jamhi_kosh` → `frozendict` and `pahredaar` → `sentinel` (Python 3.15+), with a JugaadLang error naming the required version on older interpreters, plus conditional `_SAFE_BUILTINS` allowlisting for `frozendict`, `sentinel`, and `__lazy_import__`.
+- **Version-aware cache keys**: bytecode/AST cache keys now mix in `importlib.util.MAGIC_NUMBER` and the `jugaadlang` version so `.jugb` payloads are never reused across interpreter builds or compiler releases.
+- **Tests**: `tests/test_python_features.py` — 47 tests covering every 3.14/3.15 feature, its fallback path, and cache key versioning.
+
+### Fixed
+- **Comprehension filters**: `[x ghumo x mein range(4) agar x % 2 == 0]` failed to parse because the ternary operator consumed the trailing `agar`; comprehension iteration clauses now parse with ternary disabled.
+- **f-string whitespace**: `f"{ x }"` no longer fails with "Unexpected token: INDENT" — interpolation expressions are trimmed before sub-lexing.
+- **Raw strings**: `r"..."` now raises a clear lexer error instead of a cryptic parse failure.
 
 ### Audit
 - **Full Repository Audit**: `JUGAADLANG_AUDIT_REPORT.md` — 78 findings across 8 domains (architecture, security, performance, testing, documentation, contribution opportunities).

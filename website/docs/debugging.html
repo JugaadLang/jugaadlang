@@ -61,6 +61,17 @@ aakhir_me:
 Jaanch poori.
 </code></pre>
 <p>Use <code>udao ValueError("message")</code> to reject an invalid value in your own code. A <code>wapas</code> inside a function can return a successful result; an exception communicates a failure the caller must handle.</p>
+<h2 id="catch-several-exceptions-at-once">Catch several exceptions at once</h2>
+<p>List the types after <code>gadbad</code> without brackets (PEP 758 style). Brackets still work: <code>gadbad (ValueError, TypeError):</code>.</p>
+<pre><code class="language-jugaadlang">koshish:
+    ank = int(&quot;do&quot;)
+gadbad ValueError, TypeError:
+    bolo(&quot;Sahi sankhya chahiye.&quot;)
+</code></pre>
+<p>Expected output:</p>
+<pre><code class="language-text">Sahi sankhya chahiye.
+</code></pre>
+<p>Add <code>as naam</code> to keep the exception object. Multiple types with <code>as</code> need brackets: <code>gadbad (ValueError, TypeError) as e:</code>.</p>
 <h2 id="common-problems">Common problems</h2>
 <div class="table-scroll"><table>
 <thead>
@@ -116,6 +127,7 @@ Jaanch poori.
     <aside class="on-this-page"><nav aria-label="On this page"><h2>On this page</h2><div class="toc">
 <ul>
 <li><a href="#catch-an-expected-failure">Catch an expected failure</a></li>
+<li><a href="#catch-several-exceptions-at-once">Catch several exceptions at once</a></li>
 <li><a href="#common-problems">Common problems</a></li>
 <li><a href="#a-debugging-workflow">A debugging workflow</a></li>
 </ul>

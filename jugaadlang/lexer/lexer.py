@@ -5,7 +5,7 @@ Supports:
   - Full indentation tracking (INDENT/DEDENT like Python)
   - JugaadLang keywords + English interop keywords
   - # line comments, // line comments, /* block comments */
-  - Single/double/triple-quoted strings, f-strings
+  - Single/double/triple-quoted strings, f-strings, t-strings (PEP 750)
   - Integer literals: decimal, hex (0x), octal (0o), binary (0b), underscores
   - Float literals with optional exponent
   - All operators including **, //, ->, :=, ==, !=, <=, >=
@@ -14,7 +14,7 @@ Supports:
 
 from __future__ import annotations
 
-from typing import Iterator
+from typing import Iterator, Optional
 
 from .tokens import KEYWORDS, Token, TokenType
 
@@ -207,7 +207,7 @@ class Lexer:
                 continue
 
             # ── Strings ───────────────────────────────────────────
-            if ch in ('"', "'") or (ch == "f" and self._peek() in ('"', "'")):
+            if self._string_prefix() is not None:
                 tok = self._scan_string(line, col)
                 yield tok
                 continue
@@ -269,10 +269,44 @@ class Lexer:
 
     # ── String scanner ────────────────────────────────────────────────
 
+    def _string_prefix(self) -> Optional[str]:
+        """Return the literal prefix if a string literal starts here, else None.
+
+        Returns ``""`` for a plain quoted string and e.g. ``"f"``, ``"t"`` or
+        ``"tr"`` for prefixed literals. Letters are limited to ``f`` (f-string),
+        ``t`` (t-string, PEP 750) and ``r`` (raw) so identifiers such as ``test``
+        are never mistaken for a prefix.
+        """
+        src = self.source
+        pos = self._pos
+        if pos < len(src) and src[pos] in ('"', "'"):
+            return ""
+        for length in (2, 1):
+            if pos + length < len(src) and src[pos + length] in ('"', "'"):
+                prefix = src[pos : pos + length]
+                if prefix and all(c in "ftr" for c in prefix) and len(set(prefix)) == len(prefix):
+                    return prefix
+        return None
+
     def _scan_string(self, line: int, col: int) -> Token:
-        is_fstring = False
-        if self._current() == "f":
-            is_fstring = True
+        prefix = self._string_prefix() or ""
+        if "r" in prefix:
+            raise LexerError(
+                "Raw string (r-prefix) abhi support nahi hai — r hata kar likho",
+                line,
+                col,
+                self._source_line_at(line),
+            )
+        if "f" in prefix and "t" in prefix:
+            raise LexerError(
+                "Ek string par f-prefix aur t-prefix saath nahi lag sakte",
+                line,
+                col,
+                self._source_line_at(line),
+            )
+        is_fstring = "f" in prefix
+        is_tstring = "t" in prefix
+        for _ in prefix:
             self._advance()
 
         quote_char = self._advance()  # ' or "
@@ -351,7 +385,11 @@ class Lexer:
                 buf.append(self._advance())
 
         raw = "".join(buf)
-        ttype = TokenType.FSTRING if is_fstring else TokenType.STRING
+        ttype = (
+            TokenType.TSTRING
+            if is_tstring
+            else (TokenType.FSTRING if is_fstring else TokenType.STRING)
+        )
         return self._make(ttype, raw, line, col)
 
     def _scan_hex_escape(self, n_digits: int, esc_char: str, line: int, col: int) -> str:

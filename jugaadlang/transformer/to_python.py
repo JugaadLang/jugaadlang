@@ -5,6 +5,7 @@ JugaadLang Transformer — Converts JugaadLang AST to Python standard library AS
 from __future__ import annotations
 
 import ast
+import sys
 from typing import Any
 
 from ..ast_nodes.nodes import (
@@ -36,6 +37,7 @@ from ..ast_nodes.nodes import (
     IfExp,
     Import,
     ImportFrom,
+    Interpolation,
     JoinedStr,
     Lambda,
     List,
@@ -60,6 +62,7 @@ from ..ast_nodes.nodes import (
     Slice,
     Starred,
     Subscript,
+    TemplateStr,
     Try,
     Tuple,
     UnaryOp,
@@ -75,6 +78,22 @@ from ..ast_nodes.nodes import (
     match_case,
     withitem,
 )
+from ..errors.messages import JugaadError
+
+# ── Python version feature gates ─────────────────────────────────────────────
+#
+# JugaadLang transpiles to CPython's own `ast`, so newer syntax has to be
+# emitted only when the running interpreter understands it. Everywhere else we
+# degrade gracefully to an equivalent older construct.
+
+PY314 = sys.version_info >= (3, 14)  # t-strings (PEP 750)
+PY315 = sys.version_info >= (3, 15)  # lazy imports (PEP 810), unpacking comps (PEP 798)
+
+# Hindi aliases for builtins that only exist on newer Pythons: alias → (python name, min version)
+VERSIONED_BUILTINS: dict[str, tuple[str, tuple[int, int]]] = {
+    "jamhi_kosh": ("frozendict", (3, 15)),  # PEP 814
+    "pahredaar": ("sentinel", (3, 15)),  # PEP 661
+}
 
 # ── Operator Mappings ────────────────────────────────────────────────────────
 
@@ -127,6 +146,7 @@ class JugaadToPythonTransformer:
 
     def __init__(self, filename: str = "<stdin>") -> None:
         self.filename = filename
+        self._unpack_counter = 0
 
     def transform(self, node: Module) -> ast.Module:
         """Transform a JugaadLang Module to a Python ast.Module."""
@@ -296,10 +316,19 @@ class JugaadToPythonTransformer:
 
     def visit_Import(self, node: Import, ctx: Any = None) -> ast.Import:
         names = [self.visit(alias_item) for alias_item in node.names]
+        if getattr(node, "is_lazy", False):
+            if PY315:
+                return ast.Import(names=names, is_lazy=1)  # type: ignore[call-arg]
+            # PEP 810 needs Python 3.15+ — an eager import behaves the same,
+            # it just loads the module up-front instead of on first use.
         return ast.Import(names=names)
 
     def visit_ImportFrom(self, node: ImportFrom, ctx: Any = None) -> ast.ImportFrom:
         names = [self.visit(alias_item) for alias_item in node.names]
+        if getattr(node, "is_lazy", False) and PY315:
+            return ast.ImportFrom(  # type: ignore[call-overload]
+                module=node.module, names=names, level=node.level, is_lazy=1
+            )
         return ast.ImportFrom(module=node.module, names=names, level=node.level)
 
     def visit_alias(self, node: alias, ctx: Any = None) -> ast.alias:
@@ -365,26 +394,89 @@ class JugaadToPythonTransformer:
         elts = [self.visit(e) for e in node.elts]
         return ast.Set(elts=elts)
 
+    def _unpack_temp(self) -> str:
+        """Fresh name for the hidden loop variable used to lower comprehension unpacking."""
+        name = f"_jug_unpack_{self._unpack_counter}"
+        self._unpack_counter += 1
+        return name
+
+    @staticmethod
+    def _unpack_generator(temp: str, iterable: ast.expr) -> ast.comprehension:
+        return ast.comprehension(
+            target=ast.Name(id=temp, ctx=ast.Store()),
+            iter=iterable,
+            ifs=[],
+            is_async=False,
+        )
+
     def visit_ListComp(self, node: ListComp, ctx: Any = None) -> ast.ListComp:
-        elt = self.visit(node.elt)
         generators = [self.visit(gen) for gen in node.generators]
-        return ast.ListComp(elt=elt, generators=generators)
+        if isinstance(node.elt, Starred):
+            if PY315:
+                return ast.ListComp(elt=self.visit(node.elt), generators=generators)
+            # PEP 798 fallback (≤3.14): [*x ghumo ...] → [t ghumo ... aur t mein x]
+            temp = self._unpack_temp()
+            generators.append(self._unpack_generator(temp, self.visit(node.elt.value)))
+            return ast.ListComp(elt=ast.Name(id=temp, ctx=ast.Load()), generators=generators)
+        return ast.ListComp(elt=self.visit(node.elt), generators=generators)
 
     def visit_SetComp(self, node: SetComp, ctx: Any = None) -> ast.SetComp:
-        elt = self.visit(node.elt)
         generators = [self.visit(gen) for gen in node.generators]
-        return ast.SetComp(elt=elt, generators=generators)
+        if isinstance(node.elt, Starred):
+            if PY315:
+                return ast.SetComp(elt=self.visit(node.elt), generators=generators)
+            # PEP 798 fallback (≤3.14): {*x ghumo ...} → {t ghumo ... aur t mein x}
+            temp = self._unpack_temp()
+            generators.append(self._unpack_generator(temp, self.visit(node.elt.value)))
+            return ast.SetComp(elt=ast.Name(id=temp, ctx=ast.Load()), generators=generators)
+        return ast.SetComp(elt=self.visit(node.elt), generators=generators)
 
     def visit_DictComp(self, node: DictComp, ctx: Any = None) -> ast.DictComp:
+        generators = [self.visit(gen) for gen in node.generators]
+        if node.unpack:
+            unpack_expr = self.visit(node.key)
+            if PY315:
+                return ast.DictComp(key=unpack_expr, value=None, generators=generators)  # type: ignore[arg-type]
+            # PEP 798 fallback (≤3.14): {**d ghumo ...} → {k: v ghumo ... aur k, v mein d.items()}
+            temp_k, temp_v = self._unpack_temp(), self._unpack_temp()
+            items = ast.Call(
+                func=ast.Attribute(value=unpack_expr, attr="items", ctx=ast.Load()),
+                args=[],
+                keywords=[],
+            )
+            generators.append(
+                ast.comprehension(
+                    target=ast.Tuple(
+                        elts=[
+                            ast.Name(id=temp_k, ctx=ast.Store()),
+                            ast.Name(id=temp_v, ctx=ast.Store()),
+                        ],
+                        ctx=ast.Store(),
+                    ),
+                    iter=items,
+                    ifs=[],
+                    is_async=False,
+                )
+            )
+            return ast.DictComp(
+                key=ast.Name(id=temp_k, ctx=ast.Load()),
+                value=ast.Name(id=temp_v, ctx=ast.Load()),
+                generators=generators,
+            )
         key = self.visit(node.key)
         value = self.visit(node.value)
-        generators = [self.visit(gen) for gen in node.generators]
         return ast.DictComp(key=key, value=value, generators=generators)
 
     def visit_GeneratorExp(self, node: GeneratorExp, ctx: Any = None) -> ast.GeneratorExp:
-        elt = self.visit(node.elt)
         generators = [self.visit(gen) for gen in node.generators]
-        return ast.GeneratorExp(elt=elt, generators=generators)
+        if isinstance(node.elt, Starred):
+            if PY315:
+                return ast.GeneratorExp(elt=self.visit(node.elt), generators=generators)
+            # PEP 798 fallback (≤3.14): (*x ghumo ...) → (t ghumo ... aur t mein x)
+            temp = self._unpack_temp()
+            generators.append(self._unpack_generator(temp, self.visit(node.elt.value)))
+            return ast.GeneratorExp(elt=ast.Name(id=temp, ctx=ast.Load()), generators=generators)
+        return ast.GeneratorExp(elt=self.visit(node.elt), generators=generators)
 
     def visit_comprehension(self, node: comprehension, ctx: Any = None) -> ast.comprehension:
         target = self.visit(node.target, ast.Store())
@@ -427,6 +519,26 @@ class JugaadToPythonTransformer:
 
     def visit_JoinedStr(self, node: JoinedStr, ctx: Any = None) -> ast.JoinedStr:
         values = [self.visit(val) for val in node.values]
+        return ast.JoinedStr(values=values)
+
+    def visit_Interpolation(self, node: Interpolation, ctx: Any = None) -> ast.AST:
+        value = self.visit(node.value)
+        format_spec = self.visit(node.format_spec) if node.format_spec else None
+        if PY314:
+            return ast.Interpolation(  # type: ignore[attr-defined]
+                value=value,
+                str=node.str if node.str is not None else "",
+                conversion=node.conversion,
+                format_spec=format_spec,
+            )
+        # Python ≤3.13 has no t-strings: fall back to plain f-string formatting
+        return ast.FormattedValue(value=value, conversion=node.conversion, format_spec=format_spec)
+
+    def visit_TemplateStr(self, node: TemplateStr, ctx: Any = None) -> ast.AST:
+        values = [self.visit(val) for val in node.values]
+        if PY314:
+            return ast.TemplateStr(values=values)  # type: ignore[attr-defined]
+        # Python ≤3.13 has no t-strings: a t-string degrades to an f-string
         return ast.JoinedStr(values=values)
 
     def visit_Constant(self, node: Constant, ctx: Any = None) -> ast.Constant:
@@ -495,7 +607,20 @@ class JugaadToPythonTransformer:
             "yog": "sum",
             "prakar": "type",
         }
-        name_id = id_map.get(node.id, node.id)
+        versioned = VERSIONED_BUILTINS.get(node.id)
+        if versioned is not None:
+            target, min_version = versioned
+            if sys.version_info < min_version:
+                raise JugaadError(
+                    f"'{node.id}' ({target}) ke liye Python "
+                    f"{min_version[0]}.{min_version[1]}+ chahiye — aapke paas "
+                    f"{sys.version_info[0]}.{sys.version_info[1]}.{sys.version_info[2]} hai",
+                    line=node.line,
+                    col=node.col,
+                )
+            name_id = target
+        else:
+            name_id = id_map.get(node.id, node.id)
         return ast.Name(id=name_id, ctx=py_ctx)
 
     def visit_List(self, node: List, ctx: Any = None) -> ast.List:

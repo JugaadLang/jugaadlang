@@ -34,9 +34,11 @@ Every Python keyword has a Hindi (Roman Hindi) equivalent. All keywords are case
 | Keyword | Python Equivalent | Hindi Meaning | Example |
 |---|---|---|---|
 | `koshish` | `try` | Try/Attempt | `koshish:` |
-| `gadbad` | `except` | Problem | `gadbad ValueError:` |
+| `gadbad` | `except` | Problem | `gadbad ValueError, TypeError:` |
 | `aakhir_me` | `finally` | In the end | `aakhir_me:` |
 | `udao` | `raise` | Throw | `udao ValueError("kuch gadbad hai")` |
+
+Several types can be listed without brackets (PEP 758). With `as`, brackets are still required: `gadbad (ValueError, TypeError) as e:`.
 
 ### Imports
 
@@ -45,6 +47,9 @@ Every Python keyword has a Hindi (Roman Hindi) equivalent. All keywords are case
 | `lao` | `import` | Bring | `lao math` |
 | `se` | `from` | From | `se math lao sqrt` |
 | `jaise` | `as` | Like | `lao numpy jaise np` |
+| `sust` | `lazy` (Python 3.15+) | Deferred | `sust lao json` |
+
+`sust` only introduces a `lao` or `se ... lao` statement, so it stays available as a variable name. On Python 3.15+ the import is loaded on first use; older versions import eagerly.
 
 ### Boolean & Operators
 
@@ -132,6 +137,8 @@ These JugaadLang built-in function names map directly to Python's built-in funct
 | `shabd(x)` | `str(x)` | Word/string |
 | `yog(x)` | `sum(x)` | Sum |
 | `prakar(x)` | `type(x)` | Type |
+| `jamhi_kosh(...)` | `frozendict(...)` | Immutable mapping (Python 3.15+) |
+| `pahredaar` | `sentinel` | Unique marker object (Python 3.15+) |
 
 ## JugaadLang Built-in Fun Functions
 
@@ -161,4 +168,5 @@ These are custom functions injected at runtime (not in Python stdlib):
 | `namaste()` | Welcome banner |
 | `debug(var)` | Debug info |
 | `version()` | Show version |
+| `roop(template)` | Render a `t"..."` template to text |
 | `madad()` | Full help menu 

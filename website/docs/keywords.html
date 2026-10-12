@@ -185,7 +185,7 @@
 <td><code>gadbad</code></td>
 <td><code>except</code></td>
 <td>Problem</td>
-<td><code>gadbad ValueError:</code></td>
+<td><code>gadbad ValueError, TypeError:</code></td>
 </tr>
 <tr>
 <td><code>aakhir_me</code></td>
@@ -201,6 +201,7 @@
 </tr>
 </tbody>
 </table></div>
+<p>Several types can be listed without brackets (PEP 758). With <code>as</code>, brackets are still required: <code>gadbad (ValueError, TypeError) as e:</code>.</p>
 <h3 id="imports">Imports</h3>
 <div class="table-scroll"><table>
 <thead>
@@ -230,8 +231,15 @@
 <td>Like</td>
 <td><code>lao numpy jaise np</code></td>
 </tr>
+<tr>
+<td><code>sust</code></td>
+<td><code>lazy</code> (Python 3.15+)</td>
+<td>Deferred</td>
+<td><code>sust lao json</code></td>
+</tr>
 </tbody>
 </table></div>
+<p><code>sust</code> only introduces a <code>lao</code> or <code>se ... lao</code> statement, so it stays available as a variable name. On Python 3.15+ the import is loaded on first use; older versions import eagerly.</p>
 <h3 id="boolean-operators">Boolean &amp; Operators</h3>
 <div class="table-scroll"><table>
 <thead>
@@ -605,6 +613,16 @@
 <td><code>type(x)</code></td>
 <td>Type</td>
 </tr>
+<tr>
+<td><code>jamhi_kosh(...)</code></td>
+<td><code>frozendict(...)</code></td>
+<td>Immutable mapping (Python 3.15+)</td>
+</tr>
+<tr>
+<td><code>pahredaar</code></td>
+<td><code>sentinel</code></td>
+<td>Unique marker object (Python 3.15+)</td>
+</tr>
 </tbody>
 </table></div>
 <h2 id="jugaadlang-built-in-fun-functions">JugaadLang Built-in Fun Functions</h2>
@@ -704,6 +722,10 @@
 <tr>
 <td><code>version()</code></td>
 <td>Show version</td>
+</tr>
+<tr>
+<td><code>roop(template)</code></td>
+<td>Render a <code>t"..."</code> template to text</td>
 </tr>
 <tr>
 <td><code>madad()</code></td>

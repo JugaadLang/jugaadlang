@@ -57,7 +57,7 @@ __license__ = &quot;MIT&quot;
 <h3 id="jugaadlanglexertokens"><code>jugaadlang.lexer.tokens</code></h3>
 <p><strong><code>class TokenType(Enum)</code></strong></p>
 <p>All token types used by the lexer. Categories:
-- <strong>Literals</strong>: <code>INT</code>, <code>FLOAT</code>, <code>STRING</code>, <code>FSTRING</code>
+- <strong>Literals</strong>: <code>INT</code>, <code>FLOAT</code>, <code>STRING</code>, <code>FSTRING</code>, <code>TSTRING</code>
 - <strong>Keywords</strong>: <code>BOLO</code>, <code>POOCHHO</code>, <code>AGAR</code>, <code>SHAYAD</code>, <code>WARNA</code>, <code>GHUMO</code>, <code>JABTAK</code>, <code>BANAO</code>, <code>WAPAS</code>, <code>USTAD</code>, <code>KHUD</code>, <code>LAO</code>, <code>SE</code>, <code>RUKJA</code>, <code>CHALTE_RAHO</code>, <code>KOSHISH</code>, <code>GADBAD</code>, <code>AAKHIR_ME</code>, <code>UDAO</code>, <code>SAHI</code>, <code>GALAT</code>, <code>KUCH_NAHI</code>, <code>AUR</code>, <code>YA</code>, <code>NAHI</code>, <code>TEZ</code>, <code>INTEZAAR</code>, <code>BAANTO</code>, <code>THEEK_HAI</code>, <code>SABKA</code>, <code>CHOTA_FUNKSHAN</code>, <code>MEIN</code>, <code>MEIN_NAHI</code>, <code>HAI</code>, <code>NAHI_HAI</code>, <code>BULAWO</code>, <code>DEL</code>, <code>NONLOCAL</code>, <code>WITH</code>, <code>AS</code>, <code>ASSERT</code>, <code>AGAR_MATCH</code>, <code>KAAND</code>
 - <strong>Operators</strong>: <code>PLUS</code>, <code>MINUS</code>, <code>STAR</code>, <code>SLASH</code>, <code>DOUBLESLASH</code>, <code>PERCENT</code>, <code>DOUBLESTAR</code>, <code>EQ</code>, <code>NEQ</code>, <code>LT</code>, <code>GT</code>, <code>LTE</code>, <code>GTE</code>, <code>ASSIGN</code>, <code>PLUS_ASSIGN</code>, <code>MINUS_ASSIGN</code>, <code>STAR_ASSIGN</code>, <code>SLASH_ASSIGN</code>, <code>PERCENT_ASSIGN</code>, <code>DOUBLESTAR_ASSIGN</code>, <code>DOUBLESLASH_ASSIGN</code>, <code>ARROW</code>, <code>WALRUS</code>, <code>AT</code>, <code>AT_ASSIGN</code>, <code>TILDE</code>, <code>AMP</code>, <code>PIPE</code>, <code>CARET</code>, <code>LSHIFT</code>, <code>RSHIFT</code>, <code>AMP_ASSIGN</code>, <code>PIPE_ASSIGN</code>, <code>CARET_ASSIGN</code>, <code>LSHIFT_ASSIGN</code>, <code>RSHIFT_ASSIGN</code>
 - <strong>Delimiters</strong>: <code>LPAREN</code>, <code>RPAREN</code>, <code>LBRACKET</code>, <code>RBRACKET</code>, <code>LBRACE</code>, <code>RBRACE</code>, <code>COMMA</code>, <code>DOT</code>, <code>COLON</code>, <code>SEMICOLON</code>, <code>ELLIPSIS</code>
@@ -126,7 +126,7 @@ __license__ = &quot;MIT&quot;
 </tr>
 </tbody>
 </table></div>
-<p>Internal: Uses INDENT/DEDENT stack for indentation-based block detection. Supports <code>#</code>, <code>//</code>, <code>/* */</code> comments, all string types (single, double, triple, f-strings), and all number formats.</p>
+<p>Internal: Uses INDENT/DEDENT stack for indentation-based block detection. Supports <code>#</code>, <code>//</code>, <code>/* */</code> comments, all string types (single, double, triple, f-strings, t-strings), and all number formats. A raw <code>r"..."</code> prefix raises a clear lexer error. Prefixes are letters that end at a quote, so identifiers such as <code>test</code>, <code>tf</code>, and <code>f</code> are unaffected.</p>
 <hr />
 <h2 id="module-jugaadlangast_nodes">Module: <code>jugaadlang.ast_nodes</code></h2>
 <h3 id="jugaadlangast_nodesnodes"><code>jugaadlang.ast_nodes.nodes</code></h3>
@@ -134,7 +134,8 @@ __license__ = &quot;MIT&quot;
 <p><strong>Statements:</strong>
 <code>Module</code>, <code>FunctionDef</code>, <code>ClassDef</code>, <code>Return</code>, <code>Delete</code>, <code>Assign</code>, <code>AugAssign</code>, <code>AnnAssign</code>, <code>For</code>, <code>While</code>, <code>If</code>, <code>With</code>, <code>Raise</code>, <code>Try</code>, <code>Assert</code>, <code>Import</code>, <code>ImportFrom</code>, <code>Global</code>, <code>Nonlocal</code>, <code>ExprStmt</code>, <code>Pass</code>, <code>Break</code>, <code>Continue</code>, <code>PoochhoStmt</code>, <code>Match</code></p>
 <p><strong>Expressions:</strong>
-<code>BoolOp</code>, <code>BinOp</code>, <code>UnaryOp</code>, <code>Lambda</code>, <code>IfExp</code>, <code>Dict</code>, <code>Set</code>, <code>ListComp</code>, <code>SetComp</code>, <code>DictComp</code>, <code>GeneratorExp</code>, <code>Await</code>, <code>Yield</code>, <code>YieldFrom</code>, <code>Compare</code>, <code>Call</code>, <code>FormattedValue</code>, <code>JoinedStr</code>, <code>Constant</code>, <code>Attribute</code>, <code>Subscript</code>, <code>Starred</code>, <code>Name</code>, <code>List</code>, <code>Tuple</code>, <code>Slice</code></p>
+<code>BoolOp</code>, <code>BinOp</code>, <code>UnaryOp</code>, <code>Lambda</code>, <code>IfExp</code>, <code>Dict</code>, <code>Set</code>, <code>ListComp</code>, <code>SetComp</code>, <code>DictComp</code>, <code>GeneratorExp</code>, <code>Await</code>, <code>Yield</code>, <code>YieldFrom</code>, <code>Compare</code>, <code>Call</code>, <code>FormattedValue</code>, <code>JoinedStr</code>, <code>TemplateStr</code>, <code>Interpolation</code>, <code>Constant</code>, <code>Attribute</code>, <code>Subscript</code>, <code>Starred</code>, <code>Name</code>, <code>List</code>, <code>Tuple</code>, <code>Slice</code></p>
+<p><code>TemplateStr</code>/<code>Interpolation</code> model PEP 750 t-strings (<code>Interpolation</code> carries <code>value</code>, <code>str</code>, <code>conversion</code>, <code>format_spec</code>). <code>DictComp</code> carries <code>unpack: bool</code> for <code>{**d ghumo ...}</code>; <code>Import</code>/<code>ImportFrom</code> carry <code>is_lazy: bool</code> for <code>sust lao ...</code>.</p>
 <p><strong>Helper Nodes:</strong>
 <code>arg</code>, <code>arguments</code>, <code>keyword</code>, <code>alias</code>, <code>withitem</code>, <code>ExceptHandler</code>, <code>comprehension</code></p>
 <p><strong>Pattern Matching Nodes:</strong>
@@ -177,7 +178,8 @@ __license__ = &quot;MIT&quot;
 - <code>.parse_match()</code> — <code>agar_match</code>/<code>kaand</code>
 - <code>.parse_try()</code> — <code>koshish</code>/<code>gadbad</code>/<code>aakhir_me</code>
 - <code>.parse_lambda()</code> — <code>chota_funkshan</code>
-- <code>.parse_import()</code> / <code>.parse_import_from()</code> — <code>lao</code>/<code>se ... lao</code></p>
+- <code>.parse_import()</code> / <code>.parse_import_from()</code> — <code>lao</code>/<code>se ... lao</code> (also <code>sust</code>-prefixed lazy imports)
+- <code>.parse_fstring()</code> / <code>.parse_tstring()</code> — <code>f"..."</code> and <code>t"..."</code> interpolation, including <code>!r</code>/<code>!s</code>/<code>!a</code> conversions and format specs</p>
 <hr />
 <h2 id="module-jugaadlangtransformer">Module: <code>jugaadlang.transformer</code></h2>
 <h3 id="jugaadlangtransformerto_python"><code>jugaadlang.transformer.to_python</code></h3>
@@ -215,6 +217,38 @@ __license__ = &quot;MIT&quot;
 - <code>bolo</code> → <code>print</code>
 - <code>poochho</code> → <code>input</code>
 - All Hindi built-in names → Python built-in names (mapped in <code>visit_Name</code>)</p>
+<p>Version-gated emission (<code>PY314</code> / <code>PY315</code> constants) — newer syntax is written only when the running interpreter supports it, otherwise an equivalent older construct is emitted:</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>JugaadLang feature</th>
+<th>Python 3.14+ / 3.15+</th>
+<th>Older Python</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>t"..."</code> (PEP 750)</td>
+<td><code>ast.TemplateStr</code> / <code>ast.Interpolation</code></td>
+<td><code>ast.JoinedStr</code> / <code>ast.FormattedValue</code></td>
+</tr>
+<tr>
+<td><code>sust lao x</code> (PEP 810)</td>
+<td><code>ast.Import(is_lazy=1)</code></td>
+<td>plain <code>ast.Import</code></td>
+</tr>
+<tr>
+<td><code>[*x ghumo ...]</code> (PEP 798)</td>
+<td><code>ast.Starred</code> in comprehension</td>
+<td>extra lowering loop</td>
+</tr>
+<tr>
+<td><code>jamhi_kosh</code> / <code>pahredaar</code></td>
+<td><code>frozendict</code> / <code>sentinel</code></td>
+<td><code>JugaadError</code> naming Python 3.15</td>
+</tr>
+</tbody>
+</table></div>
 <hr />
 <h2 id="module-jugaadlangruntime">Module: <code>jugaadlang.runtime</code></h2>
 <h3 id="jugaadlangruntimeinterpreter"><code>jugaadlang.runtime.interpreter</code></h3>
@@ -276,11 +310,16 @@ __license__ = &quot;MIT&quot;
 <td><code>debug(var)</code>, <code>version()</code>, <code>madad()</code></td>
 </tr>
 <tr>
+<td><strong>Templates</strong></td>
+<td><code>roop(template)</code> → render <code>t"..."</code> to <code>str</code></td>
+</tr>
+<tr>
 <td><strong>Built-in Mappings</strong></td>
 <td><code>maan</code> → <code>abs</code>, <code>sab</code> → <code>all</code>, <code>lambaee</code> → <code>len</code>, etc.</td>
 </tr>
 </tbody>
 </table></div>
+<p>Optional builtins from newer CPython releases (<code>frozendict</code>, <code>sentinel</code>, <code>__lazy_import__</code>) are added to the allowlist only when the running interpreter provides them.</p>
 <hr />
 <h2 id="module-jugaadlangerrors">Module: <code>jugaadlang.errors</code></h2>
 <h3 id="jugaadlangerrorsmessages"><code>jugaadlang.errors.messages</code></h3>

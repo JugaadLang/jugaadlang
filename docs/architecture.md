@@ -119,7 +119,8 @@ The lexer tokenizes raw source code into a stream of `Token` objects. Key featur
 
 - **Indentation tracking**: Implements Python-style INDENT/DEDENT tokens using a stack-based approach
 - **Multi-line comments**: Supports `#`, `//`, and `/* */` comment styles
-- **String literals**: Single, double, triple-quoted, and f-strings
+- **String literals**: Single, double, triple-quoted, f-strings, and t-strings (PEP 750); raw `r"..."` prefixes are rejected with a clear error
+- **Imports**: `lao`/`se ... lao`, plus contextual `sust` for lazy imports (PEP 810, Python 3.15+)
 - **Number literals**: Decimal, hex (`0x`), octal (`0o`), binary (`0b`), floats with exponents
 - **Unicode identifiers**: Full Unicode + emoji support in identifiers
 

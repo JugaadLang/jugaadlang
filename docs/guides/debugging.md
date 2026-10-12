@@ -24,6 +24,25 @@ Jaanch poori.
 
 Use `udao ValueError("message")` to reject an invalid value in your own code. A `wapas` inside a function can return a successful result; an exception communicates a failure the caller must handle.
 
+## Catch several exceptions at once
+
+List the types after `gadbad` without brackets (PEP 758 style). Brackets still work: `gadbad (ValueError, TypeError):`.
+
+```jugaadlang
+koshish:
+    ank = int("do")
+gadbad ValueError, TypeError:
+    bolo("Sahi sankhya chahiye.")
+```
+
+Expected output:
+
+```text
+Sahi sankhya chahiye.
+```
+
+Add `as naam` to keep the exception object. Multiple types with `as` need brackets: `gadbad (ValueError, TypeError) as e:`.
+
 ## Common problems
 
 | Error | Check |

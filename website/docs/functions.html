@@ -72,6 +72,15 @@ bolo(sqrt(16))
 4.0
 </code></pre>
 <p>See the <a href="stdlib.html">standard library</a> for available modules. Third-party Python packages must be installed in the environment used by <code>jug</code>. For module resolution details, consult the <a href="architecture.html">architecture</a>; do not assume a <code>.jug</code> file is automatically importable as a Python module.</p>
+<h2 id="import-a-module-lazily">Import a module lazily</h2>
+<p>Prefix an import with <code>sust</code> to defer loading until the name is first used (PEP 810, Python 3.15+). On older Pythons the same line imports eagerly, so the code runs everywhere.</p>
+<pre><code class="language-jugaadlang">sust se json lao dumps
+bolo(dumps({&quot;cup&quot;: 2}))
+</code></pre>
+<p>Expected output:</p>
+<pre><code class="language-text">{&quot;cup&quot;: 2}
+</code></pre>
+<p><code>sust</code> is contextual: it only starts a <code>lao</code> or <code>se ... lao</code> statement, so <code>sust = 5</code> still assigns a variable.</p>
 <h2 id="classes">Classes</h2>
 <p>Use <code>ustad</code> to define a class. The constructor is <code>shuru</code>, and <code>khud</code> refers to the instance.</p>
 <pre><code class="language-jugaadlang">ustad Chai:
@@ -96,6 +105,7 @@ bolo(chai.bill(3))
 <ul>
 <li><a href="#define-and-call-a-function">Define and call a function</a></li>
 <li><a href="#import-a-module">Import a module</a></li>
+<li><a href="#import-a-module-lazily">Import a module lazily</a></li>
 <li><a href="#classes">Classes</a></li>
 </ul>
 </div>

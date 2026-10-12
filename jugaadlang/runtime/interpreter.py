@@ -57,6 +57,18 @@ _SAFE_BUILTINS: dict[str, Any] = {
     ]
 }
 
+# Optional builtins from newer CPython releases. Guarded so the allowlist keeps
+# working on every supported Python (3.10+).
+_OPTIONAL_BUILTINS = (
+    "frozendict",       # PEP 814 — Python 3.15+
+    "sentinel",         # PEP 661 — Python 3.15+
+    "__lazy_import__",  # PEP 810 — Python 3.15+, used by `lazy import`
+)
+for _opt_name in _OPTIONAL_BUILTINS:
+    if hasattr(builtins, _opt_name):
+        _SAFE_BUILTINS[_opt_name] = getattr(builtins, _opt_name)
+del _opt_name
+
 
 class JugaadInterpreter:
     def __init__(self, filename: str = "<main>"):
