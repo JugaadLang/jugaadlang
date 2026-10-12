@@ -9,6 +9,7 @@ All notable changes to **JugaadLang** will be documented in this file.
 - **Test Coverage**: `tests/test_stdlib.py` — 47 tests covering all 18 standard library modules (ganit, samay, crypto, faili, json, tantra, chai, dev, fortune, motivation, love, student, jokes, memes, database, web, crypto_module, catfacts, whatsapp).
 - **CI/CD**: OS matrix expanded to `[ubuntu-latest, windows-latest, macos-latest]` in `.github/workflows/ci.yml`.
 - **Coverage Enforcement**: `[tool.coverage.report] fail_under = 60` added to `pyproject.toml`.
+- **Python 3.14 & 3.15 Support**: PyPI classifiers, Black `target-version`, CI test matrix (`3.10`–`3.15`), and documentation now cover Python 3.14 and 3.15.
 
 ### Audit
 - **Full Repository Audit**: `JUGAADLANG_AUDIT_REPORT.md` — 78 findings across 8 domains (architecture, security, performance, testing, documentation, contribution opportunities).

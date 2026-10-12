@@ -567,7 +567,7 @@ Source (.jug) ──► Lexer (Token Stream) ──► Parser (JL AST) ──►
 ```
 
 ### 🧰 Tech Stack
-- **Language**: Python 3.10+ (Tested across Python 3.10, 3.11, 3.12, 3.13, 3.14)
+- **Language**: Python 3.10+ (Tested across Python 3.10, 3.11, 3.12, 3.13, 3.14, 3.15)
 - **CLI Engine**: `click` with custom `JugaadGroup` and `JugaadCommand`
 - **Terminal UI & Diagnostics**: `rich`
 - **Linting & Code Quality**: `ruff`

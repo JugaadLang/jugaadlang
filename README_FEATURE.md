@@ -15,7 +15,7 @@ This enhancement introduces a custom Click command and group hierarchy (`JugaadG
 
 ## Tech Stack & Architecture
 
-- **Language**: Python 3.10+ (tested across 3.10 – 3.14)
+- **Language**: Python 3.10+ (tested across 3.10 – 3.15)
 - **CLI Framework**: [Click](https://click.palletsprojects.com/)
 - **Terminal Styling & Output**: [Rich](https://rich.readthedocs.io/)
 - **Transpilation Pipeline**:

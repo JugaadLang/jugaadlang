@@ -67,7 +67,7 @@ Before opening a PR, run the following tools locally to verify your changes:
 
 ### 4. Automated Pull Request Checks (CI)
 When you submit or update a Pull Request, GitHub Actions will automatically run the **JugaadLang CI** workflow (`ci.yml`):
-* **Multi-Version Testing**: Pytest runs across Python versions `3.10`, `3.11`, `3.12`, `3.13`, and `3.14`.
+* **Multi-Version Testing**: Pytest runs across Python versions `3.10`, `3.11`, `3.12`, `3.13`, `3.14`, and `3.15`.
 * **Automated Linting**: The codebase is checked using `ruff`.
 
 > [!NOTE]
