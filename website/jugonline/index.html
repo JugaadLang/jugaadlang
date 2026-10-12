@@ -1032,14 +1032,14 @@ bolo("Aapka lucky number aaj hai: " + shabd(k))
         updateProgress(45, "📦 Preparing Package System...", "Loading micropip package manager...");
         await pyodide.loadPackage("micropip");
         
-        updateProgress(70, "🇮🇳 Installing JugaadLang Core...", "Installing jugaadlang-1.2.7-py3-none-any.whl & rich...");
+        updateProgress(70, "🇮🇳 Installing JugaadLang Core...", "Installing jugaadlang-1.2.8-py3-none-any.whl & rich...");
         await pyodide.runPythonAsync(`
 import micropip
 await micropip.install("rich")
 try:
-    await micropip.install("../assets/jugaadlang-1.2.7-py3-none-any.whl", deps=False)
+    await micropip.install("../assets/jugaadlang-1.2.8-py3-none-any.whl", deps=False)
 except Exception:
-    await micropip.install("/assets/jugaadlang-1.2.7-py3-none-any.whl", deps=False)
+    await micropip.install("/assets/jugaadlang-1.2.8-py3-none-any.whl", deps=False)
 `);
 
         updateProgress(90, "⚡ Setting up Compiler Harness...", "Configuring AST parser, lexer and persistent session...");
@@ -1119,7 +1119,7 @@ def run_jugaad(source: str) -> str:
         updateProgress(100, "✅ Engine Ready!", "Initialization complete.");
 
         setTimeout(() => {
-          termView.innerHTML = `<span class="log-success">✓ JugaadLang v1.2.7 Engine Ready! 🇮🇳</span>\n<span class="log-hint">Code likho aur "⚡ Run Code" button dabao (ya Ctrl+Enter press karo).</span>\n\n`;
+          termView.innerHTML = `<span class="log-success">✓ JugaadLang v1.2.8 Engine Ready! 🇮🇳</span>\n<span class="log-hint">Code likho aur "⚡ Run Code" button dabao (ya Ctrl+Enter press karo).</span>\n\n`;
           statusLabel.textContent = "Ready";
           statusIndicator.classList.add("ready");
           runBtn.disabled = false;
