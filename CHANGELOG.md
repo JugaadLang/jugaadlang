@@ -2,7 +2,7 @@
 
 All notable changes to **JugaadLang** will be documented in this file.
 
-## [Unreleased]
+## [v1.2.7] - 2026-10-12
 
 ### Added
 - **Test Coverage**: `tests/test_transformer.py` — 120 parametrized tests covering all keyword mappings, built-in name mappings, operators, comprehensions, pattern matching, async/await, classes, and all statement types.
@@ -33,6 +33,31 @@ All notable changes to **JugaadLang** will be documented in this file.
 - **Remove `chalao` (exec)**: Removed `"chalao": exec` from the interpreter globals and the `"chalao": "exec"` mapping from the transformer name map. JugaadLang users can no longer execute arbitrary Python code via `chalao()`. Closes issue #53 (vector 1).
 - **Remove `kholo` (open)**: Removed `"kholo": open` from the interpreter globals and the `"kholo": "open"` mapping from the transformer name map. JugaadLang users can no longer open arbitrary files via `kholo()`. Closes issue #53 (vector 2).
 - **Hardened `tantra.shell_chalao`**: Changed from `subprocess.run(command, shell=True)` to `shlex.split(command)` with `shell=False`, preventing shell injection attacks. Closes issue #53 (vector 4).
+
+
+### Changed
+- Bump @types/vscode in /vscode_extension
+- Update CHANGELOG for version 1.2.6 with new features, changes, fixes, and documentation improvements
+- Bump eslint from 10.9.0 to 10.12.0 in /vscode_extension
+- Bump the uv group across 1 directory with 5 updates
+- Bump brace-expansion
+- Bump markdown from 3.10 to 3.10.3
+
+### Fixed
+- Show parse error messages in jug check command
+
+### Other
+- Update JugaadLang version from 1.1.6 to 1.2.7 in the website assets and installation scripts
+- Bump version to 1.2.7 in README, __init__, pyproject, package.json, and index.html
+- Update revision and version in uv.lock for compatibility and release
+- Update member link for SapphireUI in team section
+- Add support for Python 3.14 and 3.15 syntax features
+- Refactor code structure for improved readability and maintainability
+- Revamp team section with dynamic member loading and updated titles
+- Add members section with dynamic GitHub contributors loading
+- Implement code changes to enhance functionality and improve performance
+- Bump version to 1.2.6 and update VS Code engine requirement to ^1.140.0
+- Delete docker directory
 
 ## [1.2.6] - 2026-10-06
 
