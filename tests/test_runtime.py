@@ -38,6 +38,53 @@ def test_interpreter_builtins(capsys):
     assert "Bahar jao" in captured.out
 
 
+def test_interpreter_native_builtins(capsys):
+    interpreter = JugaadInterpreter()
+
+    interpreter.run("num = kismat(1, 10)")
+    assert 1 <= interpreter.globals["num"] <= 10
+
+    interpreter.run("coin = sikka()")
+    assert interpreter.globals["coin"] in ("Head", "Tail")
+
+    interpreter.run("namaste()")
+    captured = capsys.readouterr()
+    assert "Welcome to JugaadLang" in captured.out
+
+    interpreter.run("debug(42)")
+    captured = capsys.readouterr()
+    assert "Debug: 42" in captured.out
+
+    interpreter.run("version()")
+    captured = capsys.readouterr()
+    assert "JugaadLang Version:" in captured.out
+
+    interpreter.run("madad()")
+    captured = capsys.readouterr()
+    assert "JugaadLang Full Help Menu" in captured.out
+
+    interpreter.run("jugaad()")
+    captured = capsys.readouterr()
+    assert "Restart karke dekho" in captured.out or "debugger" in captured.out or "StackOverflow" in captured.out or "Commit" in captured.out
+
+    interpreter.run("himmat()")
+    captured = capsys.readouterr()
+    assert "himmat" in captured.out.lower()
+
+    interpreter.run("bachao()")
+    captured = capsys.readouterr()
+    assert "bachao" in captured.out.lower()
+
+    interpreter.run("dhanya_waad()")
+    captured = capsys.readouterr()
+    assert "dhanyawaad" in captured.out.lower()
+
+    interpreter.run("chilla_mat()")
+    captured = capsys.readouterr()
+    assert "chilla mat" in captured.out.lower()
+
+
+
 def test_interpreter_stdlib():
     interpreter = JugaadInterpreter()
     interpreter.run("lao ganit\nx = ganit.sqrt(16)")
