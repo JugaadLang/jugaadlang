@@ -4,6 +4,26 @@ All notable changes to **JugaadLang** will be documented in this file.
 
 ## [Unreleased]
 
+## [1.2.8] - 2026-10-13
+
+### Added
+- Update JugaadLang version to 1.2.8 in index.html and install script
+- Add markdown dependency and update version to 1.2.7
+
+### Changed
+- Update CHANGELOG for version 1.2.7 with new features, changes, fixes, and documentation improvements
+
+### Fixed
+- Ensure checkout step references the main branch
+
+### Documentation
+- Update generated changelog
+
+### Other
+- Update version number to v1.2.8
+- Update version to v1.2.8 in index.html and related documentation
+- Refactor code structure for improved readability and maintainability
+
 ## [1.2.7] - 2026-10-12
 
 ### Changed
