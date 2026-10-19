@@ -70,6 +70,8 @@ from ..ast_nodes.nodes import (
     UnaryOp,
     While,
     With,
+    Yield,
+    YieldFrom,
     alias,
     arg,
     arguments,
@@ -426,6 +428,29 @@ class Parser:
             value = self.parse_expression()
         self._expect_newline_or_eof()
         return Return(value=value, line=tok.line, col=tok.col)
+
+    def parse_yield_expression(self) -> Expr:
+        """Parse `baanto [value]` and `baanto se value` as a yield expression."""
+        tok = self._expect(TokenType.BAANTO, "Expected 'baanto'")
+        if self._match(TokenType.SE):
+            value = self.parse_expression()
+            return YieldFrom(value=value, line=tok.line, col=tok.col)
+
+        if self._check(
+            TokenType.NEWLINE,
+            TokenType.EOF,
+            TokenType.DEDENT,
+            TokenType.RPAREN,
+            TokenType.RBRACKET,
+            TokenType.RBRACE,
+            TokenType.COMMA,
+            TokenType.SEMICOLON,
+            TokenType.COLON,
+        ):
+            return Yield(value=None, line=tok.line, col=tok.col)
+
+        value = self.parse_expression()
+        return Yield(value=value, line=tok.line, col=tok.col)
 
     def parse_delete(self) -> Delete:
         tok = self._expect(TokenType.DEL, "Expected 'del'")
@@ -930,6 +955,10 @@ class Parser:
     # ── Expression Parsing (Precedence Climb / Pratt) ─────────────────
 
     def parse_expression(self, allow_ternary: bool = True) -> Expr:
+        # 0. Yield expressions (baanto value / baanto se value)
+        if self._check(TokenType.BAANTO):
+            return self.parse_yield_expression()
+
         # 1. Lambda functions (chota_funkshan)
         if self._check(TokenType.CHOTA_FUNKSHAN):
             return self.parse_lambda()
