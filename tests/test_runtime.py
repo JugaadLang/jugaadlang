@@ -424,3 +424,24 @@ banao outer():
 res = outer()
 """)
     assert interpreter.globals["res"] == 20
+
+
+def test_generator_expression_as_call_argument(capsys):
+    interpreter = JugaadInterpreter()
+    interpreter.run("bolo(yog(x * x ghumo x mein range(5)))")
+    assert capsys.readouterr().out.strip() == "30"
+
+
+def test_generator_expression_with_filter_as_call_argument(capsys):
+    interpreter = JugaadInterpreter()
+    interpreter.run("bolo(yog(x * x ghumo x mein range(10) agar x % 2 == 0))")
+    assert capsys.readouterr().out.strip() == "120"
+
+
+def test_generator_expression_documented_example(capsys):
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+sum_of_squares = yog(x * x ghumo x mein range(100))
+bolo(sum_of_squares)
+""")
+    assert capsys.readouterr().out.strip() == "328350"

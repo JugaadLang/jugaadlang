@@ -1117,7 +1117,29 @@ class Parser:
                             keyword(arg=id_tok.value, value=val, line=id_tok.line, col=id_tok.col)
                         )
                     else:
-                        args.append(self.parse_expression())
+                        arg_value = self.parse_expression()
+                        if self._check(TokenType.GHUMO):
+                            # A bare generator expression must be the only argument,
+                            # e.g. yog(x * x ghumo x mein range(100)).
+                            if args or keywords:
+                                raise self._error(
+                                    "Generator expression akela argument hona chahiye"
+                                )
+                            generators = self.parse_comprehensions()
+                            args.append(
+                                GeneratorExp(
+                                    elt=arg_value,
+                                    generators=generators,
+                                    line=arg_value.line,
+                                    col=arg_value.col,
+                                )
+                            )
+                            if not self._check(TokenType.RPAREN):
+                                raise self._error(
+                                    "Generator expression ke baad aur arguments nahi aa sakte"
+                                )
+                            break
+                        args.append(arg_value)
                     if not self._match(TokenType.COMMA):
                         break
                 self._expect(TokenType.RPAREN, "Expected ')' after call arguments")
