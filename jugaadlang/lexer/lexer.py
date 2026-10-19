@@ -4,11 +4,11 @@ JugaadLang Lexer — Tokenizes .jug source code.
 Supports:
   - Full indentation tracking (INDENT/DEDENT like Python)
   - JugaadLang keywords + English interop keywords
-  - # line comments, // line comments, /* block comments */
+  - # line comments, // line comments (line start only), /* block comments */
   - Single/double/triple-quoted strings, f-strings, t-strings (PEP 750)
   - Integer literals: decimal, hex (0x), octal (0o), binary (0b), underscores
   - Float literals with optional exponent
-  - All operators including **, //, ->, :=, ==, !=, <=, >=
+  - All operators including **, // (floor division), ->, :=, ==, !=, <=, >=
   - Full Unicode + emoji support in identifiers and strings
 """
 
@@ -148,7 +148,10 @@ class Lexer:
 
                 # Blank or comment-only line — skip
                 cur = self._current()
-                if cur == "\n" or cur == "" or (cur == "#") or (cur == "/" and self._peek() == "/"):
+                is_slash_comment = (
+                    cur == "/" and self._peek() == "/" and self._peek(2) != "="
+                )
+                if cur == "\n" or cur == "" or (cur == "#") or is_slash_comment:
                     # Still at line start if next line
                     if cur == "\n":
                         self._advance()
@@ -157,7 +160,7 @@ class Lexer:
                             self._advance()
                         if self._current() == "\n":
                             self._advance()
-                    elif cur == "/" and self._peek() == "/":
+                    elif is_slash_comment:
                         while self._pos < len(self.source) and self.source[self._pos] != "\n":
                             self._advance()
                         if self._current() == "\n":
@@ -198,7 +201,12 @@ class Lexer:
                 # Don't emit COMMENT tokens — just skip
                 continue
 
-            if ch == "/" and self._peek() == "/":
+            if (
+                ch == "/"
+                and self._peek() == "/"
+                and self._peek(2) != "="
+                and self._is_line_start_comment()
+            ):
                 self._scan_line_comment_slash()
                 continue
 
@@ -253,6 +261,22 @@ class Lexer:
         self._advance()
         while self._pos < len(self.source) and self.source[self._pos] != "\n":
             self._advance()
+
+    def _is_line_start_comment(self) -> bool:
+        """Return True when `//` starts a comment rather than floor division.
+
+        The comment form applies when the only thing before `//` on the line is
+        whitespace, a `;` statement separator, or the start of the file. In
+        every other position `//` is the floor-division operator.
+        """
+        idx = self._pos - 1
+        while idx >= 0:
+            char = self.source[idx]
+            if char in (" ", "\t", "\r"):
+                idx -= 1
+                continue
+            return char in ("\n", ";")
+        return True
 
     def _scan_block_comment(self) -> None:
         # Skip "/*"
