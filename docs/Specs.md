@@ -32,6 +32,13 @@ Statements are terminated by:
 - A newline (most common)
 - A semicolon (`;`) for inline separation
 
+A semicolon also lets several statements share one line after a block header. Every statement on that line belongs to the block:
+
+```jugaadlang
+agar sahi: bolo("ek"); bolo("do")
+agar galat: bolo("kabhi nahi")   # nothing runs, the guard covers the whole line
+```
+
 ### 1.4 String Literals
 
 | Type | Syntax | Example |

@@ -424,3 +424,43 @@ banao outer():
 res = outer()
 """)
     assert interpreter.globals["res"] == 20
+
+
+def test_inline_block_false_condition_runs_nothing(capsys):
+    interpreter = JugaadInterpreter()
+    interpreter.run('agar galat: bolo("a"); bolo("b")\n')
+    assert capsys.readouterr().out.strip() == ""
+
+
+def test_inline_block_true_condition_runs_every_statement(capsys):
+    interpreter = JugaadInterpreter()
+    interpreter.run('agar sahi: bolo("a"); bolo("b")\n')
+    assert capsys.readouterr().out.split() == ["a", "b"]
+
+
+def test_inline_block_three_statements_follow_the_condition(capsys):
+    interpreter = JugaadInterpreter()
+    interpreter.run('agar galat: bolo("a"); bolo("b"); bolo("c")\n')
+    assert capsys.readouterr().out.strip() == ""
+
+    interpreter.run('agar sahi: bolo("a"); bolo("b"); bolo("c")\n')
+    assert capsys.readouterr().out.split() == ["a", "b", "c"]
+
+
+def test_inline_block_does_not_swallow_the_next_line(capsys):
+    interpreter = JugaadInterpreter()
+    interpreter.run('agar galat: bolo("a"); bolo("b")\nbolo("after")\n')
+    assert capsys.readouterr().out.split() == ["after"]
+
+
+def test_inline_block_with_wapas():
+    interpreter = JugaadInterpreter()
+    interpreter.run('banao f(): wapas 7; bolo("never")\nresult = f()\n')
+    assert interpreter.globals["result"] == 7
+
+
+def test_inline_while_block_statements_stay_conditional():
+    interpreter = JugaadInterpreter()
+    interpreter.run("i = 0\njabtak galat: i = 1; i = 2\n")
+    assert interpreter.globals["i"] == 0
+
