@@ -97,6 +97,34 @@ def test_cli_check_invalid(runner, tmp_path):
     assert "bolo('namaste'" in output
     assert "after call arguments" in output
 
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "rukja\n",
+        "wapas 5\n",
+        "1 = 2\n",
+        "koshish:\n    x = 1\n",
+        "intezaar fetch()\n",
+        "banao f(a, a):\n    theek_hai\n",
+    ],
+)
+def test_cli_check_catches_compile_only_errors(runner, tmp_path, source):
+    jug_file = tmp_path / "bad.jug"
+    jug_file.write_text(source, encoding="utf-8")
+    result = runner.invoke(main, ['check', str(jug_file)])
+    assert result.exit_code == 1
+
+
+def test_cli_check_does_not_execute_the_program(runner, tmp_path):
+    jug_file = tmp_path / "side_effect.jug"
+    jug_file.write_text("bolo('should not run')\n", encoding="utf-8")
+    result = runner.invoke(main, ['check', str(jug_file)])
+    assert result.exit_code == 0
+    assert "should not run" not in result.output
+    assert "sahi hai" in result.output
+
+
 def test_cli_new(runner, tmp_path):
     with runner.isolated_filesystem(temp_dir=tmp_path):
         result = runner.invoke(main, ['new', 'myproject'])
