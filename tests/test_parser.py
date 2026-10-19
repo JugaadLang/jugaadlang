@@ -215,3 +215,38 @@ agar_match x:
     case4 = stmt.cases[4]
     assert isinstance(case4.pattern, MatchAs)
     assert case4.pattern.name is None
+
+
+def parse_source(src: str):
+    tokens = Lexer(src).tokenize()
+    return Parser(tokens, source=src).parse()
+
+
+def test_parse_inline_block_collects_all_semicolon_statements():
+    ast_mod = parse_source('agar sahi: bolo("a"); bolo("b"); bolo("c")\nbolo("after")\n')
+
+    assert len(ast_mod.body) == 2
+    if_stmt = ast_mod.body[0]
+    assert isinstance(if_stmt, If)
+    assert len(if_stmt.body) == 3
+    assert all(isinstance(item, ExprStmt) for item in if_stmt.body)
+    assert all(isinstance(item.value, Call) for item in if_stmt.body)
+
+    following = ast_mod.body[1]
+    assert isinstance(following, ExprStmt)
+    assert isinstance(following.value, Call)
+
+
+def test_parse_inline_block_with_trailing_semicolon():
+    ast_mod = parse_source('agar sahi: bolo("a");\n')
+    if_stmt = ast_mod.body[0]
+    assert isinstance(if_stmt, If)
+    assert len(if_stmt.body) == 1
+
+
+def test_parse_inline_function_body_stays_in_the_body():
+    ast_mod = parse_source('banao f(): wapas 1; bolo("never")\n')
+    func = ast_mod.body[0]
+    assert isinstance(func, FunctionDef)
+    assert [type(item).__name__ for item in func.body] == ["Return", "ExprStmt"]
+

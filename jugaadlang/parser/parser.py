@@ -101,6 +101,10 @@ class Parser:
         self._filename = filename
         self._source_lines = source.splitlines() if source else []
         self._current = 0
+        # Separator consumed after the most recent simple statement: "newline",
+        # "semicolon", "eof" or None. Inline blocks use it to decide whether
+        # another semicolon-separated statement belongs to the same block.
+        self._last_separator: str | None = None
 
     # ── Public API ────────────────────────────────────────────────────
 
@@ -178,10 +182,13 @@ class Parser:
 
     def _expect_newline_or_eof(self) -> None:
         if self._match(TokenType.NEWLINE):
+            self._last_separator = "newline"
             return
         elif self._check(TokenType.EOF, TokenType.DEDENT):
+            self._last_separator = "eof"
             return
         elif self._match(TokenType.SEMICOLON):
+            self._last_separator = "semicolon"
             return
         else:
             raise self._error(
@@ -319,9 +326,17 @@ class Parser:
             self._expect(TokenType.DEDENT, "Expected DEDENT at block end")
             return body
         else:
-            # Inline statement block, e.g. "agar x == 1: y = 2"
-            stmt = self.parse_statement()
-            return [stmt]
+            # Inline statement block, e.g. "agar x == 1: y = 2; z = 3".
+            # Every semicolon-separated statement up to the end of the line
+            # belongs to the block, the same way as in Python. The separator
+            # is consumed while finishing each statement, so the loop checks
+            # whether it was a semicolon before reading the next one.
+            body = [self.parse_statement()]
+            while self._last_separator == "semicolon" and not self._check(
+                TokenType.NEWLINE, TokenType.EOF, TokenType.DEDENT
+            ):
+                body.append(self.parse_statement())
+            return body
 
     def parse_function_def(self, is_async: bool) -> FunctionDef:
         tok = self._expect(TokenType.BANAO, "Expected 'banao' for function definition")
