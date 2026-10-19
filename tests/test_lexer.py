@@ -97,3 +97,84 @@ def test_malformed_unicode_escape_raises_lexer_error(src):
     # unhandled IndexError/ValueError from the interpreter internals.
     with pytest.raises(LexerError):
         Lexer(src).tokenize()
+
+
+@pytest.mark.parametrize(
+    ("src", "message"),
+    [
+        ("0x", "Invalid hexadecimal literal: '0x'"),
+        ("0x_", "Invalid hexadecimal literal: '0x_'"),
+        ("0xZZ", "Invalid hexadecimal literal: '0xZZ'"),
+        ("0xFFg", "Invalid hexadecimal literal: '0xFFg'"),
+        ("0o", "Invalid octal literal: '0o'"),
+        ("0o8", "Invalid octal literal: '0o8'"),
+        ("0b", "Invalid binary literal: '0b'"),
+        ("0b102", "Invalid binary literal: '0b102'"),
+        ("0b2", "Invalid binary literal: '0b2'"),
+        ("1e", "Invalid float literal: '1e'"),
+        ("1e+", "Invalid float literal: '1e+'"),
+        ("1e_", "Invalid float literal: '1e_'"),
+        ("1.5_", "Invalid float literal: '1.5_'"),
+        ("1e5x", "Invalid float literal: '1e5x'"),
+        ("1_", "Invalid decimal literal: '1_'"),
+        ("1__2", "Invalid decimal literal: '1__2'"),
+    ],
+)
+def test_malformed_number_literal_raises_lexer_error(src, message):
+    with pytest.raises(LexerError) as excinfo:
+        Lexer(src).tokenize()
+    assert str(excinfo.value) == message
+    # The reported location is the start of the literal, not the end of the
+    # run that was consumed while scanning it.
+    assert excinfo.value.line == 1
+    assert excinfo.value.col == 1
+
+
+def test_malformed_number_reports_column_inside_statement():
+    with pytest.raises(LexerError) as excinfo:
+        Lexer("x = 0b102").tokenize()
+    assert str(excinfo.value) == "Invalid binary literal: '0b102'"
+    assert excinfo.value.line == 1
+    assert excinfo.value.col == 5
+    assert excinfo.value.source_line == "x = 0b102"
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        "123",
+        "45.67",
+        "0x1A",
+        "0x_FF",
+        "0b1010",
+        "0b_101",
+        "0o75",
+        "0o_755",
+        "1e-3",
+        "1E+3",
+        "1_000_000",
+        "1_000.000_1",
+        "1e1_0",
+        ".5",
+        "1.",
+        "1.e5",
+    ],
+)
+def test_valid_number_literals_still_tokenize(src):
+    tokens = Lexer(src).tokenize()
+    number_tokens = [
+        t for t in tokens if t.type in (TokenType.INT, TokenType.FLOAT)
+    ]
+    assert len(number_tokens) == 1
+    assert number_tokens[0].value.replace("_", "") == src.replace("_", "")
+
+
+def test_number_followed_by_keyword_still_tokenizes():
+    # `2ya 3` used to work without a space and must keep working, so plain
+    # integers do not swallow the following keyword the way malformed floats
+    # and based literals do.
+    tokens = Lexer("2ya 3").tokenize()
+    types = [t.type for t in tokens]
+    assert TokenType.INT in types
+    assert TokenType.YA in types
+

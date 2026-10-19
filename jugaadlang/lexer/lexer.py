@@ -14,6 +14,7 @@ Supports:
 
 from __future__ import annotations
 
+import re
 from typing import Iterator, Optional
 
 from .tokens import KEYWORDS, Token, TokenType
@@ -428,6 +429,21 @@ class Lexer:
         start = self._pos
         is_float = False
 
+        def consume_rest_of_run() -> None:
+            # Keep consuming identifier characters so the reported literal and
+            # the error location cover everything the user wrote. A number can
+            # never be directly followed by an identifier.
+            while self._pos < len(self.source) and _is_id_cont(self.source[self._pos]):
+                self._advance()
+
+        def raise_invalid(kind: str) -> None:
+            raise LexerError(
+                f"Invalid {kind} literal: '{self.source[start : self._pos]}'",
+                line,
+                col,
+                self._source_line_at(line),
+            )
+
         if self._current() == "0" and self._peek() in ("x", "X"):
             # Hex
             self._advance()
@@ -436,9 +452,12 @@ class Lexer:
                 self.source[self._pos] in "0123456789abcdefABCDEF_"
             ):
                 self._advance()
-            yield self._make(
-                TokenType.INT, self.source[start : self._pos].replace("_", ""), line, col
-            )
+            if self._pos < len(self.source) and _is_id_cont(self.source[self._pos]):
+                consume_rest_of_run()
+            raw = self.source[start : self._pos]
+            if not re.fullmatch(r"0[xX](_?[0-9a-fA-F])+", raw):
+                raise_invalid("hexadecimal")
+            yield self._make(TokenType.INT, raw.replace("_", ""), line, col)
             return
 
         if self._current() == "0" and self._peek() in ("o", "O"):
@@ -447,9 +466,12 @@ class Lexer:
             self._advance()
             while self._pos < len(self.source) and self.source[self._pos] in "01234567_":
                 self._advance()
-            yield self._make(
-                TokenType.INT, self.source[start : self._pos].replace("_", ""), line, col
-            )
+            if self._pos < len(self.source) and _is_id_cont(self.source[self._pos]):
+                consume_rest_of_run()
+            raw = self.source[start : self._pos]
+            if not re.fullmatch(r"0[oO](_?[0-7])+", raw):
+                raise_invalid("octal")
+            yield self._make(TokenType.INT, raw.replace("_", ""), line, col)
             return
 
         if self._current() == "0" and self._peek() in ("b", "B"):
@@ -458,9 +480,12 @@ class Lexer:
             self._advance()
             while self._pos < len(self.source) and self.source[self._pos] in "01_":
                 self._advance()
-            yield self._make(
-                TokenType.INT, self.source[start : self._pos].replace("_", ""), line, col
-            )
+            if self._pos < len(self.source) and _is_id_cont(self.source[self._pos]):
+                consume_rest_of_run()
+            raw = self.source[start : self._pos]
+            if not re.fullmatch(r"0[bB](_?[01])+", raw):
+                raise_invalid("binary")
+            yield self._make(TokenType.INT, raw.replace("_", ""), line, col)
             return
 
         # Decimal / float
@@ -483,12 +508,35 @@ class Lexer:
             self._advance()
             if self._pos < len(self.source) and self.source[self._pos] in ("+", "-"):
                 self._advance()
-            while self._pos < len(self.source) and self.source[self._pos].isdigit():
+            while self._pos < len(self.source) and (
+                self.source[self._pos].isdigit() or self.source[self._pos] == "_"
+            ):
                 self._advance()
 
-        raw = self.source[start : self._pos].replace("_", "")
+        if is_float and self._pos < len(self.source) and _is_id_cont(self.source[self._pos]):
+            # A float can never be directly followed by an identifier, so the
+            # rest of the run is part of the malformed literal. Plain integers
+            # are left alone here: `2 ya 3` without a space has always
+            # tokenized as a keyword next to a number, and keywords keep the
+            # existing behavior.
+            consume_rest_of_run()
+            raise_invalid("float")
+
+        raw = self.source[start : self._pos]
+        digit_part = r"[0-9](?:_?[0-9])*"
+        if is_float:
+            valid = re.fullmatch(
+                rf"(?:{digit_part}(?:\.(?:{digit_part})?)?|\.[0-9](?:_?[0-9])*)"
+                rf"(?:[eE][+-]?{digit_part})?",
+                raw,
+            )
+        else:
+            valid = re.fullmatch(digit_part, raw)
+        if not valid:
+            raise_invalid("float" if is_float else "decimal")
+
         ttype = TokenType.FLOAT if is_float else TokenType.INT
-        yield self._make(ttype, raw, line, col)
+        yield self._make(ttype, raw.replace("_", ""), line, col)
 
     # ── Identifier / keyword scanner ──────────────────────────────────
 
