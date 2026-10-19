@@ -424,3 +424,46 @@ banao outer():
 res = outer()
 """)
     assert interpreter.globals["res"] == 20
+
+
+def test_run_expression_type_error_runs_user_code_once():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+events = []
+banao fail():
+    events.append(1)
+    wapas 1 + "bad"
+""")
+    with pytest.raises(TypeError):
+        interpreter.run_expression("fail()")
+    assert interpreter.globals["events"] == [1]
+
+
+def test_run_expression_type_error_runs_cached_code_once():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+events = []
+banao fail():
+    events.append(1)
+    wapas 1 + "bad"
+""")
+    with pytest.raises(TypeError):
+        interpreter.run_expression("fail()")
+    with pytest.raises(TypeError):
+        interpreter.run_expression("fail()")
+    assert interpreter.globals["events"] == [1, 1]
+
+
+def test_run_expression_statement_executes_once():
+    interpreter = JugaadInterpreter()
+    result = interpreter.run_expression("x = 5")
+    assert result is None
+    assert interpreter.globals["x"] == 5
+
+
+def test_run_expression_eval_and_exec_do_not_cross_contaminate():
+    interpreter = JugaadInterpreter()
+    assert interpreter.run_expression("10 * 2 + 5") == 25
+    assert interpreter.run_expression("y = 7") is None
+    assert interpreter.run_expression("10 * 2 + 5") == 25
+    assert interpreter.globals["y"] == 7
