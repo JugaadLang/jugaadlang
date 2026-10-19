@@ -208,8 +208,10 @@ class Parser:
                 return self.parse_function_def(is_async=True)
             elif self._check(TokenType.GHUMO):
                 return self.parse_for(is_async=True)
+            elif self._check(TokenType.WITH):
+                return self.parse_with(is_async=True)
             else:
-                raise self._error("Expected 'banao' or 'ghumo' after 'tez'")
+                raise self._error("Expected 'banao', 'ghumo' or 'ke_saath' after 'tez'")
         elif self._check(TokenType.USTAD):
             return self.parse_class_def()
         elif self._check(TokenType.WAPAS):
@@ -861,7 +863,7 @@ class Parser:
         self._expect_newline_or_eof()
         return Assert(test=test, msg=msg, line=tok.line, col=tok.col)
 
-    def parse_with(self) -> With:
+    def parse_with(self, is_async: bool = False) -> With:
         tok = self._expect(TokenType.WITH, "Expected 'with' or 'ke_saath'")
         items = []
         while True:
@@ -873,7 +875,7 @@ class Parser:
             if not self._match(TokenType.COMMA):
                 break
         body = self.parse_block()
-        return With(items=items, body=body, line=tok.line, col=tok.col)
+        return With(items=items, body=body, is_async=is_async, line=tok.line, col=tok.col)
 
     def parse_expr_statement_or_assignment(self) -> Stmt:
         expr = self.parse_expression()
