@@ -206,13 +206,17 @@ class JugaadToPythonTransformer:
         py_defaults = [self.visit(def_val) for def_val in node.defaults]
         py_vararg = self.visit(node.vararg) if node.vararg else None
         py_kwarg = self.visit(node.kwarg) if node.kwarg else None
+        py_kwonlyargs = [self.visit(arg_item) for arg_item in node.kwonlyargs]
+        py_kw_defaults = [
+            self.visit(def_val) if def_val is not None else None for def_val in node.kw_defaults
+        ]
 
         return ast.arguments(
             posonlyargs=[],
             args=py_args,
             vararg=py_vararg,
-            kwonlyargs=[],
-            kw_defaults=[],
+            kwonlyargs=py_kwonlyargs,
+            kw_defaults=py_kw_defaults,
             kwarg=py_kwarg,
             defaults=py_defaults,
         )

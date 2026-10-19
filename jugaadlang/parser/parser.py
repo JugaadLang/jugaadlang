@@ -353,11 +353,40 @@ class Parser:
         defaults = []
         vararg = None
         kwarg = None
+        # Parameters written after *args are keyword-only, exactly as in Python.
+        kwonlyargs = []
+        kw_defaults = []
+        # Every parameter name shares one namespace, so duplicates between
+        # regular parameters, *args and **kwargs must all be rejected.
+        seen_names: set[str] = set()
+        # Whether a positional parameter with a default has already been seen.
+        # Python aligns `arguments.defaults` to the last N parameters, so a
+        # required parameter after a defaulted one would silently take that
+        # default instead of being required.
+        seen_default = False
+
+        def register_name(ast_name: str, display_name: str, line: int, col: int) -> None:
+            if ast_name in seen_names:
+                raise ParseError(
+                    f"Parameter '{display_name}' is declared more than once",
+                    line,
+                    col,
+                    self._source_line_at(line),
+                )
+            seen_names.add(ast_name)
 
         while not self._check(TokenType.RPAREN, TokenType.EOF):
             if self._match(TokenType.STAR):
                 # *args
                 arg_tok = self._expect(TokenType.IDENTIFIER, "Expected identifier after '*'")
+                if vararg is not None:
+                    raise ParseError(
+                        f"Function already has a '*{vararg.arg}' parameter",
+                        arg_tok.line,
+                        arg_tok.col,
+                        self._source_line_at(arg_tok.line),
+                    )
+                register_name(arg_tok.value, arg_tok.value, arg_tok.line, arg_tok.col)
                 annotation = None
                 if self._match(TokenType.COLON):
                     annotation = self.parse_expression()
@@ -367,6 +396,14 @@ class Parser:
             elif self._match(TokenType.DOUBLESTAR):
                 # **kwargs
                 arg_tok = self._expect(TokenType.IDENTIFIER, "Expected identifier after '**'")
+                if kwarg is not None:
+                    raise ParseError(
+                        f"Function already has a '**{kwarg.arg}' parameter",
+                        arg_tok.line,
+                        arg_tok.col,
+                        self._source_line_at(arg_tok.line),
+                    )
+                register_name(arg_tok.value, arg_tok.value, arg_tok.line, arg_tok.col)
                 annotation = None
                 if self._match(TokenType.COLON):
                     annotation = self.parse_expression()
@@ -376,14 +413,19 @@ class Parser:
             else:
                 # Regular parameter (or 'khud')
                 p_name = ""
+                raw_name = ""
                 p_line, p_col = 0, 0
                 if self._match(TokenType.KHUD):
                     p_name = "self"
+                    raw_name = "khud"
                     p_line, p_col = self._previous_token().line, self._previous_token().col
                 else:
                     arg_tok = self._expect(TokenType.IDENTIFIER, "Expected parameter name")
                     p_name = arg_tok.value
+                    raw_name = arg_tok.value
                     p_line, p_col = arg_tok.line, arg_tok.col
+
+                register_name(p_name, raw_name, p_line, p_col)
 
                 annotation = None
                 if self._match(TokenType.COLON):
@@ -393,15 +435,42 @@ class Parser:
                 if self._match(TokenType.ASSIGN):
                     default_val = self.parse_expression()
 
-                args.append(arg(arg=p_name, annotation=annotation, line=p_line, col=p_col))
-                if default_val:
-                    defaults.append(default_val)
+                # Parameters after *args are keyword-only in Python, so they
+                # are allowed to omit a default even when an earlier
+                # positional parameter has one. They go to kwonlyargs so the
+                # generated function keeps the signature that was written
+                # instead of turning them into positional parameters.
+                if vararg is None:
+                    if default_val is None and seen_default:
+                        raise ParseError(
+                            f"Parameter '{raw_name}' needs a default value because an "
+                            f"earlier parameter already has one",
+                            p_line,
+                            p_col,
+                            self._source_line_at(p_line),
+                        )
+                    args.append(arg(arg=p_name, annotation=annotation, line=p_line, col=p_col))
+                    if default_val is not None:
+                        defaults.append(default_val)
+                        seen_default = True
+                else:
+                    kwonlyargs.append(
+                        arg(arg=p_name, annotation=annotation, line=p_line, col=p_col)
+                    )
+                    kw_defaults.append(default_val)
 
             if not self._match(TokenType.COMMA):
                 break
 
         return arguments(
-            args=args, defaults=defaults, vararg=vararg, kwarg=kwarg, line=tok.line, col=tok.col
+            args=args,
+            defaults=defaults,
+            vararg=vararg,
+            kwarg=kwarg,
+            kwonlyargs=kwonlyargs,
+            kw_defaults=kw_defaults,
+            line=tok.line,
+            col=tok.col,
         )
 
     def parse_class_def(self) -> ClassDef:
@@ -958,8 +1027,17 @@ class Parser:
     def parse_lambda(self) -> Lambda:
         tok = self._expect(TokenType.CHOTA_FUNKSHAN, "Expected 'chota_funkshan'")
         args_list = []
+        seen_names: set[str] = set()
         while not self._check(TokenType.COLON, TokenType.EOF):
             id_tok = self._expect(TokenType.IDENTIFIER, "Expected parameter in lambda")
+            if id_tok.value in seen_names:
+                raise ParseError(
+                    f"Parameter '{id_tok.value}' is declared more than once",
+                    id_tok.line,
+                    id_tok.col,
+                    self._source_line_at(id_tok.line),
+                )
+            seen_names.add(id_tok.value)
             args_list.append(arg(arg=id_tok.value, line=id_tok.line, col=id_tok.col))
             if not self._match(TokenType.COMMA):
                 break

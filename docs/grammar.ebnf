@@ -70,7 +70,11 @@ with_item = expression [ "as" expression ] ;
 block = newline indent { statement } dedent
       | simple_stmt ;
 
-parameters = parameter { "," parameter } [ "," [ "*" [ identifier ] ] ] [ "," [ "**" identifier ] ] ;
+parameters = [ parameter_list [ "," ] ]
+             [ "*" identifier [ "," keyword_only ] [ "," ] ]
+             [ "**" identifier ] ;
+parameter_list = parameter { "," parameter } ;
+keyword_only = parameter { "," parameter } ;
 parameter = ( identifier | "khud" ) [ ":" expression ] [ "=" expression ] ;
 
 expression = lambda_expr

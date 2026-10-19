@@ -290,6 +290,18 @@ banao count_up_to(n):
 bulawo my_function(arg1, arg2)  # same as my_function(arg1, arg2)
 ```
 
+### 6.5 Parameter Rules
+
+```jugaadlang
+banao order(a, b=1, *items, scale=2, **extra):
+    wapas scale
+```
+
+- Required parameters must come before parameters with defaults. `banao f(a=1, b)` is rejected with a `ParseError`, because Python binds defaults to the last parameters and the mistake would silently change which parameter gets the default.
+- Parameter names must be unique. `banao f(a, a)`, `banao f(a, *a)` and `banao f(**a, a)` are all rejected, `khud` included.
+- Only one `*args` and one `**kwargs` parameter are allowed. A second one is a `ParseError`.
+- Parameters listed after `*args` are keyword-only, exactly as in Python: `banao f(*args, b)` must be called as `f(1, 2, b=3)`, and `b` has no default only if it is always passed by keyword.
+
 ---
 
 ## 7. Classes & OOP
