@@ -54,6 +54,18 @@ Escape sequences: `\n`, `\t`, `\r`, `\\`, `\'`, `\"`, `\0`, `\a`, `\b`, `\f`, `\
 | Binary | `0b...` | `0b1010` |
 | Float | `digits.digits` | `3.14`, `1e-3`, `1.5e10` |
 
+Underscores may separate digits, including right after a base prefix, as in Python: `0x_FF`, `0b_101`, `0o_755`, `1_000.000_1`, `1e1_0`.
+
+A malformed literal is rejected by the lexer with a line, a column, and the literal text, instead of an internal Python error or an unrelated parser message:
+
+```
+LexerError: Invalid hexadecimal literal: '0x'
+LexerError: Invalid binary literal: '0b102'
+LexerError: Invalid octal literal: '0o8'
+LexerError: Invalid float literal: '1e'
+LexerError: Invalid decimal literal: '1_'
+```
+
 ### 1.6 Identifiers
 
 Identifiers start with a letter, underscore, or any Unicode character with `isalpha() == True`, followed by alphanumeric or underscore characters. Full Unicode/emoji support.

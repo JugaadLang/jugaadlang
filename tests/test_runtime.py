@@ -6,6 +6,7 @@ import os
 
 import pytest
 
+from jugaadlang.lexer.lexer import LexerError
 from jugaadlang.runtime.interpreter import JugaadInterpreter
 
 
@@ -424,3 +425,18 @@ banao outer():
 res = outer()
 """)
     assert interpreter.globals["res"] == 20
+
+
+def test_malformed_number_literal_fails_before_running():
+    interpreter = JugaadInterpreter()
+    with pytest.raises(LexerError):
+        interpreter.run("x = 0b102")
+
+
+def test_valid_number_literals_still_run():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+values = [0xFF, 0b1010, 0o755, 1e-3, 1_000, 1_000.000_1]
+""")
+    assert interpreter.globals["values"] == [255, 10, 493, 0.001, 1000, 1000.0001]
+

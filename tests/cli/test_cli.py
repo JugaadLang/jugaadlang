@@ -97,6 +97,24 @@ def test_cli_check_invalid(runner, tmp_path):
     assert "bolo('namaste'" in output
     assert "after call arguments" in output
 
+@pytest.mark.parametrize(
+    "source",
+    [
+        "x = 0x\n",
+        "x = 0b102\n",
+        "x = 0o8\n",
+        "x = 1e\n",
+    ],
+)
+def test_cli_check_reports_malformed_number_literals(runner, tmp_path, source):
+    jug_file = tmp_path / "numbers.jug"
+    jug_file.write_text(source, encoding="utf-8")
+    result = runner.invoke(main, ['check', str(jug_file)])
+    output = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+    assert result.exit_code == 1
+    assert "LexerError" in output
+    assert "Invalid" in output
+
 def test_cli_new(runner, tmp_path):
     with runner.isolated_filesystem(temp_dir=tmp_path):
         result = runner.invoke(main, ['new', 'myproject'])
