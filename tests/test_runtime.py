@@ -424,3 +424,43 @@ banao outer():
 res = outer()
 """)
     assert interpreter.globals["res"] == 20
+
+
+def test_runtime_inline_block_multiple_semicolon_statements(capsys):
+    interpreter = JugaadInterpreter()
+
+    # agar galat should execute NONE of the statements
+    interpreter.run('agar galat: bolo("a"); bolo("b")')
+    captured = capsys.readouterr()
+    assert captured.out == ""
+
+    # agar sahi should execute all statements in order
+    interpreter.run('agar sahi: bolo("first"); bolo("second"); bolo("third")')
+    captured = capsys.readouterr()
+    assert captured.out == "first\nsecond\nthird\n"
+
+    # Assignments under conditional inline block
+    interpreter.run("""
+x = 0
+y = 0
+agar galat: x = 1; y = 2
+""")
+    assert interpreter.globals["x"] == 0
+    assert interpreter.globals["y"] == 0
+
+    # Inline while loop
+    interpreter.run("""
+count = 0
+jabtak count < 3: count += 1; bolo(count)
+""")
+    captured = capsys.readouterr()
+    assert captured.out == "1\n2\n3\n"
+    assert interpreter.globals["count"] == 3
+
+    # Inline function with trailing semicolon
+    interpreter.run("""
+banao compute():
+    step = 5; wapas step * 4;
+res = compute()
+""")
+    assert interpreter.globals["res"] == 20

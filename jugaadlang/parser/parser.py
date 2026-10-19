@@ -319,9 +319,16 @@ class Parser:
             self._expect(TokenType.DEDENT, "Expected DEDENT at block end")
             return body
         else:
-            # Inline statement block, e.g. "agar x == 1: y = 2"
-            stmt = self.parse_statement()
-            return [stmt]
+            # Inline statement block, e.g. "agar x == 1: y = 2" or "agar x == 1: y = 2; z = 3"
+            body = [self.parse_statement()]
+            while self._previous_token().type == TokenType.SEMICOLON:
+                while self._match(TokenType.SEMICOLON):
+                    pass
+                if self._check(TokenType.NEWLINE, TokenType.EOF, TokenType.DEDENT):
+                    self._match(TokenType.NEWLINE)
+                    break
+                body.append(self.parse_statement())
+            return body
 
     def parse_function_def(self, is_async: bool) -> FunctionDef:
         tok = self._expect(TokenType.BANAO, "Expected 'banao' for function definition")

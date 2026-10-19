@@ -4,6 +4,7 @@ Tests for JugaadLang Parser.
 
 from jugaadlang.ast_nodes.nodes import (
     Assign,
+    AugAssign,
     Await,
     Call,
     ClassDef,
@@ -21,8 +22,10 @@ from jugaadlang.ast_nodes.nodes import (
     MatchValue,
     Module,
     Name,
+    Return,
     Slice,
     Subscript,
+    While,
 )
 from jugaadlang.lexer.lexer import Lexer
 from jugaadlang.parser.parser import Parser
@@ -215,3 +218,48 @@ agar_match x:
     case4 = stmt.cases[4]
     assert isinstance(case4.pattern, MatchAs)
     assert case4.pattern.name is None
+
+
+def test_parse_inline_block_multiple_semicolon_statements():
+    src = "agar galat: x = 1; y = 2\n"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    ast_mod = parser.parse()
+
+    assert len(ast_mod.body) == 1
+    stmt = ast_mod.body[0]
+    assert isinstance(stmt, If)
+    assert len(stmt.body) == 2
+    assert isinstance(stmt.body[0], Assign)
+    assert isinstance(stmt.body[1], Assign)
+
+    # 3 statements with trailing semicolon
+    src3 = "agar sahi: a = 1; b = 2; c = 3;\n"
+    tokens3 = Lexer(src3).tokenize()
+    ast_mod3 = Parser(tokens3, source=src3).parse()
+    assert len(ast_mod3.body) == 1
+    stmt3 = ast_mod3.body[0]
+    assert isinstance(stmt3, If)
+    assert len(stmt3.body) == 3
+
+    # jabtak while loop
+    src_while = "jabtak n > 0: n -= 1; bolo(n)\n"
+    tokens_while = Lexer(src_while).tokenize()
+    ast_mod_while = Parser(tokens_while, source=src_while).parse()
+    assert len(ast_mod_while.body) == 1
+    stmt_while = ast_mod_while.body[0]
+    assert isinstance(stmt_while, While)
+    assert len(stmt_while.body) == 2
+    assert isinstance(stmt_while.body[0], AugAssign)
+    assert isinstance(stmt_while.body[1], ExprStmt)
+
+    # banao function def
+    src_func = "banao f(): a = 1; wapas a\n"
+    tokens_func = Lexer(src_func).tokenize()
+    ast_mod_func = Parser(tokens_func, source=src_func).parse()
+    assert len(ast_mod_func.body) == 1
+    stmt_func = ast_mod_func.body[0]
+    assert isinstance(stmt_func, FunctionDef)
+    assert len(stmt_func.body) == 2
+    assert isinstance(stmt_func.body[0], Assign)
+    assert isinstance(stmt_func.body[1], Return)
