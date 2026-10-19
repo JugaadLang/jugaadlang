@@ -126,7 +126,7 @@ __license__ = &quot;MIT&quot;
 </tr>
 </tbody>
 </table></div>
-<p>Internal: Uses INDENT/DEDENT stack for indentation-based block detection. Supports <code>#</code>, <code>//</code>, <code>/* */</code> comments, all string types (single, double, triple, f-strings, t-strings), and all number formats. A raw <code>r"..."</code> prefix raises a clear lexer error. Prefixes are letters that end at a quote, so identifiers such as <code>test</code>, <code>tf</code>, and <code>f</code> are unaffected.</p>
+<p>Internal: Uses INDENT/DEDENT stack for indentation-based block detection. Supports <code>#</code>, line-start <code>//</code>, <code>/* */</code> comments, all string types (single, double, triple, f-strings, t-strings), and all number formats. <code>//</code> inside an expression is the floor-division operator. A raw <code>r"..."</code> prefix raises a clear lexer error. Prefixes are letters that end at a quote, so identifiers such as <code>test</code>, <code>tf</code>, and <code>f</code> are unaffected.</p>
 <hr />
 <h2 id="module-jugaadlangast_nodes">Module: <code>jugaadlang.ast_nodes</code></h2>
 <h3 id="jugaadlangast_nodesnodes"><code>jugaadlang.ast_nodes.nodes</code></h3>

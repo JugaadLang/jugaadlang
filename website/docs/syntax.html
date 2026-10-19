@@ -55,8 +55,9 @@
 <h3 id="12-comments">1.2 Comments</h3>
 <p>JugaadLang supports three comment formats:
 * <code># comment</code> — single-line comment (Python style)
-* <code>// comment</code> — single-line comment (C/JS style)
+* <code>// comment</code> — single-line comment (C/JS style), only when <code>//</code> is the first token on a line (leading whitespace and a preceding <code>;</code> are allowed)
 * <code>/* comment */</code> — multi-line/block comment (C/JS style)</p>
+<p>Because <code>//</code> is also the floor-division operator, the two uses are split by position: a line that starts with <code>//</code> (after indentation) is a comment, while <code>//</code> anywhere inside an expression is floor division. For example, <code>x = 7 // 2</code> divides, and <code>x //= 2</code> is floor-division assignment. Trailing <code>//</code> comments after code are not supported; use <code>#</code> for those.</p>
 <hr />
 <h2 id="2-keywords">2. Keywords</h2>
 <p>The compiler tokenizes the following keywords:</p>

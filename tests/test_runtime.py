@@ -424,3 +424,25 @@ banao outer():
 res = outer()
 """)
     assert interpreter.globals["res"] == 20
+
+
+def test_floor_division_operators():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+x = 7 // 2
+y = -7 // 2
+z = 9
+z //= 2
+""")
+    assert interpreter.globals["x"] == 3
+    assert interpreter.globals["y"] == -4
+    assert interpreter.globals["z"] == 4
+
+
+def test_double_slash_comments_still_work_at_runtime():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+// line comment
+x = 10 // 3
+""")
+    assert interpreter.globals["x"] == 3

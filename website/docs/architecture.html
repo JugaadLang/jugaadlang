@@ -154,7 +154,7 @@
 <p>The lexer tokenizes raw source code into a stream of <code>Token</code> objects. Key features:</p>
 <ul>
 <li><strong>Indentation tracking</strong>: Implements Python-style INDENT/DEDENT tokens using a stack-based approach</li>
-<li><strong>Multi-line comments</strong>: Supports <code>#</code>, <code>//</code>, and <code>/* */</code> comment styles</li>
+<li><strong>Multi-line comments</strong>: Supports <code>#</code>, line-start <code>//</code>, and <code>/* */</code> comment styles. <code>//</code> inside an expression is floor division</li>
 <li><strong>String literals</strong>: Single, double, triple-quoted, f-strings, and t-strings (PEP 750); raw <code>r"..."</code> prefixes are rejected with a clear error</li>
 <li><strong>Imports</strong>: <code>lao</code>/<code>se ... lao</code>, plus contextual <code>sust</code> for lazy imports (PEP 810, Python 3.15+)</li>
 <li><strong>Number literals</strong>: Decimal, hex (<code>0x</code>), octal (<code>0o</code>), binary (<code>0b</code>), floats with exponents</li>

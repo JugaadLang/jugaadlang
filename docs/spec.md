@@ -14,8 +14,10 @@ Indentation levels are computed in spaces or tabs (expanded to 8 spaces). Incons
 ### 1.2 Comments
 JugaadLang supports three comment formats:
 * `# comment` — single-line comment (Python style)
-* `// comment` — single-line comment (C/JS style)
+* `// comment` — single-line comment (C/JS style), only when `//` is the first token on a line (leading whitespace and a preceding `;` are allowed)
 * `/* comment */` — multi-line/block comment (C/JS style)
+
+Because `//` is also the floor-division operator, the two uses are split by position: a line that starts with `//` (after indentation) is a comment, while `//` anywhere inside an expression is floor division. For example, `x = 7 // 2` divides, and `x //= 2` is floor-division assignment. Trailing `//` comments after code are not supported; use `#` for those.
 
 ---
 
