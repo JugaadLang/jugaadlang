@@ -424,3 +424,52 @@ banao outer():
 res = outer()
 """)
     assert interpreter.globals["res"] == 20
+
+
+def test_async_with_runtime():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+lao asyncio
+
+ustad AsyncBox:
+    banao __init__(khud, val):
+        khud.val = val
+
+    tez banao __aenter__(khud):
+        wapas khud.val
+
+    tez banao __aexit__(khud, exc_type, exc_val, exc_tb):
+        theek_hai
+
+tez banao main():
+    tez ke_saath AsyncBox(42) jaise val:
+        wapas val
+
+result = asyncio.run(main())
+""")
+    assert interpreter.globals["result"] == 42
+
+
+def test_async_with_body_runs_once():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+lao asyncio
+
+events = []
+
+ustad AsyncBox:
+    tez banao __aenter__(khud):
+        events.append("enter")
+        wapas khud
+
+    tez banao __aexit__(khud, exc_type, exc_val, exc_tb):
+        events.append("exit")
+
+tez banao main():
+    tez ke_saath AsyncBox() jaise box:
+        events.append("body")
+
+asyncio.run(main())
+""")
+    assert interpreter.globals["events"] == ["enter", "body", "exit"]
+

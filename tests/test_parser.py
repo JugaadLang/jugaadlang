@@ -23,6 +23,7 @@ from jugaadlang.ast_nodes.nodes import (
     Name,
     Slice,
     Subscript,
+    With,
 )
 from jugaadlang.lexer.lexer import Lexer
 from jugaadlang.parser.parser import Parser
@@ -215,3 +216,33 @@ agar_match x:
     case4 = stmt.cases[4]
     assert isinstance(case4.pattern, MatchAs)
     assert case4.pattern.name is None
+
+
+def test_parse_async_with():
+    src = "tez banao main():\n    tez ke_saath ctx() jaise f:\n        theek_hai\n"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    ast_mod = parser.parse()
+
+    func = ast_mod.body[0]
+    assert isinstance(func, FunctionDef)
+    assert func.is_async is True
+    with_stmt = func.body[0]
+    assert isinstance(with_stmt, With)
+    assert with_stmt.is_async is True
+    assert len(with_stmt.items) == 1
+    assert isinstance(with_stmt.items[0].context_expr, Call)
+    assert isinstance(with_stmt.items[0].optional_vars, Name)
+    assert with_stmt.items[0].optional_vars.id == "f"
+
+
+def test_parse_plain_with_is_not_async():
+    src = "ke_saath ctx() jaise f:\n    theek_hai\n"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    ast_mod = parser.parse()
+
+    with_stmt = ast_mod.body[0]
+    assert isinstance(with_stmt, With)
+    assert with_stmt.is_async is False
+

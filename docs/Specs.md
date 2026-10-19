@@ -429,7 +429,14 @@ ke_saath open("file.txt", "w") as f:
 # Using 'with'
 with open("file.txt") as f:
     content = f.padho()
+
+# Async context manager
+tez banao main():
+    tez ke_saath AsyncConnection(host) jaise conn:
+        data = intezaar conn.fetch()
 ```
+
+`tez ke_saath` only works inside a `tez banao` function, the same way as in Python.
 
 ---
 
