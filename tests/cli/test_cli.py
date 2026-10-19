@@ -97,6 +97,34 @@ def test_cli_check_invalid(runner, tmp_path):
     assert "bolo('namaste'" in output
     assert "after call arguments" in output
 
+
+def test_cli_check_uncompilable(runner, tmp_path):
+    # 'rukja' (break outside loop) parses but cannot be compiled
+    bad_break = tmp_path / "bad_break.jug"
+    bad_break.write_text("rukja\n", encoding="utf-8")
+    result = runner.invoke(main, ['check', str(bad_break)])
+    assert result.exit_code == 1
+    assert "break" in result.output
+
+    # 'wapas' (return outside function)
+    bad_return = tmp_path / "bad_return.jug"
+    bad_return.write_text("wapas 10\n", encoding="utf-8")
+    result = runner.invoke(main, ['check', str(bad_return)])
+    assert result.exit_code == 1
+    assert "return" in result.output
+
+    # '1 = 2' (assignment to literal)
+    bad_assign = tmp_path / "bad_assign.jug"
+    bad_assign.write_text("1 = 2\n", encoding="utf-8")
+    result = runner.invoke(main, ['check', str(bad_assign)])
+    assert result.exit_code == 1
+
+    # try without except/finally
+    bad_try = tmp_path / "bad_try.jug"
+    bad_try.write_text("koshish:\n    bolo('hi')\n", encoding="utf-8")
+    result = runner.invoke(main, ['check', str(bad_try)])
+    assert result.exit_code == 1
+
 def test_cli_new(runner, tmp_path):
     with runner.isolated_filesystem(temp_dir=tmp_path):
         result = runner.invoke(main, ['new', 'myproject'])
