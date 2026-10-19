@@ -147,54 +147,54 @@ class JugaadInterpreter:
         try:
 
             cache_key = f"expr::{source}"
-            code_obj = cache_manager.get_bytecode(cache_key, filename=self.filename)
-            mode = "eval"
+            ast_mod = cache_manager.get_ast(cache_key, filename=self.filename)
+
+            if ast_mod is None:
+                lexer = Lexer(source, self.filename)
+                tokens = lexer.tokenize()
+                parser = Parser(tokens, self.filename, source)
+                ast_mod = parser.parse()
+                try:
+                    cache_manager.set_ast(cache_key, ast_mod, filename=self.filename)
+                except Exception:
+                    pass
+
+            # The compile mode is a property of the parsed source, so it is part
+            # of the bytecode cache key: an expression and a statement list with
+            # the same text must never share one compiled code object.
+            is_single_expression = len(ast_mod.body) == 1 and isinstance(
+                ast_mod.body[0], ExprStmt
+            )
+            mode = "eval" if is_single_expression else "exec"
+            bytecode_key = f"{cache_key}::{mode}"
+            code_obj = cache_manager.get_bytecode(bytecode_key, filename=self.filename)
 
             if code_obj is None:
-                ast_mod = cache_manager.get_ast(cache_key, filename=self.filename)
-                
-                if ast_mod is None:
-                    lexer = Lexer(source, self.filename)
-                    tokens = lexer.tokenize()
-                    parser = Parser(tokens, self.filename, source)
-                    ast_mod = parser.parse()
-                    try:
-                        cache_manager.set_ast(cache_key, ast_mod, filename=self.filename)
-                    except Exception:
-                        pass
-                
                 transformer = JugaadToPythonTransformer(self.filename)
                 py_ast = transformer.transform(ast_mod)
 
-                # Check if the parsed result is a single expression
-                if isinstance(ast_mod.body[0], ExprStmt) and len(ast_mod.body) == 1:
-                    mode = "eval"
+                if is_single_expression:
                     # In Python AST, py_ast.body[0] is an Expr node containing the actual value
                     expr_ast = ast.Expression(body=py_ast.body[0].value)  # type: ignore
                     ast.fix_missing_locations(expr_ast)
                     code_obj = compile(expr_ast, self.filename, "eval")
                 else:
-                    mode = "exec"
                     code_obj = compile(py_ast, self.filename, "exec")
-                
+
                 try:
-                    cache_manager.set_bytecode(cache_key, code_obj, filename=self.filename)
+                    cache_manager.set_bytecode(bytecode_key, code_obj, filename=self.filename)
                 except Exception:
                     pass
 
+            # Execute the compiled code exactly once. A TypeError raised by the
+            # user's program must propagate instead of re-running the program.
             result = None
-            if mode == "eval" or (hasattr(code_obj, "co_flags") and code_obj.co_flags & 0x010000):
-                # We compile expressions with "eval", which might be distinguishable, but let's just 
-                # try eval, and if it fails because it's not an expression, fallback to exec.
-                try:
-                    result = eval(code_obj, self.globals, self.globals)
-                except TypeError:
-                    # Occurs if code_obj is not an expression
-                    exec(code_obj, self.globals, self.globals)
+            if mode == "eval":
+                result = eval(code_obj, self.globals, self.globals)
             else:
                 exec(code_obj, self.globals, self.globals)
-                
-            event_bus.emit("EXECUTION_COMPLETED", {"filename": self.filename, "mode": "eval_or_exec"})
+
+            event_bus.emit("EXECUTION_COMPLETED", {"filename": self.filename, "mode": mode})
             return result
             
         except Exception as e:
