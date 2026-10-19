@@ -424,3 +424,61 @@ banao outer():
 res = outer()
 """)
     assert interpreter.globals["res"] == 20
+
+
+def test_generator_yield_runtime():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+banao count_up_to(n):
+    count = 1
+    jabtak count <= n:
+        baanto count
+        count += 1
+
+result = list(count_up_to(3))
+""")
+    assert interpreter.globals["result"] == [1, 2, 3]
+
+
+def test_generator_bare_yield_runtime():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+banao gen():
+    baanto
+    baanto
+
+result = list(gen())
+""")
+    assert interpreter.globals["result"] == [None, None]
+
+
+def test_generator_yield_from_runtime():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+banao inner():
+    baanto 1
+    baanto 2
+
+banao outer():
+    baanto se inner()
+    baanto 3
+
+result = list(outer())
+""")
+    assert interpreter.globals["result"] == [1, 2, 3]
+
+
+def test_generator_yield_receives_sent_value():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+banao echo():
+    received = baanto "ready"
+    baanto received
+
+gen = echo()
+first = next(gen)
+second = gen.send("done")
+""")
+    assert interpreter.globals["first"] == "ready"
+    assert interpreter.globals["second"] == "done"
+
