@@ -6,6 +6,7 @@ import os
 
 import pytest
 
+from jugaadlang.parser.parser import ParseError
 from jugaadlang.runtime.interpreter import JugaadInterpreter
 
 
@@ -424,3 +425,34 @@ banao outer():
 res = outer()
 """)
     assert interpreter.globals["res"] == 20
+
+
+def test_function_keyword_only_parameters():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+banao collect(a, b=1, *items, scale=2, **extra):
+    wapas scale
+
+with_scale = collect(1, 2, 3, scale=5)
+without_scale = collect(1)
+""")
+    assert interpreter.globals["with_scale"] == 5
+    assert interpreter.globals["without_scale"] == 2
+
+
+def test_function_required_keyword_only_parameter():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+banao pick(*items, which):
+    wapas which
+
+picked = pick(10, 20, which=20)
+""")
+    assert interpreter.globals["picked"] == 20
+
+
+def test_function_parameter_validation_is_reported_before_running():
+    interpreter = JugaadInterpreter()
+    with pytest.raises(ParseError):
+        interpreter.run("banao f(a=1, b):\n    wapas b\n")
+

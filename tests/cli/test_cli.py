@@ -97,6 +97,26 @@ def test_cli_check_invalid(runner, tmp_path):
     assert "bolo('namaste'" in output
     assert "after call arguments" in output
 
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "banao f(a, a):\n    theek_hai\n",
+        "banao f(a=1, b):\n    wapas b\n",
+        "banao f(*args, *more):\n    theek_hai\n",
+        "banao f(**kwargs, **more):\n    theek_hai\n",
+        "f = chota_funkshan a, a: a\n",
+    ],
+)
+def test_cli_check_rejects_invalid_parameter_lists(runner, tmp_path, source):
+    jug_file = tmp_path / "params.jug"
+    jug_file.write_text(source, encoding="utf-8")
+    result = runner.invoke(main, ['check', str(jug_file)])
+    output = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+    assert result.exit_code == 1
+    assert "ParseError" in output
+
+
 def test_cli_new(runner, tmp_path):
     with runner.isolated_filesystem(temp_dir=tmp_path):
         result = runner.invoke(main, ['new', 'myproject'])

@@ -2,6 +2,8 @@
 Tests for JugaadLang Parser.
 """
 
+import pytest
+
 from jugaadlang.ast_nodes.nodes import (
     Assign,
     Await,
@@ -25,7 +27,7 @@ from jugaadlang.ast_nodes.nodes import (
     Subscript,
 )
 from jugaadlang.lexer.lexer import Lexer
-from jugaadlang.parser.parser import Parser
+from jugaadlang.parser.parser import ParseError, Parser
 
 
 def test_parse_expression_stmt():
@@ -215,3 +217,91 @@ agar_match x:
     case4 = stmt.cases[4]
     assert isinstance(case4.pattern, MatchAs)
     assert case4.pattern.name is None
+
+
+def parse_source(src: str):
+    tokens = Lexer(src).tokenize()
+    return Parser(tokens, source=src).parse()
+
+
+def test_parse_function_arguments_valid_combination():
+    ast_mod = parse_source(
+        "banao f(a, b=1, *args, c=2, **kwargs):\n    wapas c\n"
+    )
+    func = ast_mod.body[0]
+    assert isinstance(func, FunctionDef)
+    arguments = func.args
+    assert [item.arg for item in arguments.args] == ["a", "b"]
+    assert len(arguments.defaults) == 1
+    assert arguments.vararg is not None and arguments.vararg.arg == "args"
+    assert [item.arg for item in arguments.kwonlyargs] == ["c"]
+    assert len(arguments.kw_defaults) == 1
+    assert arguments.kw_defaults[0] is not None
+    assert arguments.kwarg is not None and arguments.kwarg.arg == "kwargs"
+
+
+def test_parse_required_keyword_only_parameter():
+    ast_mod = parse_source("banao f(*args, b):\n    wapas b\n")
+    arguments = ast_mod.body[0].args
+    assert arguments.args == []
+    assert [item.arg for item in arguments.kwonlyargs] == ["b"]
+    assert arguments.kw_defaults == [None]
+
+
+def test_parse_required_keyword_only_after_default():
+    ast_mod = parse_source("banao f(a=1, *args, b):\n    theek_hai\n")
+    arguments = ast_mod.body[0].args
+    assert [item.arg for item in arguments.args] == ["a"]
+    assert [item.arg for item in arguments.kwonlyargs] == ["b"]
+
+
+def test_parse_khud_maps_to_self():
+    ast_mod = parse_source("ustad Box:\n    banao __init__(khud, val=1):\n        theek_hai\n")
+    arguments = ast_mod.body[0].body[0].args
+    assert [item.arg for item in arguments.args] == ["self", "val"]
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        "banao f(a=1, b):\n    wapas b\n",
+        "banao f(a=1, b, c=3):\n    theek_hai\n",
+        "banao f(a=1, b, *args):\n    theek_hai\n",
+    ],
+)
+def test_parse_required_after_default_is_rejected(src):
+    with pytest.raises(ParseError) as excinfo:
+        parse_source(src)
+    assert "needs a default value" in str(excinfo.value)
+    assert "'b'" in str(excinfo.value)
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        "banao f(a, a):\n    theek_hai\n",
+        "banao f(khud, khud):\n    theek_hai\n",
+        "banao f(a, *a):\n    theek_hai\n",
+        "banao f(**a, a):\n    theek_hai\n",
+        "banao f(*args, **args):\n    theek_hai\n",
+        "f = chota_funkshan a, a: a\n",
+    ],
+)
+def test_parse_duplicate_parameter_is_rejected(src):
+    with pytest.raises(ParseError) as excinfo:
+        parse_source(src)
+    assert "declared more than once" in str(excinfo.value)
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        "banao f(*a, *b):\n    theek_hai\n",
+        "banao f(**a, **b):\n    theek_hai\n",
+    ],
+)
+def test_parse_second_vararg_or_kwarg_is_rejected(src):
+    with pytest.raises(ParseError) as excinfo:
+        parse_source(src)
+    assert "already has a" in str(excinfo.value)
+
