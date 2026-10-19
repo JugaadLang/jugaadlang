@@ -52,6 +52,7 @@ from ..ast_nodes.nodes import (
     MatchValue,
     Module,
     Name,
+    NamedExpr,
     Nonlocal,
     Pass,
     PoochhoStmt,
@@ -495,6 +496,11 @@ class JugaadToPythonTransformer:
     def visit_YieldFrom(self, node: YieldFrom, ctx: Any = None) -> ast.YieldFrom:
         value = self.visit(node.value)
         return ast.YieldFrom(value=value)
+
+    def visit_NamedExpr(self, node: NamedExpr, ctx: Any = None) -> ast.NamedExpr:
+        target = self.visit(node.target, ast.Store())
+        value = self.visit(node.value)
+        return ast.NamedExpr(target=target, value=value)
 
     def visit_Compare(self, node: Compare, ctx: Any = None) -> ast.Compare:
         left = self.visit(node.left)
