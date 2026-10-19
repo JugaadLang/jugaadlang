@@ -121,7 +121,10 @@ atom_expr = identifier
           | set_expr
           | fstring
           | tstring
-          | "(" expression ")" ;
+          | "(" expression ")"
+          | "(" named_expr ")" ;
+
+named_expr = identifier ":=" expression ;
 
 fstring = "f" quoted_text ;
 tstring = "t" quoted_text ;

@@ -52,6 +52,7 @@ from ..ast_nodes.nodes import (
     MatchValue,
     Module,
     Name,
+    NamedExpr,
     Nonlocal,
     Pass,
     Pattern,
@@ -1218,6 +1219,16 @@ class Parser:
 
             starred = self._match(TokenType.STAR)
             first = self.parse_expression()
+            if self._match(TokenType.WALRUS):
+                if starred:
+                    raise self._error("Walrus target ke aage '*' nahi lag sakta")
+                if not isinstance(first, Name):
+                    raise self._error(
+                        "Walrus ka target ek simple variable hona chahiye, jaise (n := value)"
+                    )
+                value = self.parse_expression()
+                self._expect(TokenType.RPAREN, "Expected ')' after walrus expression")
+                return NamedExpr(target=first, value=value, line=tok.line, col=tok.col)
             if starred:
                 first = Starred(value=first, line=tok.line, col=tok.col)
             if self._check(TokenType.GHUMO):

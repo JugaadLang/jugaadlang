@@ -424,3 +424,25 @@ banao outer():
 res = outer()
 """)
     assert interpreter.globals["res"] == 20
+
+
+def test_walrus_binds_in_if_condition(capsys):
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+agar (n := lambaee([1, 2, 3])) > 0:
+    bolo(n)
+""")
+    assert capsys.readouterr().out.strip() == "3"
+    assert interpreter.globals["n"] == 3
+
+
+def test_walrus_in_while_condition():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+remaining = 3
+count = 0
+jabtak (remaining := remaining - 1) > 0:
+    count += 1
+""")
+    assert interpreter.globals["count"] == 2
+    assert interpreter.globals["remaining"] == 0

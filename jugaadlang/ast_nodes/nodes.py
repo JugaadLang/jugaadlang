@@ -359,6 +359,14 @@ class YieldFrom(Expr):
 
 
 @dataclass
+class NamedExpr(Expr):
+    """Assignment expression (walrus operator, `(name := value)`)."""
+
+    target: Expr
+    value: Expr
+
+
+@dataclass
 class Compare(Expr):
     """Comparison (x == y, a < b < c)."""
 
