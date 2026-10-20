@@ -62,6 +62,11 @@ class Lexer:
     def __init__(self, source: str, filename: str = "<stdin>") -> None:
         # Normalise line endings
         self.source: str = source.replace("\r\n", "\n").replace("\r", "\n")
+        # Editors on Windows often save UTF-8 with a byte order mark. It is not
+        # part of the program text, so drop a single leading one here instead of
+        # letting it glue itself to the first identifier.
+        if self.source.startswith("\ufeff"):
+            self.source = self.source[1:]
         self.filename: str = filename
         self._pos: int = 0
         self._line: int = 1
@@ -191,6 +196,12 @@ class Lexer:
             if ch in (" ", "\t", "\r"):
                 self._advance()
                 continue
+
+            # ── Stray byte order mark ─────────────────────────────
+            if ch == "\ufeff":
+                raise self._error(
+                    "UTF-8 BOM sirf source ke shuru mein aa sakta hai, beech mein nahi"
+                )
 
             # ── Comments ──────────────────────────────────────────
             if ch == "#":

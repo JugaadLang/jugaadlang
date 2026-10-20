@@ -97,3 +97,25 @@ def test_malformed_unicode_escape_raises_lexer_error(src):
     # unhandled IndexError/ValueError from the interpreter internals.
     with pytest.raises(LexerError):
         Lexer(src).tokenize()
+
+
+def test_leading_bom_is_ignored():
+    plain = 'bolo("hello")\nx = 1\n'
+    with_bom = "\ufeff" + plain
+
+    plain_tokens = Lexer(plain).tokenize()
+    bom_tokens = Lexer(with_bom).tokenize()
+
+    assert [(t.type, t.value, t.line, t.col) for t in plain_tokens] == [
+        (t.type, t.value, t.line, t.col) for t in bom_tokens
+    ]
+    assert bom_tokens[0].type == TokenType.BOLO
+    assert bom_tokens[0].line == 1
+    assert bom_tokens[0].col == 1
+
+
+def test_bom_in_the_middle_is_rejected():
+    src = 'bolo("first")\n\ufeffbolo("second")\n'
+    with pytest.raises(LexerError) as exc_info:
+        Lexer(src).tokenize()
+    assert "BOM" in str(exc_info.value)
