@@ -424,3 +424,38 @@ banao outer():
 res = outer()
 """)
     assert interpreter.globals["res"] == 20
+
+
+def test_runtime_starred_call_arguments():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+nums = [3, 1, 4]
+biggest = max(*nums)
+""")
+    assert interpreter.globals["biggest"] == 4
+
+    interpreter.run("""
+banao total(*items):
+    s = 0
+    ghumo n mein items:
+        s += n
+    wapas s
+out = total(*[1, 2, 3])
+""")
+    assert interpreter.globals["out"] == 6
+
+
+def test_runtime_double_starred_call_keywords():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+opts = {"a": 1}
+merged = dict(**opts, b=2)
+""")
+    assert interpreter.globals["merged"] == {"a": 1, "b": 2}
+
+    interpreter.run("""
+banao pick(x, y, z=0):
+    wapas x + y + z
+result = pick(1, *[2], z=3)
+""")
+    assert interpreter.globals["result"] == 6
