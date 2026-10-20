@@ -423,7 +423,7 @@ class Parser:
         tok = self._expect(TokenType.WAPAS, "Expected 'wapas'")
         value = None
         if not self._check(TokenType.NEWLINE, TokenType.EOF, TokenType.DEDENT):
-            value = self.parse_expression()
+            value = self.parse_expression_list()
         self._expect_newline_or_eof()
         return Return(value=value, line=tok.line, col=tok.col)
 
@@ -439,17 +439,10 @@ class Parser:
 
     def parse_for(self, is_async: bool) -> For:
         tok = self._expect(TokenType.GHUMO, "Expected 'ghumo'")
-        target = self.parse_primary()
-        if self._match(TokenType.COMMA):
-            elts = [target]
-            while True:
-                elts.append(self.parse_primary())
-                if not self._match(TokenType.COMMA):
-                    break
-            target = Tuple(elts=elts, line=target.line, col=target.col)
+        target = self.parse_target_list()
 
         self._expect(TokenType.MEIN, "Expected 'mein' after loop target variables")
-        iter_expr = self.parse_expression()
+        iter_expr = self.parse_expression_list()
         body = self.parse_block()
 
         orelse = []
@@ -876,15 +869,15 @@ class Parser:
         return With(items=items, body=body, line=tok.line, col=tok.col)
 
     def parse_expr_statement_or_assignment(self) -> Stmt:
-        expr = self.parse_expression()
+        expr = self.parse_expression_list()
 
         # Check for assignment
         if self._match(TokenType.ASSIGN):
             targets = [expr]
-            value = self.parse_expression()
+            value = self.parse_expression_list()
             while self._match(TokenType.ASSIGN):
                 targets.append(value)
-                value = self.parse_expression()
+                value = self.parse_expression_list()
             self._expect_newline_or_eof()
             return Assign(targets=targets, value=value, line=expr.line, col=expr.col)
 
@@ -906,6 +899,10 @@ class Parser:
         }
 
         if self._current_token().type in aug_assign_tokens:
+            if isinstance(expr, Tuple):
+                raise self._error(
+                    "Augmented assignment ke liye ek hi target chahiye, comma list nahi"
+                )
             tok = self._advance()
             op = aug_assign_tokens[tok.type]
             value = self.parse_expression()
@@ -914,10 +911,14 @@ class Parser:
 
         # Check for annotated assignment, e.g. x: int = 10
         if self._match(TokenType.COLON):
+            if isinstance(expr, Tuple):
+                raise self._error(
+                    "Annotation ke liye ek hi target chahiye, comma list nahi"
+                )
             annotation = self.parse_expression()
             value = None
             if self._match(TokenType.ASSIGN):
-                value = self.parse_expression()
+                value = self.parse_expression_list()
             self._expect_newline_or_eof()
             return AnnAssign(
                 target=expr, annotation=annotation, value=value, line=expr.line, col=expr.col
@@ -954,6 +955,62 @@ class Parser:
             return IfExp(body=expr, test=cond, orelse=orelse, line=expr.line, col=expr.col)
 
         return expr
+
+    def _parse_list_item(self, allow_star: bool) -> Expr:
+        """Parse one item of a comma separated expression list."""
+        if allow_star and self._match(TokenType.STAR):
+            tok = self._previous_token()
+            return Starred(value=self.parse_expression(), line=tok.line, col=tok.col)
+        return self.parse_expression()
+
+    def parse_expression_list(self, allow_star: bool = False) -> Expr:
+        """Parse ``expr (, expr)* [,]`` and return a Tuple once a comma appears.
+
+        Python accepts unparenthesised tuples in assignments, return statements
+        and loop targets, so ``a = 1, 2`` and ``wapas 1, 2`` must produce a
+        Tuple instead of failing on the comma.
+        """
+        first = self._parse_list_item(allow_star)
+        if not self._match(TokenType.COMMA):
+            return first
+
+        elts = [first]
+        while not self._check(
+            TokenType.NEWLINE,
+            TokenType.EOF,
+            TokenType.DEDENT,
+            TokenType.SEMICOLON,
+            TokenType.ASSIGN,
+            TokenType.COLON,
+            TokenType.RPAREN,
+            TokenType.RBRACKET,
+            TokenType.RBRACE,
+            TokenType.MEIN,
+        ):
+            elts.append(self._parse_list_item(allow_star))
+            if not self._match(TokenType.COMMA):
+                break
+        return Tuple(elts=elts, line=first.line, col=first.col)
+
+    def _parse_target_item(self, allow_star: bool) -> Expr:
+        """Parse one loop or assignment target (primary, optionally starred)."""
+        if allow_star and self._match(TokenType.STAR):
+            tok = self._previous_token()
+            return Starred(value=self.parse_primary(), line=tok.line, col=tok.col)
+        return self.parse_primary()
+
+    def parse_target_list(self, allow_star: bool = False) -> Expr:
+        """Parse ``target (, target)*`` for ``ghumo`` loops."""
+        first = self._parse_target_item(allow_star)
+        if not self._match(TokenType.COMMA):
+            return first
+
+        elts = [first]
+        while not self._check(TokenType.NEWLINE, TokenType.EOF, TokenType.DEDENT, TokenType.MEIN):
+            elts.append(self._parse_target_item(allow_star))
+            if not self._match(TokenType.COMMA):
+                break
+        return Tuple(elts=elts, line=first.line, col=first.col)
 
     def parse_lambda(self) -> Lambda:
         tok = self._expect(TokenType.CHOTA_FUNKSHAN, "Expected 'chota_funkshan'")
