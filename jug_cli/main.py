@@ -31,6 +31,34 @@ for _stream in (sys.stdout, sys.stderr):
             pass
 
 
+def _read_source_file(file: str) -> str:
+    """Read a .jug source file with clear errors for directories and encodings.
+
+    click.Path(exists=True) also accepts directories, and a plain open() on a
+    directory or a non-UTF-8 file raised exceptions that the command bodies
+    used to swallow, so the user only saw exit code 1 with no explanation.
+    Report both cases in words instead.
+    """
+    if os.path.isdir(file):
+        console_stderr.print(
+            f"[bold red]'{file}' ek directory hai, file nahi. "
+            "Kisi .jug file ka path dijiye.[/bold red]"
+        )
+        sys.exit(1)
+    try:
+        with open(file, "r", encoding="utf-8") as f:
+            return f.read()
+    except UnicodeDecodeError:
+        console_stderr.print(
+            f"[bold red]'{file}' valid UTF-8 file nahi hai. "
+            "File ko UTF-8 mein save karke dobara try kijiye.[/bold red]"
+        )
+        sys.exit(1)
+    except OSError as exc:
+        console_stderr.print(f"[bold red]'{file}' padhi nahi ja saki: {exc}[/bold red]")
+        sys.exit(1)
+
+
 class JugaadCommand(click.Command):
     """Click Command supporting an Examples section in help output."""
 
@@ -116,8 +144,7 @@ def run(ctx: click.Context, file: str) -> None:
         # Pass extra arguments to sys.argv
         sys.argv = [file] + ctx.args
 
-        with open(file, "r", encoding="utf-8") as f:
-            source = f.read()
+        source = _read_source_file(file)
 
         interpreter = JugaadInterpreter(filename=file)
         interpreter.run(source)
@@ -251,8 +278,7 @@ def new(project_name: str) -> None:
 def compile(file: str, output: str | None) -> None:
     """Transpile a JugaadLang (.jug) file to standard Python code."""
     try:
-        with open(file, "r", encoding="utf-8") as f:
-            source = f.read()
+        source = _read_source_file(file)
 
         from jugaadlang.cache.manager import cache_manager
         from jugaadlang.lexer.lexer import Lexer
@@ -299,11 +325,8 @@ def compile(file: str, output: str | None) -> None:
 @click.argument("file", type=click.Path(exists=True))
 def check(file: str) -> None:
     """Validate JugaadLang file syntax without executing it."""
-    source = ""
+    source = _read_source_file(file)
     try:
-        with open(file, "r", encoding="utf-8") as f:
-            source = f.read()
-
         from jugaadlang.cache.manager import cache_manager
         from jugaadlang.lexer.lexer import Lexer
         from jugaadlang.parser.parser import Parser
@@ -337,8 +360,7 @@ def typecheck(file: str) -> None:
     console.print("[bold green]🕵️ JugaadLang Type Checker[/bold green]")
     console.print(f"Type checking [cyan]{file}[/cyan]...")
     try:
-        with open(file, "r", encoding="utf-8") as f:
-            source = f.read()
+        source = _read_source_file(file)
 
         from jugaadlang.lexer.lexer import Lexer
         from jugaadlang.parser.parser import Parser
