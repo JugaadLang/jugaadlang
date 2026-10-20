@@ -424,3 +424,34 @@ banao outer():
 res = outer()
 """)
     assert interpreter.globals["res"] == 20
+
+
+def test_runtime_tuple_subscript():
+    interpreter = JugaadInterpreter()
+    interpreter.run('d = {(1, 2): "pair"}')
+    interpreter.run("value = d[1, 2]")
+    assert interpreter.globals["value"] == "pair"
+
+
+def test_runtime_tuple_subscript_assignment():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+m = {}
+m[1, 2] = 5
+saved = m[1, 2]
+""")
+    assert interpreter.globals["saved"] == 5
+
+
+def test_runtime_generic_annotations():
+    interpreter = JugaadInterpreter()
+    interpreter.run('x: dict[str, int] = {"a": 7}')
+    assert interpreter.globals["x"] == {"a": 7}
+
+    interpreter.run("""
+generic_alias = tuple[int, ...]
+banao first_list(a: list[int]) -> list[int]:
+    wapas a
+result = first_list([1, 2])
+""")
+    assert interpreter.globals["result"] == [1, 2]
