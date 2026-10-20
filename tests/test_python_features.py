@@ -165,6 +165,53 @@ def test_fstring_double_braces_are_literal():
     assert values[-1].value == "}"
 
 
+def test_fstring_debug_specifier_keeps_source_text():
+    module = parse('bolo(f"{x=}")')
+    joined = module.body[0].value.args[0]
+    assert isinstance(joined, JoinedStr)
+    assert [type(v).__name__ for v in joined.values] == ["Constant", "FormattedValue"]
+    assert joined.values[0].value == "x="
+    formatted = joined.values[1]
+    assert formatted.conversion == ord("r")
+    assert formatted.format_spec is None
+
+
+def test_fstring_debug_specifier_keeps_spaces():
+    module = parse('bolo(f"{x = }")')
+    joined = module.body[0].value.args[0]
+    assert joined.values[0].value == "x = "
+    assert joined.values[1].value.id == "x"
+
+
+def test_fstring_debug_specifier_with_format_spec():
+    module = parse('bolo(f"{x=:>5}")')
+    formatted = module.body[0].value.args[0].values[1]
+    assert formatted.conversion == -1
+    assert isinstance(formatted.format_spec, JoinedStr)
+
+
+def test_fstring_debug_specifier_with_conversion():
+    module = parse('bolo(f"{x=!s}")')
+    formatted = module.body[0].value.args[0].values[1]
+    assert formatted.conversion == ord("s")
+
+
+def test_fstring_comparison_is_not_debug_specifier():
+    module = parse('bolo(f"{x==42}")')
+    joined = module.body[0].value.args[0]
+    assert [type(v).__name__ for v in joined.values] == ["FormattedValue"]
+    assert joined.values[0].conversion == -1
+
+
+def test_tstring_debug_specifier():
+    module = parse('t"{x=}"')
+    template = module.body[0].value
+    assert [type(v).__name__ for v in template.values] == ["Constant", "Interpolation"]
+    assert template.values[0].value == "x="
+    assert template.values[1].str == "x"
+    assert template.values[1].conversion == ord("r")
+
+
 # ── Parser: PEP 758 bracket-less except ───────────────────────────────────────
 
 
@@ -312,6 +359,34 @@ def test_roop_is_a_noop_for_plain_strings():
     interpreter = JugaadInterpreter()
     interpreter.run("s = roop('seedha text')")
     assert interpreter.globals["s"] == "seedha text"
+
+
+def test_fstring_debug_output_matches_cpython(capsys):
+    source = (
+        "x = 42\n"
+        's = "abc"\n'
+        'bolo(f"{x=}")\n'
+        'bolo(f"{x = }")\n'
+        'bolo(f"{x=:>5}")\n'
+        'bolo(f"{s=}")\n'
+        'bolo(f"{s=:>8}")\n'
+        'bolo(f"{x==42}")\n'
+    )
+    lines = run(source, capsys).splitlines()
+    assert lines == ["x=42", "x = 42", "x=   42", "s='abc'", "s=     abc", "True"]
+
+
+def test_tstring_debug_output_matches_fstring(capsys):
+    source = (
+        "x = 42\n"
+        'bolo(roop(t"{x=}"))\n'
+        'bolo(f"{x=}")\n'
+        'bolo(roop(t"{x=:>5}"))\n'
+        'bolo(f"{x=:>5}")\n'
+    )
+    lines = run(source, capsys).splitlines()
+    assert lines[0] == lines[1] == "x=42"
+    assert lines[2] == lines[3] == "x=   42"
 
 
 def test_lazy_import_target_python_ast():
