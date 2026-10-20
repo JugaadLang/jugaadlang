@@ -2,6 +2,8 @@
 Tests for JugaadLang Parser.
 """
 
+import pytest
+
 from jugaadlang.ast_nodes.nodes import (
     Assign,
     Await,
@@ -9,6 +11,7 @@ from jugaadlang.ast_nodes.nodes import (
     ClassDef,
     Constant,
     ExprStmt,
+    For,
     FunctionDef,
     If,
     IfExp,
@@ -23,11 +26,12 @@ from jugaadlang.ast_nodes.nodes import (
     Name,
     Return,
     Slice,
+    Starred,
     Subscript,
     Tuple,
 )
 from jugaadlang.lexer.lexer import Lexer
-from jugaadlang.parser.parser import Parser
+from jugaadlang.parser.parser import ParseError, Parser
 
 
 def test_parse_expression_stmt():
@@ -299,3 +303,61 @@ def test_parse_chained_tuple_assignment():
     assert isinstance(stmt, Assign)
     assert len(stmt.targets) == 2
     assert isinstance(stmt.value, Tuple)
+
+
+def test_parse_starred_assignment_target():
+    src = "head, *tail = items"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    ast_mod = parser.parse()
+
+    stmt = ast_mod.body[0]
+    assert isinstance(stmt, Assign)
+    target = stmt.targets[0]
+    assert isinstance(target, Tuple)
+    assert isinstance(target.elts[0], Name)
+    assert isinstance(target.elts[1], Starred)
+    assert isinstance(target.elts[1].value, Name)
+    assert target.elts[1].value.id == "tail"
+
+
+def test_parse_starred_parenthesized_target():
+    src = "(a, *rest) = values"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    ast_mod = parser.parse()
+
+    stmt = ast_mod.body[0]
+    assert isinstance(stmt, Assign)
+    target = stmt.targets[0]
+    assert isinstance(target, Tuple)
+    assert isinstance(target.elts[1], Starred)
+
+
+def test_parse_starred_for_target():
+    src = "ghumo head, *tail mein rows:\n    bolo(head)\n"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    ast_mod = parser.parse()
+
+    stmt = ast_mod.body[0]
+    assert isinstance(stmt, For)
+    target = stmt.target
+    assert isinstance(target, Tuple)
+    assert isinstance(target.elts[1], Starred)
+
+
+def test_parse_bare_starred_target_rejected():
+    src = "*a = 1"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    with pytest.raises(ParseError):
+        parser.parse()
+
+
+def test_parse_bare_starred_for_target_rejected():
+    src = "ghumo *a mein rows:\n    bolo(a)\n"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    with pytest.raises(ParseError):
+        parser.parse()

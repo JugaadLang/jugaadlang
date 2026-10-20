@@ -563,7 +563,7 @@ class JugaadToPythonTransformer:
 
     def visit_Starred(self, node: Starred, ctx: Any = None) -> ast.Starred:
         py_ctx = ctx if ctx is not None else ast.Load()
-        value = self.visit(node.value)
+        value = self.visit(node.value, py_ctx)
         return ast.Starred(value=value, ctx=py_ctx)
 
     def visit_Name(self, node: Name, ctx: Any = None) -> ast.Name:

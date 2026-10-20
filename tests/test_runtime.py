@@ -479,3 +479,47 @@ def test_runtime_chained_tuple_assignment():
     interpreter.run("a = b = 1, 2")
     assert interpreter.globals["a"] == (1, 2)
     assert interpreter.globals["b"] == (1, 2)
+
+
+def test_runtime_starred_assignment():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+head, *tail = [1, 2, 3]
+""")
+    assert interpreter.globals["head"] == 1
+    assert interpreter.globals["tail"] == [2, 3]
+
+
+def test_runtime_starred_parenthesized_assignment():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+*init, last = [1, 2, 3]
+(a, *rest) = [4, 5, 6]
+""")
+    assert interpreter.globals["init"] == [1, 2]
+    assert interpreter.globals["last"] == 3
+    assert interpreter.globals["a"] == 4
+    assert interpreter.globals["rest"] == [5, 6]
+
+
+def test_runtime_starred_for_target():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+heads = []
+tails = []
+ghumo head, *tail mein [[1, 2, 3], [4, 5, 6]]:
+    heads.append(head)
+    tails.append(tail)
+""")
+    assert interpreter.globals["heads"] == [1, 4]
+    assert interpreter.globals["tails"] == [[2, 3], [5, 6]]
+
+
+def test_runtime_starred_value_expression():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+a = [1, 2]
+b = [3]
+combined = *a, *b, 9
+""")
+    assert interpreter.globals["combined"] == (1, 2, 3, 9)
