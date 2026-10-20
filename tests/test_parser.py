@@ -23,6 +23,7 @@ from jugaadlang.ast_nodes.nodes import (
     Name,
     Slice,
     Subscript,
+    Tuple,
 )
 from jugaadlang.lexer.lexer import Lexer
 from jugaadlang.parser.parser import Parser
@@ -215,3 +216,53 @@ agar_match x:
     case4 = stmt.cases[4]
     assert isinstance(case4.pattern, MatchAs)
     assert case4.pattern.name is None
+
+
+def test_parse_tuple_subscript():
+    src = "bolo(d[1, 2])"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    ast_mod = parser.parse()
+
+    subscript = ast_mod.body[0].value.args[0]
+    assert isinstance(subscript, Subscript)
+    assert isinstance(subscript.slice, Tuple)
+    assert [elt.value for elt in subscript.slice.elts] == [1, 2]
+
+
+def test_parse_tuple_subscript_with_slice():
+    src = "bolo(p[1:2, 3])"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    ast_mod = parser.parse()
+
+    subscript = ast_mod.body[0].value.args[0]
+    assert isinstance(subscript.slice, Tuple)
+    assert isinstance(subscript.slice.elts[0], Slice)
+    assert subscript.slice.elts[0].lower.value == 1
+    assert subscript.slice.elts[0].upper.value == 2
+    assert subscript.slice.elts[1].value == 3
+
+
+def test_parse_single_element_tuple_subscript():
+    src = "bolo(d[1,])"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    ast_mod = parser.parse()
+
+    subscript = ast_mod.body[0].value.args[0]
+    assert isinstance(subscript.slice, Tuple)
+    assert len(subscript.slice.elts) == 1
+
+
+def test_parse_generic_annotation_with_commas():
+    src = "x: dict[str, int] = {'a': 1}"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    ast_mod = parser.parse()
+
+    stmt = ast_mod.body[0]
+    annotation = stmt.annotation
+    assert isinstance(annotation, Subscript)
+    assert isinstance(annotation.slice, Tuple)
+    assert len(annotation.slice.elts) == 2

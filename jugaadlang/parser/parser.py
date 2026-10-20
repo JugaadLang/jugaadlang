@@ -1126,8 +1126,18 @@ class Parser:
                 id_tok = self._expect(TokenType.IDENTIFIER, "Expected attribute name")
                 expr = Attribute(value=expr, attr=id_tok.value, line=expr.line, col=expr.col)
             elif self._match(TokenType.LBRACKET):
-                # Subscript / Slice
-                slice_expr = self.parse_slice()
+                # Subscript / Slice. Commas make a tuple subscript: x[1, 2],
+                # x[1:2, 3], x[1,] and generic hints like dict[str, int].
+                first = self.parse_slice()
+                if self._match(TokenType.COMMA):
+                    elts = [first]
+                    while not self._check(TokenType.RBRACKET, TokenType.EOF):
+                        elts.append(self.parse_slice())
+                        if not self._match(TokenType.COMMA):
+                            break
+                    slice_expr = Tuple(elts=elts, line=first.line, col=first.col)
+                else:
+                    slice_expr = first
                 self._expect(TokenType.RBRACKET, "Expected ']' at end of subscript")
                 expr = Subscript(value=expr, slice=slice_expr, line=expr.line, col=expr.col)
             else:
