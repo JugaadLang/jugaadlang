@@ -424,3 +424,50 @@ banao outer():
 res = outer()
 """)
     assert interpreter.globals["res"] == 20
+
+
+def test_runtime_match_star_pattern():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+head = kuch_nahi
+tail = kuch_nahi
+agar_match [1, 2, 3]:
+    kaand [a, *rest]:
+        head = a
+        tail = rest
+""")
+    assert interpreter.globals["head"] == 1
+    assert interpreter.globals["tail"] == [2, 3]
+
+
+def test_runtime_match_star_middle_and_ignore():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+middle = kuch_nahi
+last = kuch_nahi
+agar_match [1, 2, 3, 4]:
+    kaand [a, *rest, z]:
+        middle = rest
+        last = z
+""")
+    assert interpreter.globals["middle"] == [2, 3]
+    assert interpreter.globals["last"] == 4
+
+    interpreter.run("""
+hit = galat
+agar_match [9, 9]:
+    kaand [*_]:
+        hit = sahi
+""")
+    assert interpreter.globals["hit"] is True
+
+
+def test_runtime_match_star_nested_tuple_pattern():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+inner = kuch_nahi
+agar_match [1, (2, 3, 4)]:
+    kaand [a, (b, *rest)]:
+        inner = rest
+""")
+    assert interpreter.globals["inner"] == [3, 4]
