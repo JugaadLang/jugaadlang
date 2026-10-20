@@ -165,6 +165,11 @@ def test_fstring_double_braces_are_literal():
     assert values[-1].value == "}"
 
 
+def test_named_unicode_escape_in_fstring():
+    namespace = execute('msg = f"\\N{SNOWMAN} {1 + 1}"')
+    assert namespace["msg"] == "\u2603 2"
+
+
 # ── Parser: PEP 758 bracket-less except ───────────────────────────────────────
 
 
