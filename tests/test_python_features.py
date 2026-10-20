@@ -245,6 +245,61 @@ def test_comprehension_filter_still_parses():
     assert len(comp.generators[0].ifs) == 1
 
 
+def test_comprehension_accepts_multiple_filters_per_clause():
+    module = parse("bolo([x ghumo x mein row agar x > 1 agar x < 5 agar x != 3])")
+    comp = module.body[0].value.args[0]
+    assert isinstance(comp, ListComp)
+    assert len(comp.generators[0].ifs) == 3
+
+
+def test_comprehension_multiple_clauses_multiple_filters():
+    src = "bolo([(x, y) ghumo x mein a agar x > 0 ghumo y mein b agar y > 0 agar y != x])"
+    comp = parse(src).body[0].value.args[0]
+    assert len(comp.generators) == 2
+    assert len(comp.generators[0].ifs) == 1
+    assert len(comp.generators[1].ifs) == 2
+
+
+def test_comprehension_multiple_filters_runtime(capsys):
+    source = (
+        "evens = [x ghumo x mein range(10) agar x > 2 agar x < 8 agar x % 2 == 0]\n"
+        "bolo(evens)\n"
+        "pairs = [(x, y) ghumo x mein range(3) agar x > 0 "
+        "ghumo y mein range(3) agar y > 0 agar y != x]\n"
+        "bolo(pairs)\n"
+    )
+    lines = run(source, capsys).splitlines()
+    assert lines[0] == "[4, 6]"
+    assert lines[1] == "[(1, 2), (2, 1)]"
+
+
+def test_comprehension_multiple_filters_all_kinds(capsys):
+    source = (
+        "s = {x ghumo x mein range(6) agar x > 1 agar x < 5}\n"
+        "d = {x: x * x ghumo x mein range(6) agar x > 1 agar x < 5}\n"
+        "g = (x ghumo x mein range(6) agar x > 1 agar x < 5)\n"
+        "bolo(sorted(s))\n"
+        "bolo(d)\n"
+        "bolo(sum(g))\n"
+    )
+    lines = run(source, capsys).splitlines()
+    assert lines[0] == "[2, 3, 4]"
+    assert lines[1] == "{2: 4, 3: 9, 4: 16}"
+    assert lines[2] == "9"
+
+
+def test_comprehension_ternary_still_works(capsys):
+    source = (
+        'labels = [("bada" agar x > 2 warna "chota") ghumo x mein range(5)]\n'
+        "bolo(labels)\n"
+        "kept = [x ghumo x mein range(5) agar (sahi agar x > 2 warna galat)]\n"
+        "bolo(kept)\n"
+    )
+    lines = run(source, capsys).splitlines()
+    assert lines[0] == "['chota', 'chota', 'chota', 'bada', 'bada']"
+    assert lines[1] == "[3, 4]"
+
+
 # ── Parser: PEP 810 lazy imports ──────────────────────────────────────────────
 
 
