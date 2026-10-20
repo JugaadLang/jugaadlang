@@ -1109,7 +1109,30 @@ class Parser:
                 args = []
                 keywords = []
                 while not self._check(TokenType.RPAREN, TokenType.EOF):
-                    if self._check(TokenType.IDENTIFIER) and self._peek().type == TokenType.ASSIGN:
+                    if self._match(TokenType.STAR):
+                        # f(*args): iterable unpacking in a call
+                        star_tok = self._previous_token()
+                        args.append(
+                            Starred(
+                                value=self.parse_expression(),
+                                line=star_tok.line,
+                                col=star_tok.col,
+                            )
+                        )
+                    elif self._match(TokenType.DOUBLESTAR):
+                        # f(**kwargs): mapping unpacking in a call
+                        star_tok = self._previous_token()
+                        keywords.append(
+                            keyword(
+                                arg=None,
+                                value=self.parse_expression(),
+                                line=star_tok.line,
+                                col=star_tok.col,
+                            )
+                        )
+                    elif (
+                        self._check(TokenType.IDENTIFIER) and self._peek().type == TokenType.ASSIGN
+                    ):
                         id_tok = self._advance()
                         self._advance()  # '='
                         val = self.parse_expression()

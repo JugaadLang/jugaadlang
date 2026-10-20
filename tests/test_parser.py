@@ -22,6 +22,7 @@ from jugaadlang.ast_nodes.nodes import (
     Module,
     Name,
     Slice,
+    Starred,
     Subscript,
 )
 from jugaadlang.lexer.lexer import Lexer
@@ -215,3 +216,46 @@ agar_match x:
     case4 = stmt.cases[4]
     assert isinstance(case4.pattern, MatchAs)
     assert case4.pattern.name is None
+
+
+def test_parse_starred_call_argument():
+    src = "bolo(max(*args))"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    ast_mod = parser.parse()
+
+    outer_call = ast_mod.body[0].value
+    assert isinstance(outer_call, Call)
+    inner_call = outer_call.args[0]
+    assert isinstance(inner_call, Call)
+    assert isinstance(inner_call.args[0], Starred)
+    assert isinstance(inner_call.args[0].value, Name)
+
+
+def test_parse_double_starred_call_keyword():
+    src = "bolo(dict(**opts))"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    ast_mod = parser.parse()
+
+    outer_call = ast_mod.body[0].value
+    inner_call = outer_call.args[0]
+    assert isinstance(inner_call, Call)
+    assert len(inner_call.keywords) == 1
+    assert inner_call.keywords[0].arg is None
+    assert isinstance(inner_call.keywords[0].value, Name)
+
+
+def test_parse_mixed_starred_call_arguments():
+    src = "call(1, *rest, extra=2, **opts)"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    ast_mod = parser.parse()
+
+    call = ast_mod.body[0].value
+    assert isinstance(call, Call)
+    assert len(call.args) == 2
+    assert isinstance(call.args[1], Starred)
+    assert len(call.keywords) == 2
+    assert call.keywords[0].arg == "extra"
+    assert call.keywords[1].arg is None
