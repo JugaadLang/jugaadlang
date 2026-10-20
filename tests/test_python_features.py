@@ -19,6 +19,7 @@ import pytest
 
 from jugaadlang.ast_nodes.nodes import (
     Assign,
+    Constant,
     DictComp,
     FormattedValue,
     GeneratorExp,
@@ -163,6 +164,85 @@ def test_fstring_double_braces_are_literal():
     values = module.body[0].value.args[0].values
     assert values[0].value == "{"
     assert values[-1].value == "}"
+
+
+# ── Parser: adjacent string literal concatenation ─────────────────────────────
+
+
+def test_adjacent_plain_strings_concatenate():
+    module = parse('msg = "a" "b" "c"')
+    value = module.body[0].value
+    assert isinstance(value, Constant)
+    assert value.value == "abc"
+
+
+def test_adjacent_plain_and_fstring_concatenate():
+    module = parse('msg = "a" f"b{c}"')
+    joined = module.body[0].value
+    assert isinstance(joined, JoinedStr)
+    assert [type(v).__name__ for v in joined.values] == ["Constant", "FormattedValue"]
+    assert joined.values[0].value == "ab"
+    assert joined.values[1].value.id == "c"
+
+
+def test_adjacent_fstrings_merge_parts():
+    module = parse('msg = f"a{c}" f"d{e}"')
+    joined = module.body[0].value
+    assert isinstance(joined, JoinedStr)
+    assert [type(v).__name__ for v in joined.values] == [
+        "Constant",
+        "FormattedValue",
+        "Constant",
+        "FormattedValue",
+    ]
+    assert joined.values[0].value == "a"
+    assert joined.values[2].value == "d"
+
+
+def test_adjacent_tstrings_merge_parts():
+    module = parse('msg = t"a{c}" t"d"')
+    template = module.body[0].value
+    assert isinstance(template, TemplateStr)
+    assert [type(v).__name__ for v in template.values] == [
+        "Constant",
+        "Interpolation",
+        "Constant",
+    ]
+    assert template.values[0].value == "a"
+    assert template.values[2].value == "d"
+
+
+def test_tstring_cannot_mix_with_plain_string():
+    with pytest.raises(ParseError):
+        parse('msg = "a" t"b"')
+    with pytest.raises(ParseError):
+        parse('msg = t"a" "b"')
+
+
+def test_tstring_cannot_mix_with_fstring():
+    with pytest.raises(ParseError):
+        parse('msg = f"a" t"b"')
+    with pytest.raises(ParseError):
+        parse('msg = t"a" f"b"')
+
+
+def test_adjacent_strings_runtime(capsys):
+    source = (
+        "x = 1\n"
+        'bolo("a" "b" "c")\n'
+        'bolo(f"v={x}" "!")\n'
+        'bolo("do" "ne")\n'
+        'bolo("multi" "word")\n'
+        'bolo("part1" "part2", "part3", sep="-")\n'
+    )
+    lines = run(source, capsys).splitlines()
+    assert lines == ["abc", "v=1!", "done", "multiword", "part1part2-part3"]
+
+
+def test_adjacent_strings_value():
+    namespace = execute('msg = "kon" "nichiwa"\nother = f"{msg}" "!"')
+    assert namespace["msg"] == "konnichiwa"
+    assert namespace["other"] == "konnichiwa!"
 
 
 # ── Parser: PEP 758 bracket-less except ───────────────────────────────────────
