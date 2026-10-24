@@ -97,6 +97,50 @@ def test_cli_check_invalid(runner, tmp_path):
     assert "bolo('namaste'" in output
     assert "after call arguments" in output
 
+def test_cli_run_directory(runner, tmp_path):
+    result = runner.invoke(main, ['run', str(tmp_path)])
+    output = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+    assert result.exit_code != 0
+    assert "directory hai" in output
+
+def test_cli_check_directory(runner, tmp_path):
+    result = runner.invoke(main, ['check', str(tmp_path)])
+    output = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+    assert result.exit_code != 0
+    assert "directory hai" in output
+    assert "Traceback" not in output
+
+def test_cli_compile_directory(runner, tmp_path):
+    result = runner.invoke(main, ['compile', str(tmp_path)])
+    output = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+    assert result.exit_code != 0
+    assert "directory hai" in output
+
+def test_cli_run_invalid_utf8(runner, tmp_path):
+    jug_file = tmp_path / "bad.jug"
+    jug_file.write_bytes(b"bolo('\xff\xfe')")
+    result = runner.invoke(main, ['run', str(jug_file)])
+    output = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+    assert result.exit_code != 0
+    assert "UTF-8" in output
+
+def test_cli_check_invalid_utf8(runner, tmp_path):
+    jug_file = tmp_path / "bad.jug"
+    jug_file.write_bytes(b"bolo('\xff\xfe')")
+    result = runner.invoke(main, ['check', str(jug_file)])
+    output = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+    assert result.exit_code != 0
+    assert "UTF-8" in output
+    assert "Traceback" not in output
+
+def test_cli_typecheck_invalid_utf8(runner, tmp_path):
+    jug_file = tmp_path / "bad.jug"
+    jug_file.write_bytes(b"bolo('\xff\xfe')")
+    result = runner.invoke(main, ['typecheck', str(jug_file)])
+    output = re.sub(r"\x1b\[[0-9;]*m", "", result.output)
+    assert result.exit_code != 0
+    assert "UTF-8" in output
+
 def test_cli_new(runner, tmp_path):
     with runner.isolated_filesystem(temp_dir=tmp_path):
         result = runner.invoke(main, ['new', 'myproject'])
