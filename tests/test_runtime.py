@@ -479,3 +479,13 @@ items = [
 """)
     assert interpreter.globals["items"] == [1, 2]
 
+def test_runtime_string_escapes(capsys):
+    interpreter = JugaadInterpreter()
+    interpreter.run(
+        'bolo("\\101\\102")\n'
+        'bolo("\\N{SNOWMAN}")\n'
+        'bolo("\\U0001F600")\n'
+    )
+    captured = capsys.readouterr()
+    lines = captured.out.splitlines()
+    assert lines == ["AB", "\u2603", "\U0001F600"]
