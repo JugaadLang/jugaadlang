@@ -1649,7 +1649,7 @@ class Parser:
             iter_expr = self.parse_expression(allow_ternary=False)
             ifs = []
             while self._match(TokenType.AGAR):
-                ifs.append(self.parse_expression())
+                ifs.append(self.parse_expression(allow_ternary=False))
             generators.append(
                 comprehension(target=target, iter=iter_expr, ifs=ifs, is_async=is_async)
             )
