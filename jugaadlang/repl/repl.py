@@ -374,6 +374,10 @@ class JugaadREPL:
         console.print(
             "[dim]Type code and press Enter. Enter blank line to execute block. Ctrl+D to exit.[/dim]\n"
         )
+        console.print(
+            "[dim]A line ending with ':' opens a block and the next line is indented automatically. "
+            "Start a line with your own spaces to return to an outer level.[/dim]\n"
+        )
 
         session: PromptSession = PromptSession(
             history=FileHistory(self.history_file),
@@ -391,14 +395,28 @@ class JugaadREPL:
 
                 # Check for block entry
                 if line.rstrip().endswith(":"):
+                    # Lines are indented automatically. Every line ending with
+                    # ':' opens one more level, so nested blocks can be built
+                    # one line at a time and the prompt shows the current
+                    # depth. A line that starts with whitespace is kept exactly
+                    # as typed, which is how an outer level is reached again.
                     lines = [line]
-                    indent = "    "
+                    level = 1
                     while True:
+                        indent = "    " * level
                         sub_line = session.prompt(".. " + indent)
                         if not sub_line.strip():
                             # Double enter / empty line executes
                             break
-                        lines.append(indent + sub_line)
+                        if sub_line[:1] in (" ", "\t"):
+                            source_line = sub_line
+                            typed_indent = len(sub_line) - len(sub_line.lstrip())
+                            level = typed_indent // 4
+                        else:
+                            source_line = indent + sub_line
+                        lines.append(source_line)
+                        if source_line.rstrip().endswith(":"):
+                            level += 1
                     source = "\n".join(lines)
                 else:
                     source = line
