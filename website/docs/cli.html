@@ -153,7 +153,7 @@ jug search requests
 jug compile main.jug    # prints Python source to stdout
 </code></pre>
 <h3 id="jug-check-file"><code>jug check FILE</code></h3>
-<p>Validate a JugaadLang file's syntax without executing it.</p>
+<p>Validate a JugaadLang file without executing it. The file is lexed, parsed, transformed, and compiled, so both syntax errors and errors that only appear during compilation (a top-level <code>rukja</code> or <code>wapas</code>, an invalid assignment target, a <code>koshish</code> block with no handler, and so on) are reported with a non-zero exit code.</p>
 <pre><code class="language-bash">jug check main.jug
 </code></pre>
 <h3 id="jug-typecheck-file"><code>jug typecheck FILE</code></h3>

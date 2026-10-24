@@ -111,7 +111,7 @@ jug compile main.jug    # prints Python source to stdout
 
 ### `jug check FILE`
 
-Validate a JugaadLang file's syntax without executing it.
+Validate a JugaadLang file without executing it. The file is lexed, parsed, transformed, and compiled, so both syntax errors and errors that only appear during compilation (a top-level `rukja` or `wapas`, an invalid assignment target, a `koshish` block with no handler, and so on) are reported with a non-zero exit code.
 
 ```bash
 jug check main.jug
