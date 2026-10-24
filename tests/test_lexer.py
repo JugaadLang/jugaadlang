@@ -97,3 +97,53 @@ def test_malformed_unicode_escape_raises_lexer_error(src):
     # unhandled IndexError/ValueError from the interpreter internals.
     with pytest.raises(LexerError):
         Lexer(src).tokenize()
+
+
+def test_octal_escapes_are_decoded():
+    tokens = Lexer('"\\101\\102\\103"').tokenize()
+    assert tokens[0].value == "ABC"
+
+
+def test_short_octal_escapes_are_decoded():
+    tokens = Lexer('"\\0\\7"').tokenize()
+    assert tokens[0].value == "\x00\x07"
+
+
+def test_octal_escape_uses_at_most_three_digits():
+    tokens = Lexer('"\\1019"').tokenize()
+    assert tokens[0].value == "A9"
+
+
+def test_named_unicode_escape_is_decoded():
+    tokens = Lexer('"\\N{SNOWMAN}"').tokenize()
+    assert tokens[0].value == "\u2603"
+
+
+def test_named_unicode_escape_is_case_insensitive():
+    tokens = Lexer('"\\N{latin small letter a}"').tokenize()
+    assert tokens[0].value == "a"
+
+
+def test_unknown_named_unicode_escape_raises_lexer_error():
+    with pytest.raises(LexerError):
+        Lexer('"\\N{NOT A REAL NAME}"').tokenize()
+
+
+def test_named_unicode_escape_needs_braces():
+    with pytest.raises(LexerError):
+        Lexer('"\\Nx"').tokenize()
+
+
+def test_unclosed_named_unicode_escape_raises_lexer_error():
+    with pytest.raises(LexerError):
+        Lexer('"\\N{SNOWMAN"').tokenize()
+
+
+def test_long_unicode_escape_is_decoded():
+    tokens = Lexer('"\\U0001F600"').tokenize()
+    assert tokens[0].value == "\U0001F600"
+
+
+def test_malformed_long_unicode_escape_raises_lexer_error():
+    with pytest.raises(LexerError):
+        Lexer('"\\U0001F60"').tokenize()
