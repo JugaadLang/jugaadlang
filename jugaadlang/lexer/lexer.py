@@ -3,6 +3,7 @@ JugaadLang Lexer — Tokenizes .jug source code.
 
 Supports:
   - Full indentation tracking (INDENT/DEDENT like Python)
+  - Implicit line joining inside (), [] and {} (newlines and indentation ignored)
   - JugaadLang keywords + English interop keywords
   - # line comments, // line comments, /* block comments */
   - Single/double/triple-quoted strings, f-strings, t-strings (PEP 750)
@@ -70,6 +71,8 @@ class Lexer:
         # Stack of indentation levels; starts with 0
         self._indent_stack: list[int] = [0]
         self._source_lines: list[str] = self.source.splitlines()
+        # Depth of open (), [] and {}: newlines and indentation are ignored inside
+        self._bracket_depth: int = 0
 
     # ── Public API ────────────────────────────────────────────────────
 
@@ -137,6 +140,15 @@ class Lexer:
 
             # ── Handle line start (indentation) ───────────────────
             if at_line_start:
+                # Continuation line inside (), [] or {} — implicit line joining,
+                # so indentation is not meaningful and no INDENT/DEDENT is due.
+                if self._bracket_depth > 0:
+                    while self._pos < len(self.source) and self.source[self._pos] in (" ", "\t"):
+                        self._pos += 1
+                        self._col += 1
+                    at_line_start = False
+                    continue
+
                 # Count leading spaces/tabs
                 indent_level = 0
                 while self._pos < len(self.source) and self.source[self._pos] in (" ", "\t"):
@@ -184,7 +196,8 @@ class Lexer:
             # ── Newline ───────────────────────────────────────────
             if ch == "\n":
                 self._advance()
-                yield self._make(TokenType.NEWLINE, "\n", line, col)
+                if self._bracket_depth == 0:
+                    yield self._make(TokenType.NEWLINE, "\n", line, col)
                 at_line_start = True
                 continue
 
@@ -226,6 +239,10 @@ class Lexer:
             # ── Operators & Delimiters ────────────────────────────
             tok = self._scan_operator(line, col)
             if tok:
+                if tok.type in (TokenType.LPAREN, TokenType.LBRACKET, TokenType.LBRACE):
+                    self._bracket_depth += 1
+                elif tok.type in (TokenType.RPAREN, TokenType.RBRACKET, TokenType.RBRACE):
+                    self._bracket_depth = max(0, self._bracket_depth - 1)
                 yield tok
                 continue
 

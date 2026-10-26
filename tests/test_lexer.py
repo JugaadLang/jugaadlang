@@ -99,6 +99,50 @@ def test_malformed_unicode_escape_raises_lexer_error(src):
         Lexer(src).tokenize()
 
 
+def test_multiline_list_has_no_layout_tokens_inside_brackets():
+    src = "x = [\n    1,\n    2,\n]\n"
+    tokens = Lexer(src).tokenize()
+
+    types = [t.type for t in tokens]
+    assert TokenType.INDENT not in types
+    assert TokenType.DEDENT not in types
+    # Only the line that closes the statement ends with a NEWLINE
+    assert types.count(TokenType.NEWLINE) == 1
+    values = [t.value for t in tokens if t.type == TokenType.INT]
+    assert values == ["1", "2"]
+
+
+def test_multiline_call_has_no_layout_tokens_inside_brackets():
+    src = "bolo(\n    1,\n    2,\n)\n"
+    tokens = Lexer(src).tokenize()
+
+    types = [t.type for t in tokens]
+    assert TokenType.INDENT not in types
+    assert TokenType.DEDENT not in types
+    assert types.count(TokenType.NEWLINE) == 1
+
+
+def test_multiline_brackets_in_block_keep_indentation_balanced():
+    src = "banao f():\n    x = [\n        1,\n    ]\n    wapas x\n"
+    tokens = Lexer(src).tokenize()
+
+    types = [t.type for t in tokens]
+    # One INDENT for the function body and one DEDENT when it ends: the
+    # bracket continuation lines must not add their own indentation tokens.
+    assert types.count(TokenType.INDENT) == 1
+    assert types.count(TokenType.DEDENT) == 1
+
+
+def test_multiline_nested_brackets_are_tracked():
+    src = "x = [\n    [\n        1,\n    ],\n    2,\n]\n"
+    tokens = Lexer(src).tokenize()
+
+    types = [t.type for t in tokens]
+    assert TokenType.INDENT not in types
+    assert TokenType.DEDENT not in types
+    values = [t.value for t in tokens if t.type == TokenType.INT]
+    assert values == ["1", "2"]
+
 def test_octal_escapes_are_decoded():
     tokens = Lexer('"\\101\\102\\103"').tokenize()
     assert tokens[0].value == "ABC"
