@@ -1371,9 +1371,20 @@ class Parser:
                 body = val[start:pos]
                 pos += 1  # skip '}'
 
-                expr_str, conversion, spec = self._split_interpolation(body, token, start)
+                expr_str, conversion, spec, debug_text = self._split_interpolation(
+                    body, token, start
+                )
                 expr = self._parse_interpolation_expr(expr_str, token, start)
                 line, col = token.line, token.col + col_offset + start
+                if debug_text is not None:
+                    # PEP 498 debug form keeps the raw source text as a literal
+                    parts.append(
+                        Constant(
+                            value=debug_text,
+                            line=token.line,
+                            col=token.col + col_offset + start,
+                        )
+                    )
                 if template:
                     parts.append(
                         Interpolation(
@@ -1433,11 +1444,14 @@ class Parser:
 
     def _split_interpolation(
         self, body: str, token: Token, col: int
-    ) -> tuple[str, int, Optional[JoinedStr]]:
+    ) -> tuple[str, int, Optional[JoinedStr], Optional[str]]:
         """Split ``{expr!conv:spec}`` into expression text, conversion and format spec.
 
         Bracket depth is respected so ``{d[k:1]}`` and ``{a if b else c}`` keep
-        their own ``:``/``!`` characters.
+        their own ``:``/``!`` characters. The Python debug form ``{expr=}`` also
+        returns the raw source text (including the ``=``) so the caller can keep
+        it as a literal part, and defaults the conversion to ``!r`` when no
+        format spec is given, matching CPython.
         """
         depth = 0
         conv_pos: Optional[int] = None
@@ -1460,6 +1474,16 @@ class Parser:
         ) else len(body)
         expr_str = body[:cut]
 
+        debug_text: Optional[str] = None
+        stripped = expr_str.rstrip()
+        if (
+            stripped.endswith("=")
+            and not stripped.endswith(("==", "!=", "<=", ">=", ":="))
+        ):
+            eq_pos = len(stripped) - 1
+            debug_text = expr_str
+            expr_str = expr_str[:eq_pos]
+
         conversion = -1
         if conv_pos is not None:
             code = body[conv_pos + 1]
@@ -1478,7 +1502,10 @@ class Parser:
             values = self._interpolation_parts(spec_text, token, col + spec_pos + 1, template=False)
             spec = JoinedStr(values=values, line=token.line, col=token.col + col + spec_pos + 1)
 
-        return expr_str, conversion, spec
+        if debug_text is not None and conversion == -1 and spec is None:
+            conversion = ord("r")
+
+        return expr_str, conversion, spec, debug_text
 
     def _parse_interpolation_expr(self, expr_str: str, token: Token, col: int) -> Expr:
         """Lex + parse the expression text inside one ``{...}`` interpolation."""
