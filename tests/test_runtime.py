@@ -426,6 +426,59 @@ res = outer()
     assert interpreter.globals["res"] == 20
 
 
+def test_multiline_list_and_dict_literals():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+numbers = [
+    1,
+    2,
+    3,
+]
+mapping = {
+    "a": 1,
+    "b": 2,
+}
+""")
+    assert interpreter.globals["numbers"] == [1, 2, 3]
+    assert interpreter.globals["mapping"] == {"a": 1, "b": 2}
+
+
+def test_multiline_call_arguments(capsys):
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+bolo(
+    "hello",
+    "world",
+)
+""")
+    assert capsys.readouterr().out.strip() == "hello world"
+
+
+def test_multiline_brackets_inside_function_block():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+banao make_list():
+    items = [
+        10,
+        20,
+    ]
+    wapas items
+
+result = make_list()
+""")
+    assert interpreter.globals["result"] == [10, 20]
+
+
+def test_multiline_brackets_with_comments():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+items = [
+    1,  # first
+    2,
+]
+""")
+    assert interpreter.globals["items"] == [1, 2]
+
 def test_runtime_string_escapes(capsys):
     interpreter = JugaadInterpreter()
     interpreter.run(

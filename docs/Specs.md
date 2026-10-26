@@ -32,6 +32,23 @@ Statements are terminated by:
 - A newline (most common)
 - A semicolon (`;`) for inline separation
 
+A statement can span several lines when the line break is inside `()`, `[]` or `{}`:
+
+```jugaadlang
+numbers = [
+    1,
+    2,
+    3,
+]
+
+result = yog(
+    x * x
+    ghumo x mein numbers
+)
+```
+
+Newlines and indentation inside the brackets are ignored, so long lists, dictionaries, and call arguments can be formatted freely. The closing bracket usually sits on its own line, and the statement ends after it.
+
 ### 1.4 String Literals
 
 | Type | Syntax | Example |
