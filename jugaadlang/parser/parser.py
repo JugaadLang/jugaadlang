@@ -49,6 +49,7 @@ from ..ast_nodes.nodes import (
     MatchOr,
     MatchSequence,
     MatchSingleton,
+    MatchStar,
     MatchValue,
     Module,
     Name,
@@ -550,6 +551,17 @@ class Parser:
             return MatchOr(patterns=patterns, line=patterns[0].line, col=patterns[0].col)
         return patterns[0]
 
+    def parse_sequence_pattern_item(self) -> Pattern:
+        """Parse one item of a sequence pattern, including `*name` and `*_`."""
+        if self._match(TokenType.STAR):
+            star_tok = self._previous_token()
+            name_tok = self._expect(
+                TokenType.IDENTIFIER, "Expected name after '*' in sequence pattern"
+            )
+            name = None if name_tok.value == "_" else name_tok.value
+            return MatchStar(name=name, line=star_tok.line, col=star_tok.col)
+        return self.parse_pattern()
+
     def parse_pattern_primary(self) -> Pattern:
         if self._check(TokenType.SAHI):
             tok = self._advance()
@@ -650,7 +662,7 @@ class Parser:
             line, col = self._previous_token().line, self._previous_token().col
             patterns = []
             while not self._check(TokenType.RBRACKET):
-                patterns.append(self.parse_pattern())
+                patterns.append(self.parse_sequence_pattern_item())
                 if not self._match(TokenType.COMMA):
                     break
             self._expect(TokenType.RBRACKET, "Expected ']' at end of sequence pattern")
@@ -660,7 +672,7 @@ class Parser:
             patterns = []
             is_tuple = False
             while not self._check(TokenType.RPAREN):
-                patterns.append(self.parse_pattern())
+                patterns.append(self.parse_sequence_pattern_item())
                 if self._match(TokenType.COMMA):
                     is_tuple = True
                 else:
