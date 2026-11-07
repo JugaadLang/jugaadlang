@@ -49,6 +49,7 @@ from ..ast_nodes.nodes import (
     MatchOr,
     MatchSequence,
     MatchSingleton,
+    MatchStar,
     MatchValue,
     Module,
     Name,
@@ -563,7 +564,7 @@ class JugaadToPythonTransformer:
 
     def visit_Starred(self, node: Starred, ctx: Any = None) -> ast.Starred:
         py_ctx = ctx if ctx is not None else ast.Load()
-        value = self.visit(node.value)
+        value = self.visit(node.value, py_ctx)
         return ast.Starred(value=value, ctx=py_ctx)
 
     def visit_Name(self, node: Name, ctx: Any = None) -> ast.Name:
@@ -662,6 +663,9 @@ class JugaadToPythonTransformer:
     def visit_MatchSequence(self, node: MatchSequence, ctx: Any = None) -> ast.MatchSequence:
         patterns = [self.visit(p) for p in node.patterns]
         return ast.MatchSequence(patterns=patterns)
+
+    def visit_MatchStar(self, node: MatchStar, ctx: Any = None) -> ast.MatchStar:
+        return ast.MatchStar(name=node.name)
 
     def visit_MatchMapping(self, node: MatchMapping, ctx: Any = None) -> ast.MatchMapping:
         keys = [self.visit(k) for k in node.keys]
