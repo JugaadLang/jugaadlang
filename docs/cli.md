@@ -35,6 +35,7 @@ Start the interactive JugaadLang REPL (Read-Eval-Print Loop).
 - Auto-completion for all keywords
 - History persistence (`~/.jugaadlang/repl_history.txt`)
 - Double-Enter to execute multi-line blocks
+- Nested blocks indent automatically: a line ending with `:` opens one more level, the continuation prompt shows the depth, and a line started with your own spaces returns to an outer level
 
 ```bash
 jug repl
