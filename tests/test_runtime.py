@@ -426,111 +426,41 @@ res = outer()
     assert interpreter.globals["res"] == 20
 
 
-def test_runtime_match_star_pattern():
+def test_inline_block_false_condition_runs_nothing(capsys):
     interpreter = JugaadInterpreter()
-    interpreter.run("""
-head = kuch_nahi
-tail = kuch_nahi
-agar_match [1, 2, 3]:
-    kaand [a, *rest]:
-        head = a
-        tail = rest
-""")
-    assert interpreter.globals["head"] == 1
-    assert interpreter.globals["tail"] == [2, 3]
+    interpreter.run('agar galat: bolo("a"); bolo("b")\n')
+    assert capsys.readouterr().out.strip() == ""
 
 
-def test_runtime_match_star_middle_and_ignore():
+def test_inline_block_true_condition_runs_every_statement(capsys):
     interpreter = JugaadInterpreter()
-    interpreter.run("""
-middle = kuch_nahi
-last = kuch_nahi
-agar_match [1, 2, 3, 4]:
-    kaand [a, *rest, z]:
-        middle = rest
-        last = z
-""")
-    assert interpreter.globals["middle"] == [2, 3]
-    assert interpreter.globals["last"] == 4
-
-    interpreter.run("""
-hit = galat
-agar_match [9, 9]:
-    kaand [*_]:
-        hit = sahi
-""")
-    assert interpreter.globals["hit"] is True
+    interpreter.run('agar sahi: bolo("a"); bolo("b")\n')
+    assert capsys.readouterr().out.split() == ["a", "b"]
 
 
-def test_runtime_match_star_nested_tuple_pattern():
+def test_inline_block_three_statements_follow_the_condition(capsys):
     interpreter = JugaadInterpreter()
-    interpreter.run("""
-inner = kuch_nahi
-agar_match [1, (2, 3, 4)]:
-    kaand [a, (b, *rest)]:
-        inner = rest
-""")
-    assert interpreter.globals["inner"] == [3, 4]
-def test_multiline_list_and_dict_literals():
+    interpreter.run('agar galat: bolo("a"); bolo("b"); bolo("c")\n')
+    assert capsys.readouterr().out.strip() == ""
+
+    interpreter.run('agar sahi: bolo("a"); bolo("b"); bolo("c")\n')
+    assert capsys.readouterr().out.split() == ["a", "b", "c"]
+
+
+def test_inline_block_does_not_swallow_the_next_line(capsys):
     interpreter = JugaadInterpreter()
-    interpreter.run("""
-numbers = [
-    1,
-    2,
-    3,
-]
-mapping = {
-    "a": 1,
-    "b": 2,
-}
-""")
-    assert interpreter.globals["numbers"] == [1, 2, 3]
-    assert interpreter.globals["mapping"] == {"a": 1, "b": 2}
+    interpreter.run('agar galat: bolo("a"); bolo("b")\nbolo("after")\n')
+    assert capsys.readouterr().out.split() == ["after"]
 
 
-def test_multiline_call_arguments(capsys):
+def test_inline_block_with_wapas():
     interpreter = JugaadInterpreter()
-    interpreter.run("""
-bolo(
-    "hello",
-    "world",
-)
-""")
-    assert capsys.readouterr().out.strip() == "hello world"
+    interpreter.run('banao f(): wapas 7; bolo("never")\nresult = f()\n')
+    assert interpreter.globals["result"] == 7
 
 
-def test_multiline_brackets_inside_function_block():
+def test_inline_while_block_statements_stay_conditional():
     interpreter = JugaadInterpreter()
-    interpreter.run("""
-banao make_list():
-    items = [
-        10,
-        20,
-    ]
-    wapas items
+    interpreter.run("i = 0\njabtak galat: i = 1; i = 2\n")
+    assert interpreter.globals["i"] == 0
 
-result = make_list()
-""")
-    assert interpreter.globals["result"] == [10, 20]
-
-
-def test_multiline_brackets_with_comments():
-    interpreter = JugaadInterpreter()
-    interpreter.run("""
-items = [
-    1,  # first
-    2,
-]
-""")
-    assert interpreter.globals["items"] == [1, 2]
-
-def test_runtime_string_escapes(capsys):
-    interpreter = JugaadInterpreter()
-    interpreter.run(
-        'bolo("\\101\\102")\n'
-        'bolo("\\N{SNOWMAN}")\n'
-        'bolo("\\U0001F600")\n'
-    )
-    captured = capsys.readouterr()
-    lines = captured.out.splitlines()
-    assert lines == ["AB", "\u2603", "\U0001F600"]

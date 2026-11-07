@@ -4,7 +4,9 @@ program = { statement } ;
 
 statement = compound_stmt | simple_stmt ;
 
-simple_stmt = ( assign_stmt
+simple_stmt = simple_item { ";" simple_item } [ ";" ] newline ;
+
+simple_item = ( assign_stmt
               | expr_stmt
               | return_stmt
               | delete_stmt
@@ -16,7 +18,7 @@ simple_stmt = ( assign_stmt
               | poochho_stmt
               | "theek_hai"
               | "rukja"
-              | "chalte_raho" ) [ ";" ] newline ;
+              | "chalte_raho" ) ;
 
 compound_stmt = if_stmt
               | while_stmt
@@ -68,7 +70,7 @@ with_stmt = [ "tez" ] "with" with_item { "," with_item } ":" block ;
 with_item = expression [ "as" expression ] ;
 
 block = newline indent { statement } dedent
-      | simple_stmt ;
+      | simple_item { ";" simple_item } [ ";" ] newline ;
 
 parameters = parameter { "," parameter } [ "," [ "*" [ identifier ] ] ] [ "," [ "**" identifier ] ] ;
 parameter = ( identifier | "khud" ) [ ":" expression ] [ "=" expression ] ;
