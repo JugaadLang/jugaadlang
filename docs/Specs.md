@@ -23,8 +23,10 @@ JugaadLang supports three comment formats:
 | Format | Style | Example |
 |---|---|---|
 | `# comment` | Python-style | `# yeh ek comment hai` |
-| `// comment` | C/JS-style | `// yeh bhi comment hai` |
+| `// comment` | C/JS-style, line start only | `// yeh bhi comment hai` |
 | `/* comment */` | Block comment | `/* multi-line \n comment */` |
+
+`//` has two roles. At the start of a line (after indentation, or after a `;`) it starts a comment. Inside an expression it is the floor-division operator, so `x = 7 // 2` evaluates to `3` and `x //= 2` divides `x` in place. Use `#` for a comment that follows code on the same line.
 
 ### 1.3 Line Termination
 

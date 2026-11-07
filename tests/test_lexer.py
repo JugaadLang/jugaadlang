@@ -74,6 +74,51 @@ def test_comments():
     assert filtered_tokens[2].value == "10"
 
 
+def test_double_slash_is_floor_division():
+    src = "x = 7 // 2"
+    tokens = Lexer(src).tokenize()
+
+    types = [t.type for t in tokens if t.type != TokenType.NEWLINE]
+    assert TokenType.DOUBLESLASH in types
+    assert [t.value for t in tokens if t.type == TokenType.INT] == ["7", "2"]
+    assert [t.value for t in tokens if t.type == TokenType.IDENTIFIER] == ["x"]
+
+
+def test_double_slash_assign_is_operator():
+    src = "x //= 2"
+    tokens = Lexer(src).tokenize()
+
+    types = [t.type for t in tokens if t.type != TokenType.NEWLINE]
+    assert TokenType.DOUBLESLASH_ASSIGN in types
+    assert TokenType.DOUBLESLASH not in types
+
+
+def test_double_slash_comment_at_line_start():
+    src = "// full line comment\nx = 1"
+    tokens = Lexer(src).tokenize()
+
+    values = [t.value for t in tokens if t.type == TokenType.IDENTIFIER]
+    assert values == ["x"]
+
+
+def test_double_slash_comment_after_indentation_and_semicolon():
+    src = "agar sahi:\n    // indented comment\n    x = 1; // after semicolon\ny = 2"
+    tokens = Lexer(src).tokenize()
+
+    values = [t.value for t in tokens if t.type == TokenType.IDENTIFIER]
+    assert values == ["x", "y"]
+    assert TokenType.DOUBLESLASH not in [t.type for t in tokens]
+
+
+def test_double_slash_division_after_code_on_same_line():
+    src = "x = 1; y = 8 // 2"
+    tokens = Lexer(src).tokenize()
+
+    types = [t.type for t in tokens if t.type != TokenType.NEWLINE]
+    assert TokenType.DOUBLESLASH in types
+    assert [t.value for t in tokens if t.type == TokenType.INT] == ["1", "8", "2"]
+
+
 def test_string_escapes():
     src = '"hello\\nworld\\tunicode\\u2615"'
     lexer = Lexer(src)

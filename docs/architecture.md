@@ -118,7 +118,7 @@ jugaadlang/
 The lexer tokenizes raw source code into a stream of `Token` objects. Key features:
 
 - **Indentation tracking**: Implements Python-style INDENT/DEDENT tokens using a stack-based approach
-- **Multi-line comments**: Supports `#`, `//`, and `/* */` comment styles
+- **Multi-line comments**: Supports `#`, line-start `//`, and `/* */` comment styles. `//` inside an expression is floor division
 - **String literals**: Single, double, triple-quoted, f-strings, and t-strings (PEP 750); raw `r"..."` prefixes are rejected with a clear error
 - **Imports**: `lao`/`se ... lao`, plus contextual `sust` for lazy imports (PEP 810, Python 3.15+)
 - **Number literals**: Decimal, hex (`0x`), octal (`0o`), binary (`0b`), floats with exponents

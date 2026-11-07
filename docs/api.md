@@ -55,7 +55,7 @@ Methods: `is_keyword() -> bool`
 | `Lexer(source, filename)` | — | Initialize with source string and optional filename |
 | `.tokenize()` | `list[Token]` | Tokenize the entire source |
 
-Internal: Uses INDENT/DEDENT stack for indentation-based block detection. Supports `#`, `//`, `/* */` comments, all string types (single, double, triple, f-strings, t-strings), and all number formats. A raw `r"..."` prefix raises a clear lexer error. Prefixes are letters that end at a quote, so identifiers such as `test`, `tf`, and `f` are unaffected.
+Internal: Uses INDENT/DEDENT stack for indentation-based block detection. Supports `#`, line-start `//`, `/* */` comments, all string types (single, double, triple, f-strings, t-strings), and all number formats. `//` inside an expression is the floor-division operator. A raw `r"..."` prefix raises a clear lexer error. Prefixes are letters that end at a quote, so identifiers such as `test`, `tf`, and `f` are unaffected.
 
 ---
 
