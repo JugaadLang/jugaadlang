@@ -523,10 +523,10 @@
     }
 
     .hero-title {
-      font-size: clamp(3rem, 6vw, 5.5rem);
+      font-size: clamp(3.25rem, 6.5vw, 5.75rem);
       font-weight: 900;
       line-height: 1.05;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.65rem;
     }
 
     .hero-title-main {
@@ -578,16 +578,17 @@
     }
 
     .hero-subtitle {
-      font-size: 1rem;
+      font-size: 1.05rem;
       color: var(--text-secondary);
       margin-bottom: 2.5rem;
-      max-width: 480px;
-      line-height: 1.7;
+      max-width: 500px;
+      line-height: 1.8;
     }
 
     .hero-ctas {
       display: flex;
-      gap: 0.75rem;
+      justify-content: center;
+      gap: 1rem;
       flex-wrap: wrap;
       align-items: center;
     }
@@ -2071,7 +2072,7 @@
       }
 
       .hero-ctas {
-        gap: 0.75rem;
+        gap: 0.85rem;
       }
 
       .btn-primary,
@@ -2163,7 +2164,7 @@
         flex-direction: column;
         align-items: center;
         width: 100%;
-        gap: 0.6rem;
+        gap: 0.7rem;
       }
 
       .hero-contributors {
@@ -2915,11 +2916,11 @@
     <div class="code-particles" aria-hidden="true">
       <span class="code-particle cp-1">{ }</span>
       <span class="code-particle cp-2 accent-blue">&lt;/&gt;</span>
-      <span class="code-particle cp-3 accent-saffron">agar</span>
-      <span class="code-particle cp-4">=&gt;</span>
-      <span class="code-particle cp-5 accent-green">bolo()</span>
-      <span class="code-particle cp-6">01</span>
-      <span class="code-particle cp-7">// jugaad</span>
+      <span class="code-particle cp-3 accent-saffron">const</span>
+      <span class="code-particle cp-4">if/else</span>
+      <span class="code-particle cp-5 accent-green">fn()</span>
+      <span class="code-particle cp-6">return</span>
+      <span class="code-particle cp-7">=&gt;</span>
       <span class="code-particle cp-8">[ ]</span>
     </div>
 
@@ -2943,18 +2944,25 @@
           <strong style="color: var(--accent-saffron);">Jugaad-first. Always.</strong>
         </p>
         <div class="hero-ctas">
-          <!-- NEW "Try Online" BUTTON -->
-           <a href="/jugonline" class="btn-primary" title="Try JugaadLang Online in Browser">
-            <span>🚀</span> Try Now Online
+          <a href="/jugonline" class="btn-primary" title="Try JugaadLang Online in Browser">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <path d="M7 4v16l13-8L7 4z" />
+            </svg>
+            Try Now Online
           </a>
-          <a href="#install" class="btn-secondary"title="Install JugaadLang Compiler">
+          <a href="#install" class="btn-secondary" title="Install JugaadLang Compiler">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
               <path
                 d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z" />
-            </svg> Install Karo
+            </svg>
+            Install Karo
           </a>
           <a href="docs/index.html" class="btn-primary" title="JugaadLang Documentation">
-            <span>📖</span> Docs Padho
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <path d="M12 7v14" />
+              <path d="M3 18V5a2 2 0 0 1 2-2h3a4 4 0 0 1 4 4 4 4 0 0 1 4-4h3a2 2 0 0 1 2 2v13a1 1 0 0 1-1 1h-4a4 4 0 0 0-4 2 4 4 0 0 0-4-2H4a1 1 0 0 1-1-1z" />
+            </svg>
+            Docs Padho
           </a>
           <a href="https://marketplace.visualstudio.com/items?itemName=jugaadlang.jugaadlang" target="_blank"
             class="btn-secondary" title="JugaadLang VS Code Extension">
