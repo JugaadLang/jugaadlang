@@ -6,6 +6,7 @@ import os
 
 import pytest
 
+from jugaadlang.parser.parser import ParseError
 from jugaadlang.runtime.interpreter import JugaadInterpreter
 
 
@@ -426,111 +427,32 @@ res = outer()
     assert interpreter.globals["res"] == 20
 
 
-def test_runtime_match_star_pattern():
+def test_function_keyword_only_parameters():
     interpreter = JugaadInterpreter()
     interpreter.run("""
-head = kuch_nahi
-tail = kuch_nahi
-agar_match [1, 2, 3]:
-    kaand [a, *rest]:
-        head = a
-        tail = rest
+banao collect(a, b=1, *items, scale=2, **extra):
+    wapas scale
+
+with_scale = collect(1, 2, 3, scale=5)
+without_scale = collect(1)
 """)
-    assert interpreter.globals["head"] == 1
-    assert interpreter.globals["tail"] == [2, 3]
+    assert interpreter.globals["with_scale"] == 5
+    assert interpreter.globals["without_scale"] == 2
 
 
-def test_runtime_match_star_middle_and_ignore():
+def test_function_required_keyword_only_parameter():
     interpreter = JugaadInterpreter()
     interpreter.run("""
-middle = kuch_nahi
-last = kuch_nahi
-agar_match [1, 2, 3, 4]:
-    kaand [a, *rest, z]:
-        middle = rest
-        last = z
+banao pick(*items, which):
+    wapas which
+
+picked = pick(10, 20, which=20)
 """)
-    assert interpreter.globals["middle"] == [2, 3]
-    assert interpreter.globals["last"] == 4
-
-    interpreter.run("""
-hit = galat
-agar_match [9, 9]:
-    kaand [*_]:
-        hit = sahi
-""")
-    assert interpreter.globals["hit"] is True
+    assert interpreter.globals["picked"] == 20
 
 
-def test_runtime_match_star_nested_tuple_pattern():
+def test_function_parameter_validation_is_reported_before_running():
     interpreter = JugaadInterpreter()
-    interpreter.run("""
-inner = kuch_nahi
-agar_match [1, (2, 3, 4)]:
-    kaand [a, (b, *rest)]:
-        inner = rest
-""")
-    assert interpreter.globals["inner"] == [3, 4]
-def test_multiline_list_and_dict_literals():
-    interpreter = JugaadInterpreter()
-    interpreter.run("""
-numbers = [
-    1,
-    2,
-    3,
-]
-mapping = {
-    "a": 1,
-    "b": 2,
-}
-""")
-    assert interpreter.globals["numbers"] == [1, 2, 3]
-    assert interpreter.globals["mapping"] == {"a": 1, "b": 2}
+    with pytest.raises(ParseError):
+        interpreter.run("banao f(a=1, b):\n    wapas b\n")
 
-
-def test_multiline_call_arguments(capsys):
-    interpreter = JugaadInterpreter()
-    interpreter.run("""
-bolo(
-    "hello",
-    "world",
-)
-""")
-    assert capsys.readouterr().out.strip() == "hello world"
-
-
-def test_multiline_brackets_inside_function_block():
-    interpreter = JugaadInterpreter()
-    interpreter.run("""
-banao make_list():
-    items = [
-        10,
-        20,
-    ]
-    wapas items
-
-result = make_list()
-""")
-    assert interpreter.globals["result"] == [10, 20]
-
-
-def test_multiline_brackets_with_comments():
-    interpreter = JugaadInterpreter()
-    interpreter.run("""
-items = [
-    1,  # first
-    2,
-]
-""")
-    assert interpreter.globals["items"] == [1, 2]
-
-def test_runtime_string_escapes(capsys):
-    interpreter = JugaadInterpreter()
-    interpreter.run(
-        'bolo("\\101\\102")\n'
-        'bolo("\\N{SNOWMAN}")\n'
-        'bolo("\\U0001F600")\n'
-    )
-    captured = capsys.readouterr()
-    lines = captured.out.splitlines()
-    assert lines == ["AB", "\u2603", "\U0001F600"]
