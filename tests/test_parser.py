@@ -2,14 +2,18 @@
 Tests for JugaadLang Parser.
 """
 
+import pytest
+
 from jugaadlang.ast_nodes.nodes import (
     Assign,
     Await,
+    BinOp,
     Call,
     ClassDef,
     Constant,
     ExprStmt,
     FunctionDef,
+    GeneratorExp,
     If,
     IfExp,
     Lambda,
@@ -26,7 +30,7 @@ from jugaadlang.ast_nodes.nodes import (
     Subscript,
 )
 from jugaadlang.lexer.lexer import Lexer
-from jugaadlang.parser.parser import Parser
+from jugaadlang.parser.parser import ParseError, Parser
 
 
 def test_parse_expression_stmt():
@@ -218,48 +222,45 @@ agar_match x:
     assert case4.pattern.name is None
 
 
-def test_parse_match_star_pattern():
-    src = """
-agar_match xs:
-    kaand [a, *rest]:
-        bolo(a)
-"""
+def test_parse_generator_expression_as_call_argument():
+    src = "bolo(yog(x * x ghumo x mein range(5)))\n"
     tokens = Lexer(src).tokenize()
     parser = Parser(tokens, source=src)
     ast_mod = parser.parse()
 
-    case = ast_mod.body[0].cases[0]
-    pattern = case.pattern
-    assert isinstance(pattern, MatchSequence)
-    assert isinstance(pattern.patterns[1], MatchStar)
-    assert pattern.patterns[1].name == "rest"
+    outer_call = ast_mod.body[0].value
+    assert isinstance(outer_call, Call)
+    inner_call = outer_call.args[0]
+    assert isinstance(inner_call, Call)
+    genexp = inner_call.args[0]
+    assert isinstance(genexp, GeneratorExp)
+    assert isinstance(genexp.elt, BinOp)
+    assert len(genexp.generators) == 1
+    assert isinstance(genexp.generators[0].target, Name)
+    assert genexp.generators[0].target.id == "x"
 
 
-def test_parse_match_star_wildcard_pattern():
-    src = """
-agar_match xs:
-    kaand [*_]:
-        bolo("any")
-"""
+def test_parse_generator_expression_with_filter_as_call_argument():
+    src = "bolo(yog(x * x ghumo x mein range(10) agar x % 2 == 0))\n"
     tokens = Lexer(src).tokenize()
     parser = Parser(tokens, source=src)
     ast_mod = parser.parse()
 
-    pattern = ast_mod.body[0].cases[0].pattern
-    assert isinstance(pattern.patterns[0], MatchStar)
-    assert pattern.patterns[0].name is None
+    genexp = ast_mod.body[0].value.args[0].args[0]
+    assert isinstance(genexp, GeneratorExp)
+    assert len(genexp.generators[0].ifs) == 1
 
 
-def test_parse_match_star_in_tuple_pattern():
-    src = """
-agar_match xs:
-    kaand (a, *rest):
-        bolo(a)
-"""
+def test_parse_generator_expression_must_be_only_argument():
+    src = "bolo(yog(x ghumo x mein range(5), 10))\n"
     tokens = Lexer(src).tokenize()
     parser = Parser(tokens, source=src)
-    ast_mod = parser.parse()
+    with pytest.raises(ParseError):
+        parser.parse()
 
-    pattern = ast_mod.body[0].cases[0].pattern
-    assert isinstance(pattern, MatchSequence)
-    assert isinstance(pattern.patterns[1], MatchStar)
+    src = "bolo(yog(10, x ghumo x mein range(5)))\n"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    with pytest.raises(ParseError):
+        parser.parse()
+
