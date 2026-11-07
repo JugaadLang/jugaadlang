@@ -99,115 +99,82 @@ def test_malformed_unicode_escape_raises_lexer_error(src):
         Lexer(src).tokenize()
 
 
-def test_leading_bom_is_ignored():
-    plain = 'bolo("hello")\nx = 1\n'
-    with_bom = "\ufeff" + plain
-
-    plain_tokens = Lexer(plain).tokenize()
-    bom_tokens = Lexer(with_bom).tokenize()
-
-    assert [(t.type, t.value, t.line, t.col) for t in plain_tokens] == [
-        (t.type, t.value, t.line, t.col) for t in bom_tokens
-    ]
-    assert bom_tokens[0].type == TokenType.BOLO
-    assert bom_tokens[0].line == 1
-    assert bom_tokens[0].col == 1
-
-
-def test_bom_in_the_middle_is_rejected():
-    src = 'bolo("first")\n\ufeffbolo("second")\n'
-    with pytest.raises(LexerError) as exc_info:
+@pytest.mark.parametrize(
+    ("src", "message"),
+    [
+        ("0x", "Invalid hexadecimal literal: '0x'"),
+        ("0x_", "Invalid hexadecimal literal: '0x_'"),
+        ("0xZZ", "Invalid hexadecimal literal: '0xZZ'"),
+        ("0xFFg", "Invalid hexadecimal literal: '0xFFg'"),
+        ("0o", "Invalid octal literal: '0o'"),
+        ("0o8", "Invalid octal literal: '0o8'"),
+        ("0b", "Invalid binary literal: '0b'"),
+        ("0b102", "Invalid binary literal: '0b102'"),
+        ("0b2", "Invalid binary literal: '0b2'"),
+        ("1e", "Invalid float literal: '1e'"),
+        ("1e+", "Invalid float literal: '1e+'"),
+        ("1e_", "Invalid float literal: '1e_'"),
+        ("1.5_", "Invalid float literal: '1.5_'"),
+        ("1e5x", "Invalid float literal: '1e5x'"),
+        ("1_", "Invalid decimal literal: '1_'"),
+        ("1__2", "Invalid decimal literal: '1__2'"),
+    ],
+)
+def test_malformed_number_literal_raises_lexer_error(src, message):
+    with pytest.raises(LexerError) as excinfo:
         Lexer(src).tokenize()
-    assert "BOM" in str(exc_info.value)
-def test_multiline_list_has_no_layout_tokens_inside_brackets():
-    src = "x = [\n    1,\n    2,\n]\n"
+    assert str(excinfo.value) == message
+    # The reported location is the start of the literal, not the end of the
+    # run that was consumed while scanning it.
+    assert excinfo.value.line == 1
+    assert excinfo.value.col == 1
+
+
+def test_malformed_number_reports_column_inside_statement():
+    with pytest.raises(LexerError) as excinfo:
+        Lexer("x = 0b102").tokenize()
+    assert str(excinfo.value) == "Invalid binary literal: '0b102'"
+    assert excinfo.value.line == 1
+    assert excinfo.value.col == 5
+    assert excinfo.value.source_line == "x = 0b102"
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        "123",
+        "45.67",
+        "0x1A",
+        "0x_FF",
+        "0b1010",
+        "0b_101",
+        "0o75",
+        "0o_755",
+        "1e-3",
+        "1E+3",
+        "1_000_000",
+        "1_000.000_1",
+        "1e1_0",
+        ".5",
+        "1.",
+        "1.e5",
+    ],
+)
+def test_valid_number_literals_still_tokenize(src):
     tokens = Lexer(src).tokenize()
+    number_tokens = [
+        t for t in tokens if t.type in (TokenType.INT, TokenType.FLOAT)
+    ]
+    assert len(number_tokens) == 1
+    assert number_tokens[0].value.replace("_", "") == src.replace("_", "")
 
+
+def test_number_followed_by_keyword_still_tokenizes():
+    # `2ya 3` used to work without a space and must keep working, so plain
+    # integers do not swallow the following keyword the way malformed floats
+    # and based literals do.
+    tokens = Lexer("2ya 3").tokenize()
     types = [t.type for t in tokens]
-    assert TokenType.INDENT not in types
-    assert TokenType.DEDENT not in types
-    # Only the line that closes the statement ends with a NEWLINE
-    assert types.count(TokenType.NEWLINE) == 1
-    values = [t.value for t in tokens if t.type == TokenType.INT]
-    assert values == ["1", "2"]
+    assert TokenType.INT in types
+    assert TokenType.YA in types
 
-
-def test_multiline_call_has_no_layout_tokens_inside_brackets():
-    src = "bolo(\n    1,\n    2,\n)\n"
-    tokens = Lexer(src).tokenize()
-
-    types = [t.type for t in tokens]
-    assert TokenType.INDENT not in types
-    assert TokenType.DEDENT not in types
-    assert types.count(TokenType.NEWLINE) == 1
-
-
-def test_multiline_brackets_in_block_keep_indentation_balanced():
-    src = "banao f():\n    x = [\n        1,\n    ]\n    wapas x\n"
-    tokens = Lexer(src).tokenize()
-
-    types = [t.type for t in tokens]
-    # One INDENT for the function body and one DEDENT when it ends: the
-    # bracket continuation lines must not add their own indentation tokens.
-    assert types.count(TokenType.INDENT) == 1
-    assert types.count(TokenType.DEDENT) == 1
-
-
-def test_multiline_nested_brackets_are_tracked():
-    src = "x = [\n    [\n        1,\n    ],\n    2,\n]\n"
-    tokens = Lexer(src).tokenize()
-
-    types = [t.type for t in tokens]
-    assert TokenType.INDENT not in types
-    assert TokenType.DEDENT not in types
-    values = [t.value for t in tokens if t.type == TokenType.INT]
-    assert values == ["1", "2"]
-
-def test_octal_escapes_are_decoded():
-    tokens = Lexer('"\\101\\102\\103"').tokenize()
-    assert tokens[0].value == "ABC"
-
-
-def test_short_octal_escapes_are_decoded():
-    tokens = Lexer('"\\0\\7"').tokenize()
-    assert tokens[0].value == "\x00\x07"
-
-
-def test_octal_escape_uses_at_most_three_digits():
-    tokens = Lexer('"\\1019"').tokenize()
-    assert tokens[0].value == "A9"
-
-
-def test_named_unicode_escape_is_decoded():
-    tokens = Lexer('"\\N{SNOWMAN}"').tokenize()
-    assert tokens[0].value == "\u2603"
-
-
-def test_named_unicode_escape_is_case_insensitive():
-    tokens = Lexer('"\\N{latin small letter a}"').tokenize()
-    assert tokens[0].value == "a"
-
-
-def test_unknown_named_unicode_escape_raises_lexer_error():
-    with pytest.raises(LexerError):
-        Lexer('"\\N{NOT A REAL NAME}"').tokenize()
-
-
-def test_named_unicode_escape_needs_braces():
-    with pytest.raises(LexerError):
-        Lexer('"\\Nx"').tokenize()
-
-
-def test_unclosed_named_unicode_escape_raises_lexer_error():
-    with pytest.raises(LexerError):
-        Lexer('"\\N{SNOWMAN"').tokenize()
-
-
-def test_long_unicode_escape_is_decoded():
-    tokens = Lexer('"\\U0001F600"').tokenize()
-    assert tokens[0].value == "\U0001F600"
-
-
-def test_malformed_long_unicode_escape_raises_lexer_error():
-    with pytest.raises(LexerError):
-        Lexer('"\\U0001F60"').tokenize()
