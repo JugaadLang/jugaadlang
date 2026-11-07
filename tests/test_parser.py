@@ -223,15 +223,56 @@ agar_match x:
     assert isinstance(case4.pattern, MatchAs)
     assert case4.pattern.name is None
 
-
-def test_parse_multiple_assignment_targets():
-    src = "a, b = 1, 2"
 def test_parse_match_star_pattern():
     src = """
 agar_match xs:
     kaand [a, *rest]:
         bolo(a)
 """
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    ast_mod = parser.parse()
+
+    case = ast_mod.body[0].cases[0]
+    pattern = case.pattern
+    assert isinstance(pattern, MatchSequence)
+    assert isinstance(pattern.patterns[1], MatchStar)
+    assert pattern.patterns[1].name == "rest"
+
+
+def test_parse_match_star_wildcard_pattern():
+    src = """
+agar_match xs:
+    kaand [*_]:
+        bolo("any")
+"""
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    ast_mod = parser.parse()
+
+    pattern = ast_mod.body[0].cases[0].pattern
+    assert isinstance(pattern.patterns[0], MatchStar)
+    assert pattern.patterns[0].name is None
+
+
+def test_parse_match_star_in_tuple_pattern():
+    src = """
+agar_match xs:
+    kaand (a, *rest):
+        bolo(a)
+"""
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    ast_mod = parser.parse()
+
+    pattern = ast_mod.body[0].cases[0].pattern
+    assert isinstance(pattern, MatchSequence)
+    assert isinstance(pattern.patterns[1], MatchStar)
+
+
+
+def test_parse_multiple_assignment_targets():
+    src = "a, b = 1, 2"
     tokens = Lexer(src).tokenize()
     parser = Parser(tokens, source=src)
     ast_mod = parser.parse()
@@ -264,19 +305,6 @@ def test_parse_multiple_assignment_value_from_call():
 
 def test_parse_unparenthesized_tuple_value():
     src = "x = 1, 2, 3"
-    case = ast_mod.body[0].cases[0]
-    pattern = case.pattern
-    assert isinstance(pattern, MatchSequence)
-    assert isinstance(pattern.patterns[1], MatchStar)
-    assert pattern.patterns[1].name == "rest"
-
-
-def test_parse_match_star_wildcard_pattern():
-    src = """
-agar_match xs:
-    kaand [*_]:
-        bolo("any")
-"""
     tokens = Lexer(src).tokenize()
     parser = Parser(tokens, source=src)
     ast_mod = parser.parse()
@@ -289,17 +317,6 @@ agar_match xs:
 
 def test_parse_single_element_tuple_value():
     src = "x = 1,"
-    pattern = ast_mod.body[0].cases[0].pattern
-    assert isinstance(pattern.patterns[0], MatchStar)
-    assert pattern.patterns[0].name is None
-
-
-def test_parse_match_star_in_tuple_pattern():
-    src = """
-agar_match xs:
-    kaand (a, *rest):
-        bolo(a)
-"""
     tokens = Lexer(src).tokenize()
     parser = Parser(tokens, source=src)
     ast_mod = parser.parse()
@@ -392,6 +409,3 @@ def test_parse_bare_starred_for_target_rejected():
     parser = Parser(tokens, source=src)
     with pytest.raises(ParseError):
         parser.parse()
-    pattern = ast_mod.body[0].cases[0].pattern
-    assert isinstance(pattern, MatchSequence)
-    assert isinstance(pattern.patterns[1], MatchStar)
