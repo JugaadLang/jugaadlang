@@ -71,6 +71,97 @@ def test_repl_syntax_error():
         with patch("jugaadlang.repl.repl.console.print") :
             repl.start()
 
+
+def run_repl_inputs(inputs):
+    """Run a REPL session over scripted prompts and return captured stdout."""
+    repl = JugaadREPL()
+    with patch("jugaadlang.repl.repl.PromptSession") as mock_session_cls:
+        mock_session = MagicMock()
+        mock_session.prompt.side_effect = list(inputs) + [EOFError]
+        mock_session_cls.return_value = mock_session
+        with patch("jugaadlang.repl.repl.console.print"):
+            captured = io.StringIO()
+            old_stdout = sys.stdout
+            sys.stdout = captured
+            try:
+                repl.start()
+            finally:
+                sys.stdout = old_stdout
+        return captured.getvalue(), mock_session
+
+
+def test_repl_nested_block_in_function():
+    # "agar sahi:" is indented one level deeper than the function body
+    output, _ = run_repl_inputs(
+        [
+            "banao greet():",
+            "agar sahi:",
+            "bolo('andar')",
+            "",
+            "greet()",
+        ]
+    )
+    assert "andar" in output
+
+
+def test_repl_nested_block_false_condition_runs_nothing():
+    output, _ = run_repl_inputs(
+        [
+            "banao greet():",
+            "agar galat:",
+            "bolo('andar')",
+            "",
+            "greet()",
+        ]
+    )
+    assert "andar" not in output
+
+
+def test_repl_loop_inside_function():
+    output, _ = run_repl_inputs(
+        [
+            "banao count():",
+            "ghumo i mein range(3):",
+            "bolo(i)",
+            "",
+            "count()",
+        ]
+    )
+    assert output.split() == ["0", "1", "2"]
+
+
+def test_repl_typed_indent_returns_to_outer_level():
+    # The fourth line is typed with four spaces, which closes the inner
+    # 'agar' block and puts 'wapas 5' back in the function body.
+    output, _ = run_repl_inputs(
+        [
+            "banao f():",
+            "agar sahi:",
+            "bolo('inner')",
+            "    wapas 5",
+            "",
+            "result = f()",
+            "bolo(result)",
+        ]
+    )
+    assert output.split() == ["inner", "5"]
+
+
+def test_repl_prompt_shows_nesting_depth():
+    _, mock_session = run_repl_inputs(
+        [
+            "banao f():",
+            "agar sahi:",
+            "bolo('x')",
+            "",
+        ]
+    )
+    prompts = [call.args[0] for call in mock_session.prompt.call_args_list]
+    # First continuation line at depth 1, the body of 'agar' at depth 2.
+    assert ".. " + ("    " * 1) in prompts
+    assert ".. " + ("    " * 2) in prompts
+
+
 def test_repl_runtime_error():
     repl = JugaadREPL()
     with patch("jugaadlang.repl.repl.PromptSession") as mock_session_cls:
