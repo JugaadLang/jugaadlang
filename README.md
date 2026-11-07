@@ -120,7 +120,7 @@ jug --version
 Expected output:
 
 ```text
-JugaadLang v1.2.7 🇮🇳
+JugaadLang v1.2.8 🇮🇳
 
 ```
 

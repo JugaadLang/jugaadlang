@@ -593,6 +593,13 @@ class MatchOr(Pattern):
 
 
 @dataclass
+class MatchStar(Pattern):
+    """Star pattern inside a sequence pattern (e.g. *rest or *_)."""
+
+    name: Optional[str] = None
+
+
+@dataclass
 class MatchSequence(Pattern):
     """Sequence match pattern (e.g. [a, b], (c, d))."""
 

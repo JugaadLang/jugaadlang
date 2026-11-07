@@ -49,6 +49,7 @@ from ..ast_nodes.nodes import (
     MatchOr,
     MatchSequence,
     MatchSingleton,
+    MatchStar,
     MatchValue,
     Module,
     Name,
@@ -423,7 +424,7 @@ class Parser:
         tok = self._expect(TokenType.WAPAS, "Expected 'wapas'")
         value = None
         if not self._check(TokenType.NEWLINE, TokenType.EOF, TokenType.DEDENT):
-            value = self.parse_expression()
+            value = self.parse_expression_list(allow_star=True)
         self._expect_newline_or_eof()
         return Return(value=value, line=tok.line, col=tok.col)
 
@@ -439,17 +440,10 @@ class Parser:
 
     def parse_for(self, is_async: bool) -> For:
         tok = self._expect(TokenType.GHUMO, "Expected 'ghumo'")
-        target = self.parse_primary()
-        if self._match(TokenType.COMMA):
-            elts = [target]
-            while True:
-                elts.append(self.parse_primary())
-                if not self._match(TokenType.COMMA):
-                    break
-            target = Tuple(elts=elts, line=target.line, col=target.col)
+        target = self.parse_target_list(allow_star=True)
 
         self._expect(TokenType.MEIN, "Expected 'mein' after loop target variables")
-        iter_expr = self.parse_expression()
+        iter_expr = self.parse_expression_list(allow_star=True)
         body = self.parse_block()
 
         orelse = []
@@ -549,6 +543,17 @@ class Parser:
         if len(patterns) > 1:
             return MatchOr(patterns=patterns, line=patterns[0].line, col=patterns[0].col)
         return patterns[0]
+
+    def parse_sequence_pattern_item(self) -> Pattern:
+        """Parse one item of a sequence pattern, including `*name` and `*_`."""
+        if self._match(TokenType.STAR):
+            star_tok = self._previous_token()
+            name_tok = self._expect(
+                TokenType.IDENTIFIER, "Expected name after '*' in sequence pattern"
+            )
+            name = None if name_tok.value == "_" else name_tok.value
+            return MatchStar(name=name, line=star_tok.line, col=star_tok.col)
+        return self.parse_pattern()
 
     def parse_pattern_primary(self) -> Pattern:
         if self._check(TokenType.SAHI):
@@ -650,7 +655,7 @@ class Parser:
             line, col = self._previous_token().line, self._previous_token().col
             patterns = []
             while not self._check(TokenType.RBRACKET):
-                patterns.append(self.parse_pattern())
+                patterns.append(self.parse_sequence_pattern_item())
                 if not self._match(TokenType.COMMA):
                     break
             self._expect(TokenType.RBRACKET, "Expected ']' at end of sequence pattern")
@@ -660,7 +665,7 @@ class Parser:
             patterns = []
             is_tuple = False
             while not self._check(TokenType.RPAREN):
-                patterns.append(self.parse_pattern())
+                patterns.append(self.parse_sequence_pattern_item())
                 if self._match(TokenType.COMMA):
                     is_tuple = True
                 else:
@@ -876,15 +881,15 @@ class Parser:
         return With(items=items, body=body, line=tok.line, col=tok.col)
 
     def parse_expr_statement_or_assignment(self) -> Stmt:
-        expr = self.parse_expression()
+        expr = self.parse_expression_list(allow_star=True)
 
         # Check for assignment
         if self._match(TokenType.ASSIGN):
             targets = [expr]
-            value = self.parse_expression()
+            value = self.parse_expression_list(allow_star=True)
             while self._match(TokenType.ASSIGN):
                 targets.append(value)
-                value = self.parse_expression()
+                value = self.parse_expression_list(allow_star=True)
             self._expect_newline_or_eof()
             return Assign(targets=targets, value=value, line=expr.line, col=expr.col)
 
@@ -906,6 +911,10 @@ class Parser:
         }
 
         if self._current_token().type in aug_assign_tokens:
+            if isinstance(expr, Tuple):
+                raise self._error(
+                    "Augmented assignment ke liye ek hi target chahiye, comma list nahi"
+                )
             tok = self._advance()
             op = aug_assign_tokens[tok.type]
             value = self.parse_expression()
@@ -914,10 +923,14 @@ class Parser:
 
         # Check for annotated assignment, e.g. x: int = 10
         if self._match(TokenType.COLON):
+            if isinstance(expr, Tuple):
+                raise self._error(
+                    "Annotation ke liye ek hi target chahiye, comma list nahi"
+                )
             annotation = self.parse_expression()
             value = None
             if self._match(TokenType.ASSIGN):
-                value = self.parse_expression()
+                value = self.parse_expression_list(allow_star=True)
             self._expect_newline_or_eof()
             return AnnAssign(
                 target=expr, annotation=annotation, value=value, line=expr.line, col=expr.col
@@ -954,6 +967,70 @@ class Parser:
             return IfExp(body=expr, test=cond, orelse=orelse, line=expr.line, col=expr.col)
 
         return expr
+
+    def _parse_list_item(self, allow_star: bool) -> Expr:
+        """Parse one item of a comma separated expression list."""
+        if allow_star and self._match(TokenType.STAR):
+            tok = self._previous_token()
+            return Starred(value=self.parse_expression(), line=tok.line, col=tok.col)
+        return self.parse_expression()
+
+    def parse_expression_list(self, allow_star: bool = False) -> Expr:
+        """Parse ``expr (, expr)* [,]`` and return a Tuple once a comma appears.
+
+        Python accepts unparenthesised tuples in assignments, return statements
+        and loop targets, so ``a = 1, 2`` and ``wapas 1, 2`` must produce a
+        Tuple instead of failing on the comma.
+        """
+        first = self._parse_list_item(allow_star)
+        if not self._match(TokenType.COMMA):
+            if allow_star and isinstance(first, Starred):
+                raise self._error(
+                    "Starred expression ke baad comma chahiye (jaise *a, ya *a, b)"
+                )
+            return first
+
+        elts = [first]
+        while not self._check(
+            TokenType.NEWLINE,
+            TokenType.EOF,
+            TokenType.DEDENT,
+            TokenType.SEMICOLON,
+            TokenType.ASSIGN,
+            TokenType.COLON,
+            TokenType.RPAREN,
+            TokenType.RBRACKET,
+            TokenType.RBRACE,
+            TokenType.MEIN,
+        ):
+            elts.append(self._parse_list_item(allow_star))
+            if not self._match(TokenType.COMMA):
+                break
+        return Tuple(elts=elts, line=first.line, col=first.col)
+
+    def _parse_target_item(self, allow_star: bool) -> Expr:
+        """Parse one loop or assignment target (primary, optionally starred)."""
+        if allow_star and self._match(TokenType.STAR):
+            tok = self._previous_token()
+            return Starred(value=self.parse_primary(), line=tok.line, col=tok.col)
+        return self.parse_primary()
+
+    def parse_target_list(self, allow_star: bool = False) -> Expr:
+        """Parse ``target (, target)*`` for ``ghumo`` loops."""
+        first = self._parse_target_item(allow_star)
+        if not self._match(TokenType.COMMA):
+            if allow_star and isinstance(first, Starred):
+                raise self._error(
+                    "Starred loop target ke baad comma chahiye (jaise *rest,)"
+                )
+            return first
+
+        elts = [first]
+        while not self._check(TokenType.NEWLINE, TokenType.EOF, TokenType.DEDENT, TokenType.MEIN):
+            elts.append(self._parse_target_item(allow_star))
+            if not self._match(TokenType.COMMA):
+                break
+        return Tuple(elts=elts, line=first.line, col=first.col)
 
     def parse_lambda(self) -> Lambda:
         tok = self._expect(TokenType.CHOTA_FUNKSHAN, "Expected 'chota_funkshan'")
@@ -1155,6 +1232,72 @@ class Parser:
                 raise self._error("Subscript slice empty nahi ho sakti")
             return first
 
+    def _concatenate_adjacent_strings(self, first: Expr) -> Expr:
+        """Merge adjacent string literals such as ``"a" "b"``, like Python.
+
+        Plain strings and f-strings may be joined in any combination; t-strings
+        may only be joined with other t-strings, matching CPython. Adjacent
+        Constant parts are coalesced so the resulting node matches what Python
+        builds for the same source.
+        """
+        if not self._check(TokenType.STRING, TokenType.FSTRING, TokenType.TSTRING):
+            return first
+
+        if isinstance(first, JoinedStr):
+            kind = "f"
+            parts = list(first.values)
+        elif isinstance(first, TemplateStr):
+            kind = "t"
+            parts = list(first.values)
+        else:
+            kind = "plain"
+            parts = [first]
+
+        def append_part(part: Expr) -> None:
+            if isinstance(part, Constant) and parts and isinstance(parts[-1], Constant):
+                parts[-1] = Constant(
+                    value=parts[-1].value + part.value,
+                    line=parts[-1].line,
+                    col=parts[-1].col,
+                )
+            else:
+                parts.append(part)
+
+        while self._check(TokenType.STRING, TokenType.FSTRING, TokenType.TSTRING):
+            if self._match(TokenType.STRING):
+                if kind == "t":
+                    raise self._error(
+                        "t-string ko plain string ke saath jod nahi sakte"
+                    )
+                tok = self._previous_token()
+                append_part(Constant(value=tok.value, line=tok.line, col=tok.col))
+            elif self._check(TokenType.FSTRING):
+                if kind == "t":
+                    raise self._error(
+                        "t-string ko f-string ke saath jod nahi sakte"
+                    )
+                f_tok = self._advance()
+                node = self.parse_fstring(f_tok)
+                for part in node.values:
+                    append_part(part)
+                kind = "f"
+            else:
+                if kind != "t":
+                    raise self._error(
+                        "t-string ko plain string ya f-string ke saath jod nahi sakte"
+                    )
+                t_tok = self._advance()
+                node = self.parse_tstring(t_tok)
+                for part in node.values:
+                    append_part(part)
+
+        line, col = first.line, first.col
+        if kind == "f":
+            return JoinedStr(values=parts, line=line, col=col)
+        if kind == "t":
+            return TemplateStr(values=parts, line=line, col=col)
+        return Constant(value="".join(p.value for p in parts), line=line, col=col)
+
     def parse_atom(self) -> Expr:
         tok = self._current_token()
 
@@ -1174,15 +1317,17 @@ class Parser:
             return Constant(value=float(self._previous_token().value), line=tok.line, col=tok.col)
 
         elif self._match(TokenType.STRING):
-            return Constant(value=self._previous_token().value, line=tok.line, col=tok.col)
+            return self._concatenate_adjacent_strings(
+                Constant(value=self._previous_token().value, line=tok.line, col=tok.col)
+            )
 
         elif self._check(TokenType.FSTRING):
             f_tok = self._advance()
-            return self.parse_fstring(f_tok)
+            return self._concatenate_adjacent_strings(self.parse_fstring(f_tok))
 
         elif self._check(TokenType.TSTRING):
             t_tok = self._advance()
-            return self.parse_tstring(t_tok)
+            return self._concatenate_adjacent_strings(self.parse_tstring(t_tok))
 
         elif self._match(TokenType.SAHI):
             return Constant(value=True, line=tok.line, col=tok.col)
@@ -1303,9 +1448,20 @@ class Parser:
                 body = val[start:pos]
                 pos += 1  # skip '}'
 
-                expr_str, conversion, spec = self._split_interpolation(body, token, start)
+                expr_str, conversion, spec, debug_text = self._split_interpolation(
+                    body, token, start
+                )
                 expr = self._parse_interpolation_expr(expr_str, token, start)
                 line, col = token.line, token.col + col_offset + start
+                if debug_text is not None:
+                    # PEP 498 debug form keeps the raw source text as a literal
+                    parts.append(
+                        Constant(
+                            value=debug_text,
+                            line=token.line,
+                            col=token.col + col_offset + start,
+                        )
+                    )
                 if template:
                     parts.append(
                         Interpolation(
@@ -1365,11 +1521,14 @@ class Parser:
 
     def _split_interpolation(
         self, body: str, token: Token, col: int
-    ) -> tuple[str, int, Optional[JoinedStr]]:
+    ) -> tuple[str, int, Optional[JoinedStr], Optional[str]]:
         """Split ``{expr!conv:spec}`` into expression text, conversion and format spec.
 
         Bracket depth is respected so ``{d[k:1]}`` and ``{a if b else c}`` keep
-        their own ``:``/``!`` characters.
+        their own ``:``/``!`` characters. The Python debug form ``{expr=}`` also
+        returns the raw source text (including the ``=``) so the caller can keep
+        it as a literal part, and defaults the conversion to ``!r`` when no
+        format spec is given, matching CPython.
         """
         depth = 0
         conv_pos: Optional[int] = None
@@ -1392,6 +1551,16 @@ class Parser:
         ) else len(body)
         expr_str = body[:cut]
 
+        debug_text: Optional[str] = None
+        stripped = expr_str.rstrip()
+        if (
+            stripped.endswith("=")
+            and not stripped.endswith(("==", "!=", "<=", ">=", ":="))
+        ):
+            eq_pos = len(stripped) - 1
+            debug_text = expr_str
+            expr_str = expr_str[:eq_pos]
+
         conversion = -1
         if conv_pos is not None:
             code = body[conv_pos + 1]
@@ -1410,7 +1579,10 @@ class Parser:
             values = self._interpolation_parts(spec_text, token, col + spec_pos + 1, template=False)
             spec = JoinedStr(values=values, line=token.line, col=token.col + col + spec_pos + 1)
 
-        return expr_str, conversion, spec
+        if debug_text is not None and conversion == -1 and spec is None:
+            conversion = ord("r")
+
+        return expr_str, conversion, spec, debug_text
 
     def _parse_interpolation_expr(self, expr_str: str, token: Token, col: int) -> Expr:
         """Lex + parse the expression text inside one ``{...}`` interpolation."""
@@ -1581,7 +1753,7 @@ class Parser:
             iter_expr = self.parse_expression(allow_ternary=False)
             ifs = []
             while self._match(TokenType.AGAR):
-                ifs.append(self.parse_expression())
+                ifs.append(self.parse_expression(allow_ternary=False))
             generators.append(
                 comprehension(target=target, iter=iter_expr, ifs=ifs, is_async=is_async)
             )
