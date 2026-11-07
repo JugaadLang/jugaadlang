@@ -18,6 +18,7 @@ from jugaadlang.ast_nodes.nodes import (
     MatchClass,
     MatchSequence,
     MatchSingleton,
+    MatchStar,
     MatchValue,
     Module,
     Name,
@@ -220,6 +221,12 @@ agar_match x:
 
 def test_parse_tuple_subscript():
     src = "bolo(d[1, 2])"
+def test_parse_match_star_pattern():
+    src = """
+agar_match xs:
+    kaand [a, *rest]:
+        bolo(a)
+"""
     tokens = Lexer(src).tokenize()
     parser = Parser(tokens, source=src)
     ast_mod = parser.parse()
@@ -232,6 +239,19 @@ def test_parse_tuple_subscript():
 
 def test_parse_tuple_subscript_with_slice():
     src = "bolo(p[1:2, 3])"
+    case = ast_mod.body[0].cases[0]
+    pattern = case.pattern
+    assert isinstance(pattern, MatchSequence)
+    assert isinstance(pattern.patterns[1], MatchStar)
+    assert pattern.patterns[1].name == "rest"
+
+
+def test_parse_match_star_wildcard_pattern():
+    src = """
+agar_match xs:
+    kaand [*_]:
+        bolo("any")
+"""
     tokens = Lexer(src).tokenize()
     parser = Parser(tokens, source=src)
     ast_mod = parser.parse()
@@ -246,6 +266,17 @@ def test_parse_tuple_subscript_with_slice():
 
 def test_parse_single_element_tuple_subscript():
     src = "bolo(d[1,])"
+    pattern = ast_mod.body[0].cases[0].pattern
+    assert isinstance(pattern.patterns[0], MatchStar)
+    assert pattern.patterns[0].name is None
+
+
+def test_parse_match_star_in_tuple_pattern():
+    src = """
+agar_match xs:
+    kaand (a, *rest):
+        bolo(a)
+"""
     tokens = Lexer(src).tokenize()
     parser = Parser(tokens, source=src)
     ast_mod = parser.parse()
@@ -266,3 +297,6 @@ def test_parse_generic_annotation_with_commas():
     assert isinstance(annotation, Subscript)
     assert isinstance(annotation.slice, Tuple)
     assert len(annotation.slice.elts) == 2
+    pattern = ast_mod.body[0].cases[0].pattern
+    assert isinstance(pattern, MatchSequence)
+    assert isinstance(pattern.patterns[1], MatchStar)

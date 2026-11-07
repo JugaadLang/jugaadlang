@@ -353,6 +353,51 @@ completer = WordCompleter(KEYWORDS_LIST, ignore_case=True)
 # ── REPL ──────────────────────────────────────────────────────────────────────
 
 
+def _open_bracket_depth(source: str) -> int:
+    """Count unclosed ``(``, ``[`` and ``{`` brackets in *source*.
+
+    String literals and comments are skipped so that text such as
+    ``bolo("(")`` does not look like an unfinished call. The REPL uses this
+    to keep reading lines until the brackets balance, the way Python does.
+    """
+    depth = 0
+    i = 0
+    length = len(source)
+    quote: str | None = None
+    while i < length:
+        ch = source[i]
+        if quote is not None:
+            if ch == "\\":
+                i += 2
+                continue
+            if source.startswith(quote, i):
+                i += len(quote)
+                quote = None
+                continue
+            i += 1
+            continue
+        if ch in "\"'":
+            if source.startswith(ch * 3, i):
+                quote = ch * 3
+                i += 3
+            else:
+                quote = ch
+                i += 1
+            continue
+        if ch == "#" or source.startswith("//", i):
+            newline = source.find("\n", i)
+            if newline == -1:
+                break
+            i = newline + 1
+            continue
+        if ch in "([{":
+            depth += 1
+        elif ch in ")]}":
+            depth = max(depth - 1, 0)
+        i += 1
+    return depth
+
+
 class JugaadREPL:
     """
     JugaadLang Interactive REPL session.
@@ -399,6 +444,13 @@ class JugaadREPL:
                             # Double enter / empty line executes
                             break
                         lines.append(indent + sub_line)
+                    source = "\n".join(lines)
+                elif _open_bracket_depth(line) > 0:
+                    # An unfinished call, list, dict or multi-line string:
+                    # keep reading until the brackets balance.
+                    lines = [line]
+                    while _open_bracket_depth("\n".join(lines)) > 0:
+                        lines.append(session.prompt(".. "))
                     source = "\n".join(lines)
                 else:
                     source = line
