@@ -2,11 +2,14 @@
 Tests for JugaadLang Parser.
 """
 
+import pytest
+
 from jugaadlang.ast_nodes.nodes import (
     Assign,
     Await,
     Call,
     ClassDef,
+    Compare,
     Constant,
     ExprStmt,
     FunctionDef,
@@ -22,11 +25,12 @@ from jugaadlang.ast_nodes.nodes import (
     MatchValue,
     Module,
     Name,
+    NamedExpr,
     Slice,
     Subscript,
 )
 from jugaadlang.lexer.lexer import Lexer
-from jugaadlang.parser.parser import Parser
+from jugaadlang.parser.parser import ParseError, Parser
 
 
 def test_parse_expression_stmt():
@@ -218,48 +222,52 @@ agar_match x:
     assert case4.pattern.name is None
 
 
-def test_parse_match_star_pattern():
-    src = """
-agar_match xs:
-    kaand [a, *rest]:
-        bolo(a)
-"""
+def test_parse_walrus_in_if_condition():
+    src = "agar (n := 5) > 0:\n    bolo(n)\n"
     tokens = Lexer(src).tokenize()
     parser = Parser(tokens, source=src)
     ast_mod = parser.parse()
 
-    case = ast_mod.body[0].cases[0]
-    pattern = case.pattern
-    assert isinstance(pattern, MatchSequence)
-    assert isinstance(pattern.patterns[1], MatchStar)
-    assert pattern.patterns[1].name == "rest"
+    stmt = ast_mod.body[0]
+    assert isinstance(stmt, If)
+    assert isinstance(stmt.test, Compare)
+    named = stmt.test.left
+    assert isinstance(named, NamedExpr)
+    assert isinstance(named.target, Name)
+    assert named.target.id == "n"
+    assert isinstance(named.value, Constant)
+    assert named.value.value == 5
 
 
-def test_parse_match_star_wildcard_pattern():
-    src = """
-agar_match xs:
-    kaand [*_]:
-        bolo("any")
-"""
+def test_parse_walrus_in_while_condition():
+    src = "jabtak (count := 3) > 0:\n    theek_hai\n"
     tokens = Lexer(src).tokenize()
     parser = Parser(tokens, source=src)
     ast_mod = parser.parse()
 
-    pattern = ast_mod.body[0].cases[0].pattern
-    assert isinstance(pattern.patterns[0], MatchStar)
-    assert pattern.patterns[0].name is None
+    test = ast_mod.body[0].test
+    assert isinstance(test.left, NamedExpr)
+    assert test.left.target.id == "count"
 
 
-def test_parse_match_star_in_tuple_pattern():
-    src = """
-agar_match xs:
-    kaand (a, *rest):
-        bolo(a)
-"""
+def test_parse_walrus_target_must_be_simple_name():
+    src = "x = (1 := 2)\n"
     tokens = Lexer(src).tokenize()
     parser = Parser(tokens, source=src)
-    ast_mod = parser.parse()
+    with pytest.raises(ParseError):
+        parser.parse()
 
-    pattern = ast_mod.body[0].cases[0].pattern
-    assert isinstance(pattern, MatchSequence)
-    assert isinstance(pattern.patterns[1], MatchStar)
+    src = "x = (a + b := 2)\n"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    with pytest.raises(ParseError):
+        parser.parse()
+
+
+def test_parse_walrus_without_parentheses_is_rejected():
+    src = "n := 5\n"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    with pytest.raises(ParseError):
+        parser.parse()
+
