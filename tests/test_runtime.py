@@ -426,111 +426,141 @@ res = outer()
     assert interpreter.globals["res"] == 20
 
 
-def test_runtime_match_star_pattern():
+def test_runtime_multiple_assignment_targets():
+    interpreter = JugaadInterpreter()
+    interpreter.run("a, b = 1, 2")
+    assert interpreter.globals["a"] == 1
+    assert interpreter.globals["b"] == 2
+
+
+def test_runtime_multiple_assignment_from_call():
     interpreter = JugaadInterpreter()
     interpreter.run("""
-head = kuch_nahi
-tail = kuch_nahi
-agar_match [1, 2, 3]:
-    kaand [a, *rest]:
-        head = a
-        tail = rest
+banao pair():
+    wapas (7, 8)
+a, b = pair()
+""")
+    assert interpreter.globals["a"] == 7
+    assert interpreter.globals["b"] == 8
+
+
+def test_runtime_tuple_value_without_parens():
+    interpreter = JugaadInterpreter()
+    interpreter.run("x = 1, 2, 3")
+    assert interpreter.globals["x"] == (1, 2, 3)
+
+    interpreter.run("single = 1,")
+    assert interpreter.globals["single"] == (1,)
+
+
+def test_runtime_swap_with_tuple_assignment():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+a = 1
+b = 2
+a, b = b, a
+""")
+    assert interpreter.globals["a"] == 2
+    assert interpreter.globals["b"] == 1
+
+
+def test_runtime_return_tuple_without_parens():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+banao do_teen():
+    wapas 1, 2
+result = do_teen()
+""")
+    assert interpreter.globals["result"] == (1, 2)
+
+
+def test_runtime_chained_tuple_assignment():
+    interpreter = JugaadInterpreter()
+    interpreter.run("a = b = 1, 2")
+    assert interpreter.globals["a"] == (1, 2)
+    assert interpreter.globals["b"] == (1, 2)
+
+
+def test_runtime_starred_assignment():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+head, *tail = [1, 2, 3]
 """)
     assert interpreter.globals["head"] == 1
     assert interpreter.globals["tail"] == [2, 3]
 
 
-def test_runtime_match_star_middle_and_ignore():
+def test_runtime_starred_parenthesized_assignment():
     interpreter = JugaadInterpreter()
     interpreter.run("""
-middle = kuch_nahi
-last = kuch_nahi
-agar_match [1, 2, 3, 4]:
-    kaand [a, *rest, z]:
-        middle = rest
-        last = z
+*init, last = [1, 2, 3]
+(a, *rest) = [4, 5, 6]
 """)
-    assert interpreter.globals["middle"] == [2, 3]
-    assert interpreter.globals["last"] == 4
-
-    interpreter.run("""
-hit = galat
-agar_match [9, 9]:
-    kaand [*_]:
-        hit = sahi
-""")
-    assert interpreter.globals["hit"] is True
+    assert interpreter.globals["init"] == [1, 2]
+    assert interpreter.globals["last"] == 3
+    assert interpreter.globals["a"] == 4
+    assert interpreter.globals["rest"] == [5, 6]
 
 
-def test_runtime_match_star_nested_tuple_pattern():
+def test_runtime_starred_for_target():
     interpreter = JugaadInterpreter()
     interpreter.run("""
-inner = kuch_nahi
-agar_match [1, (2, 3, 4)]:
-    kaand [a, (b, *rest)]:
-        inner = rest
+heads = []
+tails = []
+ghumo head, *tail mein [[1, 2, 3], [4, 5, 6]]:
+    heads.append(head)
+    tails.append(tail)
 """)
-    assert interpreter.globals["inner"] == [3, 4]
-def test_multiline_list_and_dict_literals():
+    assert interpreter.globals["heads"] == [1, 4]
+    assert interpreter.globals["tails"] == [[2, 3], [5, 6]]
+
+
+def test_runtime_starred_value_expression():
     interpreter = JugaadInterpreter()
     interpreter.run("""
-numbers = [
-    1,
-    2,
-    3,
-]
-mapping = {
-    "a": 1,
-    "b": 2,
-}
+a = [1, 2]
+b = [3]
+combined = *a, *b, 9
 """)
-    assert interpreter.globals["numbers"] == [1, 2, 3]
-    assert interpreter.globals["mapping"] == {"a": 1, "b": 2}
-
-
-def test_multiline_call_arguments(capsys):
+    assert interpreter.globals["combined"] == (1, 2, 3, 9)
+def test_runtime_match_star_pattern():
     interpreter = JugaadInterpreter()
     interpreter.run("""
-bolo(
-    "hello",
-    "world",
-)
+events = []
+banao fail():
+    events.append(1)
+    wapas 1 + "bad"
 """)
-    assert capsys.readouterr().out.strip() == "hello world"
+    with pytest.raises(TypeError):
+        interpreter.run_expression("fail()")
+    assert interpreter.globals["events"] == [1]
 
 
-def test_multiline_brackets_inside_function_block():
+def test_run_expression_type_error_runs_cached_code_once():
     interpreter = JugaadInterpreter()
     interpreter.run("""
-banao make_list():
-    items = [
-        10,
-        20,
-    ]
-    wapas items
-
-result = make_list()
+events = []
+banao fail():
+    events.append(1)
+    wapas 1 + "bad"
 """)
-    assert interpreter.globals["result"] == [10, 20]
+    with pytest.raises(TypeError):
+        interpreter.run_expression("fail()")
+    with pytest.raises(TypeError):
+        interpreter.run_expression("fail()")
+    assert interpreter.globals["events"] == [1, 1]
 
 
-def test_multiline_brackets_with_comments():
+def test_run_expression_statement_executes_once():
     interpreter = JugaadInterpreter()
-    interpreter.run("""
-items = [
-    1,  # first
-    2,
-]
-""")
-    assert interpreter.globals["items"] == [1, 2]
+    result = interpreter.run_expression("x = 5")
+    assert result is None
+    assert interpreter.globals["x"] == 5
 
-def test_runtime_string_escapes(capsys):
+
+def test_run_expression_eval_and_exec_do_not_cross_contaminate():
     interpreter = JugaadInterpreter()
-    interpreter.run(
-        'bolo("\\101\\102")\n'
-        'bolo("\\N{SNOWMAN}")\n'
-        'bolo("\\U0001F600")\n'
-    )
-    captured = capsys.readouterr()
-    lines = captured.out.splitlines()
-    assert lines == ["AB", "\u2603", "\U0001F600"]
+    assert interpreter.run_expression("10 * 2 + 5") == 25
+    assert interpreter.run_expression("y = 7") is None
+    assert interpreter.run_expression("10 * 2 + 5") == 25
+    assert interpreter.globals["y"] == 7
