@@ -97,3 +97,117 @@ def test_malformed_unicode_escape_raises_lexer_error(src):
     # unhandled IndexError/ValueError from the interpreter internals.
     with pytest.raises(LexerError):
         Lexer(src).tokenize()
+
+
+def test_leading_bom_is_ignored():
+    plain = 'bolo("hello")\nx = 1\n'
+    with_bom = "\ufeff" + plain
+
+    plain_tokens = Lexer(plain).tokenize()
+    bom_tokens = Lexer(with_bom).tokenize()
+
+    assert [(t.type, t.value, t.line, t.col) for t in plain_tokens] == [
+        (t.type, t.value, t.line, t.col) for t in bom_tokens
+    ]
+    assert bom_tokens[0].type == TokenType.BOLO
+    assert bom_tokens[0].line == 1
+    assert bom_tokens[0].col == 1
+
+
+def test_bom_in_the_middle_is_rejected():
+    src = 'bolo("first")\n\ufeffbolo("second")\n'
+    with pytest.raises(LexerError) as exc_info:
+        Lexer(src).tokenize()
+    assert "BOM" in str(exc_info.value)
+def test_multiline_list_has_no_layout_tokens_inside_brackets():
+    src = "x = [\n    1,\n    2,\n]\n"
+    tokens = Lexer(src).tokenize()
+
+    types = [t.type for t in tokens]
+    assert TokenType.INDENT not in types
+    assert TokenType.DEDENT not in types
+    # Only the line that closes the statement ends with a NEWLINE
+    assert types.count(TokenType.NEWLINE) == 1
+    values = [t.value for t in tokens if t.type == TokenType.INT]
+    assert values == ["1", "2"]
+
+
+def test_multiline_call_has_no_layout_tokens_inside_brackets():
+    src = "bolo(\n    1,\n    2,\n)\n"
+    tokens = Lexer(src).tokenize()
+
+    types = [t.type for t in tokens]
+    assert TokenType.INDENT not in types
+    assert TokenType.DEDENT not in types
+    assert types.count(TokenType.NEWLINE) == 1
+
+
+def test_multiline_brackets_in_block_keep_indentation_balanced():
+    src = "banao f():\n    x = [\n        1,\n    ]\n    wapas x\n"
+    tokens = Lexer(src).tokenize()
+
+    types = [t.type for t in tokens]
+    # One INDENT for the function body and one DEDENT when it ends: the
+    # bracket continuation lines must not add their own indentation tokens.
+    assert types.count(TokenType.INDENT) == 1
+    assert types.count(TokenType.DEDENT) == 1
+
+
+def test_multiline_nested_brackets_are_tracked():
+    src = "x = [\n    [\n        1,\n    ],\n    2,\n]\n"
+    tokens = Lexer(src).tokenize()
+
+    types = [t.type for t in tokens]
+    assert TokenType.INDENT not in types
+    assert TokenType.DEDENT not in types
+    values = [t.value for t in tokens if t.type == TokenType.INT]
+    assert values == ["1", "2"]
+
+def test_octal_escapes_are_decoded():
+    tokens = Lexer('"\\101\\102\\103"').tokenize()
+    assert tokens[0].value == "ABC"
+
+
+def test_short_octal_escapes_are_decoded():
+    tokens = Lexer('"\\0\\7"').tokenize()
+    assert tokens[0].value == "\x00\x07"
+
+
+def test_octal_escape_uses_at_most_three_digits():
+    tokens = Lexer('"\\1019"').tokenize()
+    assert tokens[0].value == "A9"
+
+
+def test_named_unicode_escape_is_decoded():
+    tokens = Lexer('"\\N{SNOWMAN}"').tokenize()
+    assert tokens[0].value == "\u2603"
+
+
+def test_named_unicode_escape_is_case_insensitive():
+    tokens = Lexer('"\\N{latin small letter a}"').tokenize()
+    assert tokens[0].value == "a"
+
+
+def test_unknown_named_unicode_escape_raises_lexer_error():
+    with pytest.raises(LexerError):
+        Lexer('"\\N{NOT A REAL NAME}"').tokenize()
+
+
+def test_named_unicode_escape_needs_braces():
+    with pytest.raises(LexerError):
+        Lexer('"\\Nx"').tokenize()
+
+
+def test_unclosed_named_unicode_escape_raises_lexer_error():
+    with pytest.raises(LexerError):
+        Lexer('"\\N{SNOWMAN"').tokenize()
+
+
+def test_long_unicode_escape_is_decoded():
+    tokens = Lexer('"\\U0001F600"').tokenize()
+    assert tokens[0].value == "\U0001F600"
+
+
+def test_malformed_long_unicode_escape_raises_lexer_error():
+    with pytest.raises(LexerError):
+        Lexer('"\\U0001F60"').tokenize()
