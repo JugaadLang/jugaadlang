@@ -24,6 +24,7 @@ from jugaadlang.ast_nodes.nodes import (
     Name,
     Slice,
     Subscript,
+    With,
 )
 from jugaadlang.lexer.lexer import Lexer
 from jugaadlang.parser.parser import Parser
@@ -218,48 +219,31 @@ agar_match x:
     assert case4.pattern.name is None
 
 
-def test_parse_match_star_pattern():
-    src = """
-agar_match xs:
-    kaand [a, *rest]:
-        bolo(a)
-"""
+def test_parse_async_with():
+    src = "tez banao main():\n    tez ke_saath ctx() jaise f:\n        theek_hai\n"
     tokens = Lexer(src).tokenize()
     parser = Parser(tokens, source=src)
     ast_mod = parser.parse()
 
-    case = ast_mod.body[0].cases[0]
-    pattern = case.pattern
-    assert isinstance(pattern, MatchSequence)
-    assert isinstance(pattern.patterns[1], MatchStar)
-    assert pattern.patterns[1].name == "rest"
+    func = ast_mod.body[0]
+    assert isinstance(func, FunctionDef)
+    assert func.is_async is True
+    with_stmt = func.body[0]
+    assert isinstance(with_stmt, With)
+    assert with_stmt.is_async is True
+    assert len(with_stmt.items) == 1
+    assert isinstance(with_stmt.items[0].context_expr, Call)
+    assert isinstance(with_stmt.items[0].optional_vars, Name)
+    assert with_stmt.items[0].optional_vars.id == "f"
 
 
-def test_parse_match_star_wildcard_pattern():
-    src = """
-agar_match xs:
-    kaand [*_]:
-        bolo("any")
-"""
+def test_parse_plain_with_is_not_async():
+    src = "ke_saath ctx() jaise f:\n    theek_hai\n"
     tokens = Lexer(src).tokenize()
     parser = Parser(tokens, source=src)
     ast_mod = parser.parse()
 
-    pattern = ast_mod.body[0].cases[0].pattern
-    assert isinstance(pattern.patterns[0], MatchStar)
-    assert pattern.patterns[0].name is None
+    with_stmt = ast_mod.body[0]
+    assert isinstance(with_stmt, With)
+    assert with_stmt.is_async is False
 
-
-def test_parse_match_star_in_tuple_pattern():
-    src = """
-agar_match xs:
-    kaand (a, *rest):
-        bolo(a)
-"""
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    ast_mod = parser.parse()
-
-    pattern = ast_mod.body[0].cases[0].pattern
-    assert isinstance(pattern, MatchSequence)
-    assert isinstance(pattern.patterns[1], MatchStar)

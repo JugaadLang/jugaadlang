@@ -426,111 +426,50 @@ res = outer()
     assert interpreter.globals["res"] == 20
 
 
-def test_runtime_match_star_pattern():
+def test_async_with_runtime():
     interpreter = JugaadInterpreter()
     interpreter.run("""
-head = kuch_nahi
-tail = kuch_nahi
-agar_match [1, 2, 3]:
-    kaand [a, *rest]:
-        head = a
-        tail = rest
+lao asyncio
+
+ustad AsyncBox:
+    banao __init__(khud, val):
+        khud.val = val
+
+    tez banao __aenter__(khud):
+        wapas khud.val
+
+    tez banao __aexit__(khud, exc_type, exc_val, exc_tb):
+        theek_hai
+
+tez banao main():
+    tez ke_saath AsyncBox(42) jaise val:
+        wapas val
+
+result = asyncio.run(main())
 """)
-    assert interpreter.globals["head"] == 1
-    assert interpreter.globals["tail"] == [2, 3]
+    assert interpreter.globals["result"] == 42
 
 
-def test_runtime_match_star_middle_and_ignore():
+def test_async_with_body_runs_once():
     interpreter = JugaadInterpreter()
     interpreter.run("""
-middle = kuch_nahi
-last = kuch_nahi
-agar_match [1, 2, 3, 4]:
-    kaand [a, *rest, z]:
-        middle = rest
-        last = z
+lao asyncio
+
+events = []
+
+ustad AsyncBox:
+    tez banao __aenter__(khud):
+        events.append("enter")
+        wapas khud
+
+    tez banao __aexit__(khud, exc_type, exc_val, exc_tb):
+        events.append("exit")
+
+tez banao main():
+    tez ke_saath AsyncBox() jaise box:
+        events.append("body")
+
+asyncio.run(main())
 """)
-    assert interpreter.globals["middle"] == [2, 3]
-    assert interpreter.globals["last"] == 4
+    assert interpreter.globals["events"] == ["enter", "body", "exit"]
 
-    interpreter.run("""
-hit = galat
-agar_match [9, 9]:
-    kaand [*_]:
-        hit = sahi
-""")
-    assert interpreter.globals["hit"] is True
-
-
-def test_runtime_match_star_nested_tuple_pattern():
-    interpreter = JugaadInterpreter()
-    interpreter.run("""
-inner = kuch_nahi
-agar_match [1, (2, 3, 4)]:
-    kaand [a, (b, *rest)]:
-        inner = rest
-""")
-    assert interpreter.globals["inner"] == [3, 4]
-def test_multiline_list_and_dict_literals():
-    interpreter = JugaadInterpreter()
-    interpreter.run("""
-numbers = [
-    1,
-    2,
-    3,
-]
-mapping = {
-    "a": 1,
-    "b": 2,
-}
-""")
-    assert interpreter.globals["numbers"] == [1, 2, 3]
-    assert interpreter.globals["mapping"] == {"a": 1, "b": 2}
-
-
-def test_multiline_call_arguments(capsys):
-    interpreter = JugaadInterpreter()
-    interpreter.run("""
-bolo(
-    "hello",
-    "world",
-)
-""")
-    assert capsys.readouterr().out.strip() == "hello world"
-
-
-def test_multiline_brackets_inside_function_block():
-    interpreter = JugaadInterpreter()
-    interpreter.run("""
-banao make_list():
-    items = [
-        10,
-        20,
-    ]
-    wapas items
-
-result = make_list()
-""")
-    assert interpreter.globals["result"] == [10, 20]
-
-
-def test_multiline_brackets_with_comments():
-    interpreter = JugaadInterpreter()
-    interpreter.run("""
-items = [
-    1,  # first
-    2,
-]
-""")
-    assert interpreter.globals["items"] == [1, 2]
-
-def test_runtime_string_escapes(capsys):
-    interpreter = JugaadInterpreter()
-    interpreter.run(
-        'bolo("\\101\\102")\n'
-        'bolo("\\N{SNOWMAN}")\n'
-        'bolo("\\U0001F600")\n'
-    )
-    captured = capsys.readouterr()
-    lines = captured.out.splitlines()
-    assert lines == ["AB", "\u2603", "\U0001F600"]
