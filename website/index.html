@@ -2853,9 +2853,9 @@
         </button>
       </li>
     </ul>
-    <div class="hamburger" id="hamburger" aria-label="Toggle menu" role="button" tabindex="0">
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-menu" type="button">
       <span></span><span></span><span></span>
-    </div>
+    </button>
   </nav>
 
   <!-- Mobile Menu -->
@@ -4646,18 +4646,18 @@ web.chalao(port=5001)`;
     // ===== HAMBURGER MENU =====
     const hamburger = document.getElementById('hamburger');
     const mobileMenu = document.getElementById('mobile-menu');
+
     hamburger.addEventListener('click', () => {
-      hamburger.classList.toggle('open');
+      const isOpen = hamburger.classList.toggle('open');
       mobileMenu.classList.toggle('open');
+      hamburger.setAttribute('aria-expanded', isOpen);
     });
-    hamburger.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') hamburger.click();
-    });
+
     function closeMobileMenu() {
       hamburger.classList.remove('open');
       mobileMenu.classList.remove('open');
+      hamburger.setAttribute('aria-expanded', 'false');
     }
-
     // ===== SCROLL NAV =====
     window.addEventListener('scroll', () => {
       document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
