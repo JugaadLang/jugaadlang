@@ -3,6 +3,7 @@ JugaadLang Lexer — Tokenizes .jug source code.
 
 Supports:
   - Full indentation tracking (INDENT/DEDENT like Python)
+  - Implicit line joining inside (), [] and {} (newlines and indentation ignored)
   - JugaadLang keywords + English interop keywords
   - # line comments, // line comments, /* block comments */
   - Single/double/triple-quoted strings, f-strings, t-strings (PEP 750)
@@ -14,6 +15,7 @@ Supports:
 
 from __future__ import annotations
 
+import unicodedata
 from typing import Iterator, Optional
 
 from .tokens import KEYWORDS, Token, TokenType
@@ -62,6 +64,11 @@ class Lexer:
     def __init__(self, source: str, filename: str = "<stdin>") -> None:
         # Normalise line endings
         self.source: str = source.replace("\r\n", "\n").replace("\r", "\n")
+        # Editors on Windows often save UTF-8 with a byte order mark. It is not
+        # part of the program text, so drop a single leading one here instead of
+        # letting it glue itself to the first identifier.
+        if self.source.startswith("\ufeff"):
+            self.source = self.source[1:]
         self.filename: str = filename
         self._pos: int = 0
         self._line: int = 1
@@ -69,6 +76,8 @@ class Lexer:
         # Stack of indentation levels; starts with 0
         self._indent_stack: list[int] = [0]
         self._source_lines: list[str] = self.source.splitlines()
+        # Depth of open (), [] and {}: newlines and indentation are ignored inside
+        self._bracket_depth: int = 0
 
     # ── Public API ────────────────────────────────────────────────────
 
@@ -136,6 +145,15 @@ class Lexer:
 
             # ── Handle line start (indentation) ───────────────────
             if at_line_start:
+                # Continuation line inside (), [] or {} — implicit line joining,
+                # so indentation is not meaningful and no INDENT/DEDENT is due.
+                if self._bracket_depth > 0:
+                    while self._pos < len(self.source) and self.source[self._pos] in (" ", "\t"):
+                        self._pos += 1
+                        self._col += 1
+                    at_line_start = False
+                    continue
+
                 # Count leading spaces/tabs
                 indent_level = 0
                 while self._pos < len(self.source) and self.source[self._pos] in (" ", "\t"):
@@ -183,7 +201,8 @@ class Lexer:
             # ── Newline ───────────────────────────────────────────
             if ch == "\n":
                 self._advance()
-                yield self._make(TokenType.NEWLINE, "\n", line, col)
+                if self._bracket_depth == 0:
+                    yield self._make(TokenType.NEWLINE, "\n", line, col)
                 at_line_start = True
                 continue
 
@@ -191,6 +210,12 @@ class Lexer:
             if ch in (" ", "\t", "\r"):
                 self._advance()
                 continue
+
+            # ── Stray byte order mark ─────────────────────────────
+            if ch == "\ufeff":
+                raise self._error(
+                    "UTF-8 BOM sirf source ke shuru mein aa sakta hai, beech mein nahi"
+                )
 
             # ── Comments ──────────────────────────────────────────
             if ch == "#":
@@ -225,6 +250,10 @@ class Lexer:
             # ── Operators & Delimiters ────────────────────────────
             tok = self._scan_operator(line, col)
             if tok:
+                if tok.type in (TokenType.LPAREN, TokenType.LBRACKET, TokenType.LBRACE):
+                    self._bracket_depth += 1
+                elif tok.type in (TokenType.RPAREN, TokenType.RBRACKET, TokenType.RBRACE):
+                    self._bracket_depth = max(0, self._bracket_depth - 1)
                 yield tok
                 continue
 
@@ -364,13 +393,21 @@ class Lexer:
                     "\\": "\\",
                     "'": "'",
                     '"': '"',
-                    "0": "\0",
                     "a": "\a",
                     "b": "\b",
                     "f": "\f",
                     "v": "\v",
                 }
-                if esc in escape_map:
+                if esc in "01234567":
+                    # \ooo — up to three octal digits, first one already read
+                    oct_digits = esc
+                    for _ in range(2):
+                        if self._current() in "01234567":
+                            oct_digits += self._advance()
+                        else:
+                            break
+                    buf.append(chr(int(oct_digits, 8)))
+                elif esc in escape_map:
                     buf.append(escape_map[esc])
                 elif esc == "u":
                     # \uXXXX
@@ -378,6 +415,12 @@ class Lexer:
                 elif esc == "x":
                     # \xXX
                     buf.append(self._scan_hex_escape(2, "x", line, col))
+                elif esc == "U":
+                    # \UXXXXXXXX
+                    buf.append(self._scan_hex_escape(8, "U", line, col))
+                elif esc == "N":
+                    # \N{CHARACTER NAME}
+                    buf.append(self._scan_named_escape(line, col))
                 else:
                     buf.append("\\")
                     buf.append(esc)
@@ -417,6 +460,46 @@ class Lexer:
             raise LexerError(
                 f"Galat \\{esc_char} escape sequence: {hex_chars!r} "
                 f"({n_digits} hex digits hone chahiye)",
+                line,
+                col,
+                self._source_line_at(line),
+            ) from None
+
+    def _scan_named_escape(self, line: int, col: int) -> str:
+        """Read ``\\N{CHARACTER NAME}`` and return the named character.
+
+        Raises a LexerError when the braces are missing or the name is not a
+        real Unicode name, instead of letting the KeyError from
+        ``unicodedata.lookup`` escape as a raw Python exception.
+        """
+        if self._current() != "{":
+            raise LexerError(
+                "\\N escape ke baad { naam } chahiye (jaise \\N{SNOWMAN})",
+                line,
+                col,
+                self._source_line_at(line),
+            )
+        self._advance()  # consume '{'
+
+        name_chars: list[str] = []
+        while self._pos < len(self.source) and self._current() != "}":
+            name_chars.append(self._advance())
+
+        if self._pos >= len(self.source):
+            raise LexerError(
+                "\\N{...} band nahi hua (} missing)",
+                line,
+                col,
+                self._source_line_at(line),
+            )
+        self._advance()  # consume '}'
+
+        name = "".join(name_chars)
+        try:
+            return unicodedata.lookup(name)
+        except KeyError:
+            raise LexerError(
+                f"\\N{{{name}}} naam ki koi Unicode character nahi hai",
                 line,
                 col,
                 self._source_line_at(line),

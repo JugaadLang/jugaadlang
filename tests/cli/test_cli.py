@@ -59,6 +59,20 @@ def test_cli_run(runner, tmp_path):
     result = runner.invoke(main, ['run', str(jug_file)])
     assert result.exit_code == 0
 
+def test_cli_run_utf8_bom_file(runner, tmp_path):
+    jug_file = tmp_path / "bom.jug"
+    jug_file.write_text("bolo('namaste')", encoding="utf-8-sig")
+    result = runner.invoke(main, ['run', str(jug_file)])
+    assert result.exit_code == 0
+    assert "namaste" in result.output
+
+def test_cli_check_utf8_bom_file(runner, tmp_path):
+    jug_file = tmp_path / "bom.jug"
+    jug_file.write_text("bolo('namaste')", encoding="utf-8-sig")
+    result = runner.invoke(main, ['check', str(jug_file)])
+    assert result.exit_code == 0
+    assert "sahi hai" in result.output
+
 def test_cli_run_non_existent(runner):
     result = runner.invoke(main, ['run', 'does_not_exist.jug'])
     assert result.exit_code != 0
