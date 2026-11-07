@@ -1,6 +1,6 @@
-import pytest
-from jugaadlang.ast_nodes.nodes import BinOp, BoolOp, Constant, If, UnaryOp, ExprStmt, Module
+from jugaadlang.ast_nodes.nodes import BinOp, BoolOp, Constant, ExprStmt, If, UnaryOp
 from jugaadlang.optimizer.ast_optimizer import JugaadASTOptimizer
+
 
 def test_constant_folding_binop():
     optimizer = JugaadASTOptimizer()

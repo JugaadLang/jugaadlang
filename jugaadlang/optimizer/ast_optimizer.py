@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import Any, List
+from typing import Any
 
 from ..ast_nodes.nodes import (
     ASTNode,
@@ -10,7 +10,6 @@ from ..ast_nodes.nodes import (
     Constant,
     Expr,
     If,
-    Stmt,
     UnaryOp,
 )
 
@@ -61,18 +60,30 @@ class JugaadASTOptimizer:
             lval = node.left.value
             rval = node.right.value
             try:
-                if node.op == '+': res = lval + rval
-                elif node.op == '-': res = lval - rval
-                elif node.op == '*': res = lval * rval
-                elif node.op == '/': res = lval / rval
-                elif node.op == '//': res = lval // rval
-                elif node.op == '%': res = lval % rval
-                elif node.op == '**': res = lval ** rval
-                elif node.op == '<<': res = lval << rval
-                elif node.op == '>>': res = lval >> rval
-                elif node.op == '|': res = lval | rval
-                elif node.op == '&': res = lval & rval
-                elif node.op == '^': res = lval ^ rval
+                if node.op == '+':
+                    res = lval + rval
+                elif node.op == '-':
+                    res = lval - rval
+                elif node.op == '*':
+                    res = lval * rval
+                elif node.op == '/':
+                    res = lval / rval
+                elif node.op == '//':
+                    res = lval // rval
+                elif node.op == '%':
+                    res = lval % rval
+                elif node.op == '**':
+                    res = lval ** rval
+                elif node.op == '<<':
+                    res = lval << rval
+                elif node.op == '>>':
+                    res = lval >> rval
+                elif node.op == '|':
+                    res = lval | rval
+                elif node.op == '&':
+                    res = lval & rval
+                elif node.op == '^':
+                    res = lval ^ rval
                 else:
                     return node
                 return Constant(value=res, line=node.line, col=node.col)
@@ -105,10 +116,14 @@ class JugaadASTOptimizer:
         if isinstance(node.operand, Constant):
             val = node.operand.value
             try:
-                if node.op == 'nahi': res = not val
-                elif node.op == '+': res = +val
-                elif node.op == '-': res = -val
-                elif node.op == '~': res = ~val
+                if node.op == 'nahi':
+                    res = not val
+                elif node.op == '+':
+                    res = +val
+                elif node.op == '-':
+                    res = -val
+                elif node.op == '~':
+                    res = ~val
                 else:
                     return node
                 return Constant(value=res, line=node.line, col=node.col)
