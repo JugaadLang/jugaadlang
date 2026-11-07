@@ -6,7 +6,7 @@
   "publisher": "jugaadlang",
   "icon": "icon.png",
   "engines": {
-    "vscode": "^1.140.0"
+    "vscode": "^1.144.0"
   },
   "categories": [
     "Programming Languages",
@@ -115,8 +115,8 @@
     "lint": "eslint src --ext ts"
   },
   "devDependencies": {
-    "@types/node": "^26.6.6",
-    "@types/vscode": "^1.140.0",
+    "@types/node": "^26.6.4",
+    "@types/vscode": "^1.144.0",
     "@typescript-eslint/eslint-plugin": "^8.71.2",
     "@typescript-eslint/parser": "^8.61.0",
     "eslint": "^10.14.0",
