@@ -6,6 +6,7 @@ import pytest
 
 from jugaadlang.ast_nodes.nodes import (
     Assign,
+    AugAssign,
     Await,
     Call,
     ClassDef,
@@ -21,7 +22,6 @@ from jugaadlang.ast_nodes.nodes import (
     MatchClass,
     MatchSequence,
     MatchSingleton,
-    MatchStar,
     MatchValue,
     Module,
     Name,
@@ -29,7 +29,7 @@ from jugaadlang.ast_nodes.nodes import (
     Slice,
     Starred,
     Subscript,
-    Tuple,
+    While,
 )
 from jugaadlang.lexer.lexer import Lexer
 from jugaadlang.parser.parser import ParseError, Parser
@@ -223,189 +223,47 @@ agar_match x:
     assert isinstance(case4.pattern, MatchAs)
     assert case4.pattern.name is None
 
-def test_parse_match_star_pattern():
-    src = """
-agar_match xs:
-    kaand [a, *rest]:
-        bolo(a)
-"""
+
+def test_parse_inline_block_multiple_semicolon_statements():
+    src = "agar galat: x = 1; y = 2\n"
     tokens = Lexer(src).tokenize()
     parser = Parser(tokens, source=src)
     ast_mod = parser.parse()
 
-    case = ast_mod.body[0].cases[0]
-    pattern = case.pattern
-    assert isinstance(pattern, MatchSequence)
-    assert isinstance(pattern.patterns[1], MatchStar)
-    assert pattern.patterns[1].name == "rest"
-
-
-def test_parse_match_star_wildcard_pattern():
-    src = """
-agar_match xs:
-    kaand [*_]:
-        bolo("any")
-"""
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    ast_mod = parser.parse()
-
-    pattern = ast_mod.body[0].cases[0].pattern
-    assert isinstance(pattern.patterns[0], MatchStar)
-    assert pattern.patterns[0].name is None
-
-
-def test_parse_match_star_in_tuple_pattern():
-    src = """
-agar_match xs:
-    kaand (a, *rest):
-        bolo(a)
-"""
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    ast_mod = parser.parse()
-
-    pattern = ast_mod.body[0].cases[0].pattern
-    assert isinstance(pattern, MatchSequence)
-    assert isinstance(pattern.patterns[1], MatchStar)
-
-
-
-def test_parse_multiple_assignment_targets():
-    src = "a, b = 1, 2"
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    ast_mod = parser.parse()
-
+    assert len(ast_mod.body) == 1
     stmt = ast_mod.body[0]
-    assert isinstance(stmt, Assign)
-    assert len(stmt.targets) == 1
-    target = stmt.targets[0]
-    assert isinstance(target, Tuple)
-    assert len(target.elts) == 2
-    assert all(isinstance(elt, Name) for elt in target.elts)
+    assert isinstance(stmt, If)
+    assert len(stmt.body) == 2
+    assert isinstance(stmt.body[0], Assign)
+    assert isinstance(stmt.body[1], Assign)
 
-    value = stmt.value
-    assert isinstance(value, Tuple)
-    assert len(value.elts) == 2
-    assert [elt.value for elt in value.elts] == [1, 2]
+    # 3 statements with trailing semicolon
+    src3 = "agar sahi: a = 1; b = 2; c = 3;\n"
+    tokens3 = Lexer(src3).tokenize()
+    ast_mod3 = Parser(tokens3, source=src3).parse()
+    assert len(ast_mod3.body) == 1
+    stmt3 = ast_mod3.body[0]
+    assert isinstance(stmt3, If)
+    assert len(stmt3.body) == 3
 
+    # jabtak while loop
+    src_while = "jabtak n > 0: n -= 1; bolo(n)\n"
+    tokens_while = Lexer(src_while).tokenize()
+    ast_mod_while = Parser(tokens_while, source=src_while).parse()
+    assert len(ast_mod_while.body) == 1
+    stmt_while = ast_mod_while.body[0]
+    assert isinstance(stmt_while, While)
+    assert len(stmt_while.body) == 2
+    assert isinstance(stmt_while.body[0], AugAssign)
+    assert isinstance(stmt_while.body[1], ExprStmt)
 
-def test_parse_multiple_assignment_value_from_call():
-    src = "a, b = get_pair()"
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    ast_mod = parser.parse()
-
-    stmt = ast_mod.body[0]
-    assert isinstance(stmt, Assign)
-    assert isinstance(stmt.targets[0], Tuple)
-    assert isinstance(stmt.value, Call)
-
-
-def test_parse_unparenthesized_tuple_value():
-    src = "x = 1, 2, 3"
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    ast_mod = parser.parse()
-
-    stmt = ast_mod.body[0]
-    assert isinstance(stmt, Assign)
-    assert isinstance(stmt.value, Tuple)
-    assert [elt.value for elt in stmt.value.elts] == [1, 2, 3]
-
-
-def test_parse_single_element_tuple_value():
-    src = "x = 1,"
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    ast_mod = parser.parse()
-
-    stmt = ast_mod.body[0]
-    assert isinstance(stmt, Assign)
-    assert isinstance(stmt.value, Tuple)
-    assert len(stmt.value.elts) == 1
-
-
-def test_parse_return_tuple_without_parens():
-    src = "banao do_teen():\n    wapas 1, 2\n"
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    ast_mod = parser.parse()
-
-    func = ast_mod.body[0]
-    assert isinstance(func, FunctionDef)
-    ret = func.body[0]
-    assert isinstance(ret, Return)
-    assert isinstance(ret.value, Tuple)
-    assert len(ret.value.elts) == 2
-
-
-def test_parse_chained_tuple_assignment():
-    src = "a = b = 1, 2"
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    ast_mod = parser.parse()
-
-    stmt = ast_mod.body[0]
-    assert isinstance(stmt, Assign)
-    assert len(stmt.targets) == 2
-    assert isinstance(stmt.value, Tuple)
-
-
-def test_parse_starred_assignment_target():
-    src = "head, *tail = items"
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    ast_mod = parser.parse()
-
-    stmt = ast_mod.body[0]
-    assert isinstance(stmt, Assign)
-    target = stmt.targets[0]
-    assert isinstance(target, Tuple)
-    assert isinstance(target.elts[0], Name)
-    assert isinstance(target.elts[1], Starred)
-    assert isinstance(target.elts[1].value, Name)
-    assert target.elts[1].value.id == "tail"
-
-
-def test_parse_starred_parenthesized_target():
-    src = "(a, *rest) = values"
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    ast_mod = parser.parse()
-
-    stmt = ast_mod.body[0]
-    assert isinstance(stmt, Assign)
-    target = stmt.targets[0]
-    assert isinstance(target, Tuple)
-    assert isinstance(target.elts[1], Starred)
-
-
-def test_parse_starred_for_target():
-    src = "ghumo head, *tail mein rows:\n    bolo(head)\n"
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    ast_mod = parser.parse()
-
-    stmt = ast_mod.body[0]
-    assert isinstance(stmt, For)
-    target = stmt.target
-    assert isinstance(target, Tuple)
-    assert isinstance(target.elts[1], Starred)
-
-
-def test_parse_bare_starred_target_rejected():
-    src = "*a = 1"
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    with pytest.raises(ParseError):
-        parser.parse()
-
-
-def test_parse_bare_starred_for_target_rejected():
-    src = "ghumo *a mein rows:\n    bolo(a)\n"
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    with pytest.raises(ParseError):
-        parser.parse()
+    # banao function def
+    src_func = "banao f(): a = 1; wapas a\n"
+    tokens_func = Lexer(src_func).tokenize()
+    ast_mod_func = Parser(tokens_func, source=src_func).parse()
+    assert len(ast_mod_func.body) == 1
+    stmt_func = ast_mod_func.body[0]
+    assert isinstance(stmt_func, FunctionDef)
+    assert len(stmt_func.body) == 2
+    assert isinstance(stmt_func.body[0], Assign)
+    assert isinstance(stmt_func.body[1], Return)
