@@ -43,6 +43,23 @@ Expected output:
 
 See the [standard library](stdlib.html) for available modules. Third-party Python packages must be installed in the environment used by `jug`. For module resolution details, consult the [architecture](architecture.html); do not assume a `.jug` file is automatically importable as a Python module.
 
+## Import a module lazily
+
+Prefix an import with `sust` to defer loading until the name is first used (PEP 810, Python 3.15+). On older Pythons the same line imports eagerly, so the code runs everywhere.
+
+```jugaadlang
+sust se json lao dumps
+bolo(dumps({"cup": 2}))
+```
+
+Expected output:
+
+```text
+{"cup": 2}
+```
+
+`sust` is contextual: it only starts a `lao` or `se ... lao` statement, so `sust = 5` still assigns a variable.
+
 ## Classes
 
 Use `ustad` to define a class. The constructor is `shuru`, and `khud` refers to the instance.

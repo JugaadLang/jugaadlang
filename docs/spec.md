@@ -38,6 +38,7 @@ The compiler tokenizes the following keywords:
 | `khud` | `self` | Instance self-reference |
 | `lao` | `import` | Module import |
 | `se` | `from` | Sub-module import |
+| `sust` | `lazy` (3.15+) | Deferred import |
 | `rukja` | `break` | Loop termination |
 | `chalte_raho`| `continue` | Loop skip iteration |
 | `koshish` | `try` | Exception try block |
@@ -67,6 +68,7 @@ JugaadLang maps natively to Python's dynamic type system:
 * `int`: Arbitrary-precision integer (e.g. `10`, `0xFA`, `0b101`)
 * `float`: Double-precision floating-point (e.g. `10.5`, `1e-3`)
 * `str`: Unicode string literals (e.g. `"Namaste"`, `'Duniya'`, `f"Hi {naam}"`)
+* `Template`: Template literal `t"Hi {naam}"` (PEP 750, Python 3.14+; degrades to `str` on older interpreters)
 * `bool`: Boolean values (`sahi`, `galat`)
 * `null`: Null value (`kuch_nahi`)
 * `list`: Resizable array (e.g. `[1, 2, 3]`)
@@ -104,3 +106,62 @@ The interpreter automatically injects these interactive functions into the globa
 * `bachao()`: Prints emergency help search.
 * `fortune()`: Tells a programmer's fortune.
 * `jugaad()`: Prints funny debugging tips.
+* `roop(t"...")`: Renders a template (`t"..."`) back to text.
+
+---
+
+## 6. Python 3.14 & 3.15 Syntax
+
+JugaadLang tracks CPython's "What's New" releases. Each feature below is transpiled to the native construct when the running interpreter understands it, and to an equivalent older construct otherwise — one source file works on every supported Python (3.10+).
+
+### 6.1 Template strings (`t"..."`, PEP 750)
+
+`t"..."` produces a `string.templatelib.Template` on Python 3.14+ whose `strings` and `interpolations` expose the literal pieces separately. `roop(template)` renders it the way an f-string would.
+
+```jugaadlang
+naam = "Asha"
+bolo(roop(t"Namaste {naam}, {naam!r:>6}!"))
+```
+
+Conversions (`!r`, `!s`, `!a`) and format specs (`{:>6}`, `{:03d}`) work in both `f"..."` and `t"..."`, including nested specs such as `f"{n:0{w}d}"`. Literal braces use `{{` and `}}`. Raw strings (`r"..."`) are not supported yet.
+
+### 6.2 Bracket-less `except` (PEP 758)
+
+```jugaadlang
+koshish:
+    1 / 0
+gadbad ZeroDivisionError, ValueError:
+    bolo("pakda gaya")
+```
+
+Multiple types with `as` still require brackets: `gadbad (ValueError, TypeError) as e:`.
+
+### 6.3 Unpacking in comprehensions (PEP 798) and literals (PEP 448)
+
+```jugaadlang
+jodon = [[1, 2], [3]]
+bolo([*l ghumo l mein jodon])
+daftar = [{"a": 1}, {"b": 2}]
+bolo({**d ghumo d mein daftar})
+bolo([*jodon[0], 9])
+```
+
+`*` works in list and set comprehensions and generator expressions, `**` in dict comprehensions, and both in list/set/dict/tuple literals. On Python 3.15+ they are emitted natively; older versions rewrite them as an extra loop, so results and evaluation order are identical.
+
+### 6.4 Lazy imports (`sust`, PEP 810)
+
+```jugaadlang
+sust lao json
+sust se pathlib lao Path
+```
+
+`sust` is contextual — it only introduces a `lao` or `se ... lao` statement, so it remains usable as a variable name. On Python 3.15+ the import is bound lazily; on older versions it imports eagerly.
+
+### 6.5 New builtins (PEP 814, PEP 661)
+
+| JugaadLang | Python | Minimum version |
+| :--- | :--- | :--- |
+| `jamhi_kosh(...)` | `frozendict(...)` | 3.15 |
+| `pahredaar` | `sentinel` | 3.15 |
+
+Using either alias below Python 3.15 raises a clear JugaadLang error naming the required version instead of an obscure `NameError`.

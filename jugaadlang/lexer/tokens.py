@@ -14,6 +14,7 @@ class TokenType(Enum):
     FLOAT = auto()
     STRING = auto()
     FSTRING = auto()
+    TSTRING = auto()
 
     # ── Identifier ───────────────────────────────────────────────────
     IDENTIFIER = auto()
@@ -185,6 +186,7 @@ TOKEN_NAMES: dict[TokenType, str] = {
     TokenType.FLOAT: "float",
     TokenType.STRING: "string",
     TokenType.FSTRING: "f-string",
+    TokenType.TSTRING: "t-string",
     TokenType.IDENTIFIER: "identifier",
 
     TokenType.NEWLINE: "newline",

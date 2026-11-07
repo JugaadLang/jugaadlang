@@ -118,6 +118,35 @@ bolo(chai[&quot;daam&quot;] * chai[&quot;cup&quot;])
 3
 30
 </code></pre>
+<h2 id="strings-and-templates">Strings and templates</h2>
+<p><code>f"..."</code> formats values in place, including the <code>!r</code>/<code>!s</code>/<code>!a</code> conversions and width specifiers Python supports. <code>t"..."</code> builds a template object (PEP 750, Python 3.14+); <code>roop</code> renders any template back to text.</p>
+<pre><code class="language-jugaadlang">naam = &quot;Asha&quot;
+daam = 12.5
+bolo(f&quot;Namaste {naam}, daam = {daam:.2f}&quot;)
+bolo(f&quot;{naam!r:&gt;6}&quot;)
+chitthi = t&quot;Namaste {naam}!&quot;
+bolo(roop(chitthi))
+</code></pre>
+<p>Expected output:</p>
+<pre><code class="language-text">Namaste Asha, daam = 12.50
+'Asha'
+Namaste Asha!
+</code></pre>
+<p>Use templates when the pieces matter as data — SQL, HTML, or log messages are built from <code>template.strings</code> and <code>template.interpolations</code> instead of one concatenated string. <code>bolo</code> on a template prints the object itself, so pass it through <code>roop</code> when you want text. On Python 3.13 and older <code>t"..."</code> compiles to a plain f-string, and <code>roop</code> returns it unchanged.</p>
+<h2 id="unpack-collections">Unpack collections</h2>
+<p><code>*</code> splices list or set elements and <code>**</code> merges dictionary keys. The same marks work directly inside comprehensions, so nested containers flatten in one expression.</p>
+<pre><code class="language-jugaadlang">jodon = [[1, 2], [3]]
+sab = [*l ghumo l mein jodon]
+bolo(sab)
+bolo([*sab, 4])
+daftar = [{&quot;a&quot;: 1}, {&quot;b&quot;: 2}]
+bolo({**d ghumo d mein daftar})
+</code></pre>
+<p>Expected output:</p>
+<pre><code class="language-text">[1, 2, 3]
+[1, 2, 3, 4]
+{'a': 1, 'b': 2}
+</code></pre>
 <h2 id="convert-explicitly">Convert explicitly</h2>
 <p>Input and file contents are text. Use <code>int</code>, <code>float</code>, or <code>str</code> when converting between text and numbers. Invalid numeric text raises <code>ValueError</code>.</p>
 <pre><code class="language-jugaadlang">daam = int(&quot;25&quot;)
@@ -139,6 +168,8 @@ Total: 25
 <ul>
 <li><a href="#values">Values</a></li>
 <li><a href="#work-with-collections">Work with collections</a></li>
+<li><a href="#strings-and-templates">Strings and templates</a></li>
+<li><a href="#unpack-collections">Unpack collections</a></li>
 <li><a href="#convert-explicitly">Convert explicitly</a></li>
 <li><a href="#mutation-and-sharing">Mutation and sharing</a></li>
 </ul>

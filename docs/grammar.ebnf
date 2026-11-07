@@ -43,8 +43,8 @@ nonlocal_stmt = "nonlocal" identifier { "," identifier } ;
 
 assert_stmt = "assert" expression [ "," expression ] ;
 
-import_stmt = "lao" alias_list
-            | "se" relative_module "lao" ( "*" | alias_list | "(" alias_list ")" ) ;
+import_stmt = [ "sust" ] ( "lao" alias_list
+                         | "se" relative_module "lao" ( "*" | alias_list | "(" alias_list ")" ) ) ;
 
 alias_list = alias { "," alias } ;
 alias = identifier [ "as" identifier ] ;
@@ -58,7 +58,7 @@ while_stmt = "jabtak" expression ":" block [ "warna" ":" block ] ;
 for_stmt = [ "tez" ] "ghumo" expression "mein" expression ":" block [ "warna" ":" block ] ;
 
 try_stmt = "koshish" ":" block { except_clause ":" block } [ "warna" ":" block ] [ "aakhir_me" ":" block ] ;
-except_clause = "gadbad" [ expression [ "as" identifier ] ] ;
+except_clause = "gadbad" [ ( expression { "," expression } ) [ "as" identifier ] ] ;
 
 func_def = [ "tez" ] "banao" identifier "(" [ parameters ] ")" [ "->" expression ] ":" block ;
 
@@ -120,6 +120,13 @@ atom_expr = identifier
           | dict_expr
           | set_expr
           | fstring
+          | tstring
           | "(" expression ")" ;
+
+fstring = "f" quoted_text ;
+tstring = "t" quoted_text ;
+quoted_text = ( "'" | "\"" ) { interpolation | text } ( "'" | "\"" ) ;
+interpolation = "{" expression [ "!" ( "r" | "s" | "a" ) ] [ ":" format_spec ] "}" ;
+format_spec = { interpolation | text } ;
 
 constant = integer | float | string | "sahi" | "galat" | "kuch_nahi" | "..." ;

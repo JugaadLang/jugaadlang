@@ -38,6 +38,53 @@ def test_interpreter_builtins(capsys):
     assert "Bahar jao" in captured.out
 
 
+def test_interpreter_native_builtins(capsys):
+    interpreter = JugaadInterpreter()
+
+    interpreter.run("num = kismat(1, 10)")
+    assert 1 <= interpreter.globals["num"] <= 10
+
+    interpreter.run("coin = sikka()")
+    assert interpreter.globals["coin"] in ("Head", "Tail")
+
+    interpreter.run("namaste()")
+    captured = capsys.readouterr()
+    assert "Welcome to JugaadLang" in captured.out
+
+    interpreter.run("debug(42)")
+    captured = capsys.readouterr()
+    assert "Debug: 42" in captured.out
+
+    interpreter.run("version()")
+    captured = capsys.readouterr()
+    assert "JugaadLang Version:" in captured.out
+
+    interpreter.run("madad()")
+    captured = capsys.readouterr()
+    assert "JugaadLang Full Help Menu" in captured.out
+
+    interpreter.run("jugaad()")
+    captured = capsys.readouterr()
+    assert "Restart karke dekho" in captured.out or "debugger" in captured.out or "StackOverflow" in captured.out or "Commit" in captured.out
+
+    interpreter.run("himmat()")
+    captured = capsys.readouterr()
+    assert "himmat" in captured.out.lower()
+
+    interpreter.run("bachao()")
+    captured = capsys.readouterr()
+    assert "bachao" in captured.out.lower()
+
+    interpreter.run("dhanya_waad()")
+    captured = capsys.readouterr()
+    assert "dhanyawaad" in captured.out.lower()
+
+    interpreter.run("chilla_mat()")
+    captured = capsys.readouterr()
+    assert "chilla mat" in captured.out.lower()
+
+
+
 def test_interpreter_stdlib():
     interpreter = JugaadInterpreter()
     interpreter.run("lao ganit\nx = ganit.sqrt(16)")
@@ -377,3 +424,143 @@ banao outer():
 res = outer()
 """)
     assert interpreter.globals["res"] == 20
+
+
+def test_runtime_multiple_assignment_targets():
+    interpreter = JugaadInterpreter()
+    interpreter.run("a, b = 1, 2")
+    assert interpreter.globals["a"] == 1
+    assert interpreter.globals["b"] == 2
+
+
+def test_runtime_multiple_assignment_from_call():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+banao pair():
+    wapas (7, 8)
+a, b = pair()
+""")
+    assert interpreter.globals["a"] == 7
+    assert interpreter.globals["b"] == 8
+
+
+def test_runtime_tuple_value_without_parens():
+    interpreter = JugaadInterpreter()
+    interpreter.run("x = 1, 2, 3")
+    assert interpreter.globals["x"] == (1, 2, 3)
+
+    interpreter.run("single = 1,")
+    assert interpreter.globals["single"] == (1,)
+
+
+def test_runtime_swap_with_tuple_assignment():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+a = 1
+b = 2
+a, b = b, a
+""")
+    assert interpreter.globals["a"] == 2
+    assert interpreter.globals["b"] == 1
+
+
+def test_runtime_return_tuple_without_parens():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+banao do_teen():
+    wapas 1, 2
+result = do_teen()
+""")
+    assert interpreter.globals["result"] == (1, 2)
+
+
+def test_runtime_chained_tuple_assignment():
+    interpreter = JugaadInterpreter()
+    interpreter.run("a = b = 1, 2")
+    assert interpreter.globals["a"] == (1, 2)
+    assert interpreter.globals["b"] == (1, 2)
+
+
+def test_runtime_starred_assignment():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+head, *tail = [1, 2, 3]
+""")
+    assert interpreter.globals["head"] == 1
+    assert interpreter.globals["tail"] == [2, 3]
+
+
+def test_runtime_starred_parenthesized_assignment():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+*init, last = [1, 2, 3]
+(a, *rest) = [4, 5, 6]
+""")
+    assert interpreter.globals["init"] == [1, 2]
+    assert interpreter.globals["last"] == 3
+    assert interpreter.globals["a"] == 4
+    assert interpreter.globals["rest"] == [5, 6]
+
+
+def test_runtime_starred_for_target():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+heads = []
+tails = []
+ghumo head, *tail mein [[1, 2, 3], [4, 5, 6]]:
+    heads.append(head)
+    tails.append(tail)
+""")
+    assert interpreter.globals["heads"] == [1, 4]
+    assert interpreter.globals["tails"] == [[2, 3], [5, 6]]
+
+
+def test_runtime_starred_value_expression():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+a = [1, 2]
+b = [3]
+combined = *a, *b, 9
+""")
+    assert interpreter.globals["combined"] == (1, 2, 3, 9)
+def test_runtime_match_star_pattern():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+events = []
+banao fail():
+    events.append(1)
+    wapas 1 + "bad"
+""")
+    with pytest.raises(TypeError):
+        interpreter.run_expression("fail()")
+    assert interpreter.globals["events"] == [1]
+
+
+def test_run_expression_type_error_runs_cached_code_once():
+    interpreter = JugaadInterpreter()
+    interpreter.run("""
+events = []
+banao fail():
+    events.append(1)
+    wapas 1 + "bad"
+""")
+    with pytest.raises(TypeError):
+        interpreter.run_expression("fail()")
+    with pytest.raises(TypeError):
+        interpreter.run_expression("fail()")
+    assert interpreter.globals["events"] == [1, 1]
+
+
+def test_run_expression_statement_executes_once():
+    interpreter = JugaadInterpreter()
+    result = interpreter.run_expression("x = 5")
+    assert result is None
+    assert interpreter.globals["x"] == 5
+
+
+def test_run_expression_eval_and_exec_do_not_cross_contaminate():
+    interpreter = JugaadInterpreter()
+    assert interpreter.run_expression("10 * 2 + 5") == 25
+    assert interpreter.run_expression("y = 7") is None
+    assert interpreter.run_expression("10 * 2 + 5") == 25
+    assert interpreter.globals["y"] == 7

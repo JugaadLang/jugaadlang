@@ -5,6 +5,8 @@ Uses recursive descent with precedence climb.
 
 from __future__ import annotations
 
+from typing import Optional
+
 from ..ast_nodes.nodes import (
     AnnAssign,
     Assert,
@@ -35,6 +37,7 @@ from ..ast_nodes.nodes import (
     IfExp,
     Import,
     ImportFrom,
+    Interpolation,
     JoinedStr,
     Lambda,
     List,
@@ -46,6 +49,7 @@ from ..ast_nodes.nodes import (
     MatchOr,
     MatchSequence,
     MatchSingleton,
+    MatchStar,
     MatchValue,
     Module,
     Name,
@@ -58,8 +62,10 @@ from ..ast_nodes.nodes import (
     Set,
     SetComp,
     Slice,
+    Starred,
     Stmt,
     Subscript,
+    TemplateStr,
     Try,
     Tuple,
     UnaryOp,
@@ -223,6 +229,18 @@ class Parser:
             return self.parse_try()
         elif self._check(TokenType.UDAO):
             return self.parse_raise()
+        elif self._check(TokenType.IDENTIFIER) and self._current_token().value == "sust":
+            # Contextual keyword: 'sust lao x' / 'sust se x lao y' (PEP 810 lazy import).
+            # Not a real keyword so existing code can still use 'sust' as a variable.
+            nxt = self._peek()
+            if nxt.type in (TokenType.LAO, TokenType.SE):
+                self._advance()  # consume 'sust'
+                if nxt.type == TokenType.LAO:
+                    stmt: Stmt = self.parse_import()
+                else:
+                    stmt = self.parse_import_from()
+                stmt.is_lazy = True  # type: ignore[attr-defined]
+                return stmt
         elif self._check(TokenType.LAO):
             return self.parse_import()
         elif self._check(TokenType.SE):
@@ -406,7 +424,7 @@ class Parser:
         tok = self._expect(TokenType.WAPAS, "Expected 'wapas'")
         value = None
         if not self._check(TokenType.NEWLINE, TokenType.EOF, TokenType.DEDENT):
-            value = self.parse_expression()
+            value = self.parse_expression_list(allow_star=True)
         self._expect_newline_or_eof()
         return Return(value=value, line=tok.line, col=tok.col)
 
@@ -422,17 +440,10 @@ class Parser:
 
     def parse_for(self, is_async: bool) -> For:
         tok = self._expect(TokenType.GHUMO, "Expected 'ghumo'")
-        target = self.parse_primary()
-        if self._match(TokenType.COMMA):
-            elts = [target]
-            while True:
-                elts.append(self.parse_primary())
-                if not self._match(TokenType.COMMA):
-                    break
-            target = Tuple(elts=elts, line=target.line, col=target.col)
+        target = self.parse_target_list(allow_star=True)
 
         self._expect(TokenType.MEIN, "Expected 'mein' after loop target variables")
-        iter_expr = self.parse_expression()
+        iter_expr = self.parse_expression_list(allow_star=True)
         body = self.parse_block()
 
         orelse = []
@@ -532,6 +543,17 @@ class Parser:
         if len(patterns) > 1:
             return MatchOr(patterns=patterns, line=patterns[0].line, col=patterns[0].col)
         return patterns[0]
+
+    def parse_sequence_pattern_item(self) -> Pattern:
+        """Parse one item of a sequence pattern, including `*name` and `*_`."""
+        if self._match(TokenType.STAR):
+            star_tok = self._previous_token()
+            name_tok = self._expect(
+                TokenType.IDENTIFIER, "Expected name after '*' in sequence pattern"
+            )
+            name = None if name_tok.value == "_" else name_tok.value
+            return MatchStar(name=name, line=star_tok.line, col=star_tok.col)
+        return self.parse_pattern()
 
     def parse_pattern_primary(self) -> Pattern:
         if self._check(TokenType.SAHI):
@@ -633,7 +655,7 @@ class Parser:
             line, col = self._previous_token().line, self._previous_token().col
             patterns = []
             while not self._check(TokenType.RBRACKET):
-                patterns.append(self.parse_pattern())
+                patterns.append(self.parse_sequence_pattern_item())
                 if not self._match(TokenType.COMMA):
                     break
             self._expect(TokenType.RBRACKET, "Expected ']' at end of sequence pattern")
@@ -643,7 +665,7 @@ class Parser:
             patterns = []
             is_tuple = False
             while not self._check(TokenType.RPAREN):
-                patterns.append(self.parse_pattern())
+                patterns.append(self.parse_sequence_pattern_item())
                 if self._match(TokenType.COMMA):
                     is_tuple = True
                 else:
@@ -693,11 +715,30 @@ class Parser:
         handlers = []
         while self._match(TokenType.GADBAD):
             handler_tok = self._previous_token()
-            exc_type = None
+            exc_type: Expr | None = None
             exc_name = None
             if not self._check(TokenType.COLON):
-                exc_type = self.parse_expression()
+                # PEP 758: `gadbad A, B:` (multiple types, no brackets) as well
+                # as the classic `gadbad (A, B):`. We emit a Tuple either way,
+                # which compiles on every supported Python version.
+                types: list[Expr] = [self.parse_expression()]
+                while self._match(TokenType.COMMA):
+                    if self._check(TokenType.AS):
+                        raise self._error(
+                            "Bina bracket ke 'gadbad A, B as e:' nahi chalta — brackets laga: "
+                            "gadbad (A, B) as e:"
+                        )
+                    types.append(self.parse_expression())
+                if len(types) > 1:
+                    exc_type = Tuple(elts=types, line=handler_tok.line, col=handler_tok.col)
+                else:
+                    exc_type = types[0]
                 if self._match(TokenType.AS):
+                    if len(types) > 1:
+                        raise self._error(
+                            "Bina bracket ke bahut saare exceptions ke saath 'as' nahi chalta — "
+                            "brackets laga: gadbad (A, B) as e:"
+                        )
                     name_tok = self._expect(TokenType.IDENTIFIER, "Expected name after 'as'")
                     exc_name = name_tok.value
             exc_body = self.parse_block()
@@ -840,15 +881,15 @@ class Parser:
         return With(items=items, body=body, line=tok.line, col=tok.col)
 
     def parse_expr_statement_or_assignment(self) -> Stmt:
-        expr = self.parse_expression()
+        expr = self.parse_expression_list(allow_star=True)
 
         # Check for assignment
         if self._match(TokenType.ASSIGN):
             targets = [expr]
-            value = self.parse_expression()
+            value = self.parse_expression_list(allow_star=True)
             while self._match(TokenType.ASSIGN):
                 targets.append(value)
-                value = self.parse_expression()
+                value = self.parse_expression_list(allow_star=True)
             self._expect_newline_or_eof()
             return Assign(targets=targets, value=value, line=expr.line, col=expr.col)
 
@@ -870,6 +911,10 @@ class Parser:
         }
 
         if self._current_token().type in aug_assign_tokens:
+            if isinstance(expr, Tuple):
+                raise self._error(
+                    "Augmented assignment ke liye ek hi target chahiye, comma list nahi"
+                )
             tok = self._advance()
             op = aug_assign_tokens[tok.type]
             value = self.parse_expression()
@@ -878,10 +923,14 @@ class Parser:
 
         # Check for annotated assignment, e.g. x: int = 10
         if self._match(TokenType.COLON):
+            if isinstance(expr, Tuple):
+                raise self._error(
+                    "Annotation ke liye ek hi target chahiye, comma list nahi"
+                )
             annotation = self.parse_expression()
             value = None
             if self._match(TokenType.ASSIGN):
-                value = self.parse_expression()
+                value = self.parse_expression_list(allow_star=True)
             self._expect_newline_or_eof()
             return AnnAssign(
                 target=expr, annotation=annotation, value=value, line=expr.line, col=expr.col
@@ -893,7 +942,7 @@ class Parser:
 
     # ── Expression Parsing (Precedence Climb / Pratt) ─────────────────
 
-    def parse_expression(self) -> Expr:
+    def parse_expression(self, allow_ternary: bool = True) -> Expr:
         # 1. Lambda functions (chota_funkshan)
         if self._check(TokenType.CHOTA_FUNKSHAN):
             return self.parse_lambda()
@@ -909,13 +958,79 @@ class Parser:
         expr = self.parse_logical_or()
 
         # 3. Ternary operator (x if cond else y) -> expr agar cond warna orelse
-        if self._match(TokenType.AGAR):
+        # Comprehension `for ... mein ...` clauses disable this so that a
+        # trailing `agar` is read as the comprehension's filter, not a ternary.
+        if allow_ternary and self._match(TokenType.AGAR):
             cond = self.parse_logical_or()
             self._expect(TokenType.WARNA, "Expected 'warna' in ternary expression")
             orelse = self.parse_expression()
             return IfExp(body=expr, test=cond, orelse=orelse, line=expr.line, col=expr.col)
 
         return expr
+
+    def _parse_list_item(self, allow_star: bool) -> Expr:
+        """Parse one item of a comma separated expression list."""
+        if allow_star and self._match(TokenType.STAR):
+            tok = self._previous_token()
+            return Starred(value=self.parse_expression(), line=tok.line, col=tok.col)
+        return self.parse_expression()
+
+    def parse_expression_list(self, allow_star: bool = False) -> Expr:
+        """Parse ``expr (, expr)* [,]`` and return a Tuple once a comma appears.
+
+        Python accepts unparenthesised tuples in assignments, return statements
+        and loop targets, so ``a = 1, 2`` and ``wapas 1, 2`` must produce a
+        Tuple instead of failing on the comma.
+        """
+        first = self._parse_list_item(allow_star)
+        if not self._match(TokenType.COMMA):
+            if allow_star and isinstance(first, Starred):
+                raise self._error(
+                    "Starred expression ke baad comma chahiye (jaise *a, ya *a, b)"
+                )
+            return first
+
+        elts = [first]
+        while not self._check(
+            TokenType.NEWLINE,
+            TokenType.EOF,
+            TokenType.DEDENT,
+            TokenType.SEMICOLON,
+            TokenType.ASSIGN,
+            TokenType.COLON,
+            TokenType.RPAREN,
+            TokenType.RBRACKET,
+            TokenType.RBRACE,
+            TokenType.MEIN,
+        ):
+            elts.append(self._parse_list_item(allow_star))
+            if not self._match(TokenType.COMMA):
+                break
+        return Tuple(elts=elts, line=first.line, col=first.col)
+
+    def _parse_target_item(self, allow_star: bool) -> Expr:
+        """Parse one loop or assignment target (primary, optionally starred)."""
+        if allow_star and self._match(TokenType.STAR):
+            tok = self._previous_token()
+            return Starred(value=self.parse_primary(), line=tok.line, col=tok.col)
+        return self.parse_primary()
+
+    def parse_target_list(self, allow_star: bool = False) -> Expr:
+        """Parse ``target (, target)*`` for ``ghumo`` loops."""
+        first = self._parse_target_item(allow_star)
+        if not self._match(TokenType.COMMA):
+            if allow_star and isinstance(first, Starred):
+                raise self._error(
+                    "Starred loop target ke baad comma chahiye (jaise *rest,)"
+                )
+            return first
+
+        elts = [first]
+        while not self._check(TokenType.NEWLINE, TokenType.EOF, TokenType.DEDENT, TokenType.MEIN):
+            elts.append(self._parse_target_item(allow_star))
+            if not self._match(TokenType.COMMA):
+                break
+        return Tuple(elts=elts, line=first.line, col=first.col)
 
     def parse_lambda(self) -> Lambda:
         tok = self._expect(TokenType.CHOTA_FUNKSHAN, "Expected 'chota_funkshan'")
@@ -1117,6 +1232,72 @@ class Parser:
                 raise self._error("Subscript slice empty nahi ho sakti")
             return first
 
+    def _concatenate_adjacent_strings(self, first: Expr) -> Expr:
+        """Merge adjacent string literals such as ``"a" "b"``, like Python.
+
+        Plain strings and f-strings may be joined in any combination; t-strings
+        may only be joined with other t-strings, matching CPython. Adjacent
+        Constant parts are coalesced so the resulting node matches what Python
+        builds for the same source.
+        """
+        if not self._check(TokenType.STRING, TokenType.FSTRING, TokenType.TSTRING):
+            return first
+
+        if isinstance(first, JoinedStr):
+            kind = "f"
+            parts = list(first.values)
+        elif isinstance(first, TemplateStr):
+            kind = "t"
+            parts = list(first.values)
+        else:
+            kind = "plain"
+            parts = [first]
+
+        def append_part(part: Expr) -> None:
+            if isinstance(part, Constant) and parts and isinstance(parts[-1], Constant):
+                parts[-1] = Constant(
+                    value=parts[-1].value + part.value,
+                    line=parts[-1].line,
+                    col=parts[-1].col,
+                )
+            else:
+                parts.append(part)
+
+        while self._check(TokenType.STRING, TokenType.FSTRING, TokenType.TSTRING):
+            if self._match(TokenType.STRING):
+                if kind == "t":
+                    raise self._error(
+                        "t-string ko plain string ke saath jod nahi sakte"
+                    )
+                tok = self._previous_token()
+                append_part(Constant(value=tok.value, line=tok.line, col=tok.col))
+            elif self._check(TokenType.FSTRING):
+                if kind == "t":
+                    raise self._error(
+                        "t-string ko f-string ke saath jod nahi sakte"
+                    )
+                f_tok = self._advance()
+                node = self.parse_fstring(f_tok)
+                for part in node.values:
+                    append_part(part)
+                kind = "f"
+            else:
+                if kind != "t":
+                    raise self._error(
+                        "t-string ko plain string ya f-string ke saath jod nahi sakte"
+                    )
+                t_tok = self._advance()
+                node = self.parse_tstring(t_tok)
+                for part in node.values:
+                    append_part(part)
+
+        line, col = first.line, first.col
+        if kind == "f":
+            return JoinedStr(values=parts, line=line, col=col)
+        if kind == "t":
+            return TemplateStr(values=parts, line=line, col=col)
+        return Constant(value="".join(p.value for p in parts), line=line, col=col)
+
     def parse_atom(self) -> Expr:
         tok = self._current_token()
 
@@ -1136,11 +1317,17 @@ class Parser:
             return Constant(value=float(self._previous_token().value), line=tok.line, col=tok.col)
 
         elif self._match(TokenType.STRING):
-            return Constant(value=self._previous_token().value, line=tok.line, col=tok.col)
+            return self._concatenate_adjacent_strings(
+                Constant(value=self._previous_token().value, line=tok.line, col=tok.col)
+            )
 
         elif self._check(TokenType.FSTRING):
             f_tok = self._advance()
-            return self.parse_fstring(f_tok)
+            return self._concatenate_adjacent_strings(self.parse_fstring(f_tok))
+
+        elif self._check(TokenType.TSTRING):
+            t_tok = self._advance()
+            return self._concatenate_adjacent_strings(self.parse_tstring(t_tok))
 
         elif self._match(TokenType.SAHI):
             return Constant(value=True, line=tok.line, col=tok.col)
@@ -1174,7 +1361,10 @@ class Parser:
             if self._match(TokenType.RPAREN):
                 return Tuple(elts=[], line=tok.line, col=tok.col)
 
+            starred = self._match(TokenType.STAR)
             first = self.parse_expression()
+            if starred:
+                first = Starred(value=first, line=tok.line, col=tok.col)
             if self._check(TokenType.GHUMO):
                 generators = self.parse_comprehensions()
                 self._expect(TokenType.RPAREN, "Expected ')' at end of generator expression")
@@ -1183,13 +1373,22 @@ class Parser:
             if self._match(TokenType.COMMA):
                 elts = [first]
                 while not self._check(TokenType.RPAREN, TokenType.EOF):
-                    elts.append(self.parse_expression())
+                    if self._match(TokenType.STAR):
+                        elts.append(
+                            Starred(value=self.parse_expression(), line=tok.line, col=tok.col)
+                        )
+                    else:
+                        elts.append(self.parse_expression())
                     if not self._match(TokenType.COMMA):
                         break
                 self._expect(TokenType.RPAREN, "Expected ')' at end of tuple")
                 return Tuple(elts=elts, line=tok.line, col=tok.col)
 
             self._expect(TokenType.RPAREN, "Expected ')' after grouped expression")
+            if starred:
+                raise self._error(
+                    "Starred expression '(' ... ')' mein akela nahi chalta — ',' ya 'ghumo' lagao"
+                )
             return first
 
         elif self._match(TokenType.ELLIPSIS):
@@ -1200,11 +1399,36 @@ class Parser:
         )
 
     def parse_fstring(self, token: Token) -> Expr:
-        parts = []
-        val = token.value
+        """Parse an f-string token into a JoinedStr (Python f-string literal)."""
+        return self._parse_interpolated_string(token, template=False)
+
+    def parse_tstring(self, token: Token) -> Expr:
+        """Parse a t-string token into a TemplateStr (PEP 750 template literal)."""
+        return self._parse_interpolated_string(token, template=True)
+
+    def _parse_interpolated_string(self, token: Token, template: bool) -> Expr:
+        parts = self._interpolation_parts(token.value, token, 0, template)
+        if template:
+            return TemplateStr(values=parts, line=token.line, col=token.col)
+        return JoinedStr(values=parts, line=token.line, col=token.col)
+
+    def _interpolation_parts(
+        self, val: str, token: Token, col_offset: int, template: bool
+    ) -> list[Expr]:
+        """Scan an f/t-string body into Constant + FormattedValue/Interpolation parts.
+
+        ``col_offset`` shifts column positions when scanning nested text such as
+        a format spec. ``template`` selects t-string interpolation nodes.
+        """
+        parts: list[Expr] = []
         pos = 0
         while pos < len(val):
-            if val[pos] == "{" and (pos == 0 or val[pos - 1] != "\\"):
+            at_expr_start = (
+                val[pos] == "{"
+                and (pos == 0 or val[pos - 1] != "\\")
+                and (pos + 1 >= len(val) or val[pos + 1] != "{")
+            )
+            if at_expr_start:
                 # Start of expression
                 pos += 1
                 start = pos
@@ -1221,46 +1445,180 @@ class Parser:
                     raise ParseError(
                         "f-string expression brace band nahi hua", token.line, token.col
                     )
-                expr_str = val[start:pos]
+                body = val[start:pos]
                 pos += 1  # skip '}'
 
-                # Lex and Parse the expression inside {}
-                from ..lexer.lexer import Lexer
-
-                sub_lexer = Lexer(expr_str, filename=self._filename)
-                sub_lexer._line = token.line
-                sub_lexer._col = token.col + start
-                sub_tokens = sub_lexer.tokenize()
-                if sub_tokens and sub_tokens[-1].type == TokenType.EOF:
-                    sub_tokens.pop()
-
-                if not sub_tokens:
-                    raise ParseError("f-string expression khali hai", token.line, token.col)
-
-                sub_parser = Parser(
-                    sub_tokens, filename=self._filename, source=self._source_line_at(token.line)
+                expr_str, conversion, spec, debug_text = self._split_interpolation(
+                    body, token, start
                 )
-                expr = sub_parser.parse_expression()
-                parts.append(FormattedValue(value=expr, line=token.line, col=token.col + start))
+                expr = self._parse_interpolation_expr(expr_str, token, start)
+                line, col = token.line, token.col + col_offset + start
+                if debug_text is not None:
+                    # PEP 498 debug form keeps the raw source text as a literal
+                    parts.append(
+                        Constant(
+                            value=debug_text,
+                            line=token.line,
+                            col=token.col + col_offset + start,
+                        )
+                    )
+                if template:
+                    parts.append(
+                        Interpolation(
+                            value=expr,
+                            str=expr_str,
+                            conversion=conversion,
+                            format_spec=spec,
+                            line=line,
+                            col=col,
+                        )
+                    )
+                else:
+                    parts.append(
+                        FormattedValue(
+                            value=expr,
+                            conversion=conversion,
+                            format_spec=spec,
+                            line=line,
+                            col=col,
+                        )
+                    )
             else:
-                # String constant part
+                # String constant part — `{{`, `}}`, `\{`, `\}` are literal braces
                 start = pos
-                while pos < len(val) and not (
-                    val[pos] == "{" and (pos == 0 or val[pos - 1] != "\\")
-                ):
+                chars: list[str] = []
+                while pos < len(val):
+                    ch = val[pos]
+                    if ch == "\\" and pos + 1 < len(val) and val[pos + 1] in "{}":
+                        chars.append(val[pos + 1])
+                        pos += 2
+                        continue
+                    if ch == "{":
+                        if pos + 1 < len(val) and val[pos + 1] == "{":
+                            chars.append("{")
+                            pos += 2
+                            continue
+                        break  # real interpolation starts here
+                    if ch == "}" and pos + 1 < len(val) and val[pos + 1] == "}":
+                        chars.append("}")
+                        pos += 2
+                        continue
+                    chars.append(ch)
                     pos += 1
-                segment = val[start:pos]
-                segment = segment.replace("\\{", "{").replace("\\}", "}")
-                parts.append(Constant(value=segment, line=token.line, col=token.col + start))
+                if pos == start:
+                    # Safety: never spin on a character we refuse to consume
+                    chars.append(val[pos])
+                    pos += 1
+                parts.append(
+                    Constant(
+                        value="".join(chars),
+                        line=token.line,
+                        col=token.col + col_offset + start,
+                    )
+                )
 
-        return JoinedStr(values=parts, line=token.line, col=token.col)
+        return parts
+
+    def _split_interpolation(
+        self, body: str, token: Token, col: int
+    ) -> tuple[str, int, Optional[JoinedStr], Optional[str]]:
+        """Split ``{expr!conv:spec}`` into expression text, conversion and format spec.
+
+        Bracket depth is respected so ``{d[k:1]}`` and ``{a if b else c}`` keep
+        their own ``:``/``!`` characters. The Python debug form ``{expr=}`` also
+        returns the raw source text (including the ``=``) so the caller can keep
+        it as a literal part, and defaults the conversion to ``!r`` when no
+        format spec is given, matching CPython.
+        """
+        depth = 0
+        conv_pos: Optional[int] = None
+        spec_pos: Optional[int] = None
+        for i, ch in enumerate(body):
+            if ch in "([{":
+                depth += 1
+            elif ch in ")]}":
+                depth -= 1
+            elif depth == 0:
+                if ch == "!" and conv_pos is None and spec_pos is None:
+                    nxt = body[i + 1 : i + 2]
+                    if nxt and nxt != "=":
+                        conv_pos = i
+                elif ch == ":" and spec_pos is None and body[i + 1 : i + 2] != "=":
+                    spec_pos = i
+
+        cut = min(p for p in (conv_pos, spec_pos) if p is not None) if (
+            conv_pos is not None or spec_pos is not None
+        ) else len(body)
+        expr_str = body[:cut]
+
+        debug_text: Optional[str] = None
+        stripped = expr_str.rstrip()
+        if (
+            stripped.endswith("=")
+            and not stripped.endswith(("==", "!=", "<=", ">=", ":="))
+        ):
+            eq_pos = len(stripped) - 1
+            debug_text = expr_str
+            expr_str = expr_str[:eq_pos]
+
+        conversion = -1
+        if conv_pos is not None:
+            code = body[conv_pos + 1]
+            if code in ("r", "s", "a"):
+                conversion = ord(code)
+            else:
+                raise ParseError(
+                    f"f-string conversion '!{code}' galat hai — sirf !r, !s, !a chalte hain",
+                    token.line,
+                    token.col + col + conv_pos,
+                )
+
+        spec: Optional[JoinedStr] = None
+        if spec_pos is not None:
+            spec_text = body[spec_pos + 1 :]
+            values = self._interpolation_parts(spec_text, token, col + spec_pos + 1, template=False)
+            spec = JoinedStr(values=values, line=token.line, col=token.col + col + spec_pos + 1)
+
+        if debug_text is not None and conversion == -1 and spec is None:
+            conversion = ord("r")
+
+        return expr_str, conversion, spec, debug_text
+
+    def _parse_interpolation_expr(self, expr_str: str, token: Token, col: int) -> Expr:
+        """Lex + parse the expression text inside one ``{...}`` interpolation."""
+        from ..lexer.lexer import Lexer
+
+        # Strip surrounding whitespace so the sub-lexer never sees a leading
+        # space as an INDENT token (e.g. `f"{ x }"`). CPython keeps the raw
+        # spacing in `Interpolation.str`, so only lexing uses the stripped text.
+        text = expr_str.strip()
+        if not text:
+            raise ParseError("f-string expression khali hai", token.line, token.col)
+
+        sub_lexer = Lexer(text, filename=self._filename)
+        sub_lexer._line = token.line
+        sub_lexer._col = token.col + col
+        sub_tokens = sub_lexer.tokenize()
+        if sub_tokens and sub_tokens[-1].type == TokenType.EOF:
+            sub_tokens.pop()
+
+        if not sub_tokens:
+            raise ParseError("f-string expression khali hai", token.line, token.col)
+
+        sub_parser = Parser(
+            sub_tokens, filename=self._filename, source=self._source_line_at(token.line)
+        )
+        return sub_parser.parse_expression()
 
     def parse_list_or_comp(self) -> Expr:
         tok = self._previous_token()
         if self._match(TokenType.RBRACKET):
             return List(elts=[], line=tok.line, col=tok.col)
 
+        starred = self._match(TokenType.STAR)
         first = self.parse_expression()
+        if starred:
+            first = Starred(value=first, line=tok.line, col=tok.col)
         if self._check(TokenType.GHUMO):
             generators = self.parse_comprehensions()
             self._expect(TokenType.RBRACKET, "Expected ']' at end of list comprehension")
@@ -1270,7 +1628,12 @@ class Parser:
         while self._match(TokenType.COMMA):
             if self._check(TokenType.RBRACKET):
                 break
-            elts.append(self.parse_expression())
+            if self._match(TokenType.STAR):
+                elts.append(
+                    Starred(value=self.parse_expression(), line=tok.line, col=tok.col)
+                )
+            else:
+                elts.append(self.parse_expression())
         self._expect(TokenType.RBRACKET, "Expected ']' at end of list")
         return List(elts=elts, line=tok.line, col=tok.col)
 
@@ -1279,8 +1642,17 @@ class Parser:
         if self._match(TokenType.RBRACE):
             return Dict(keys=[], values=[], line=tok.line, col=tok.col)
 
+        # Leading '**' → dict unpacking literal or PEP 798 dict comprehension
+        if self._match(TokenType.DOUBLESTAR):
+            return self._parse_dict_unpacking(tok)
+
+        starred = self._match(TokenType.STAR)
         first = self.parse_expression()
+        if starred:
+            first = Starred(value=first, line=tok.line, col=tok.col)
         if self._match(TokenType.COLON):
+            if starred:
+                raise self._error("Dict key par starred expression nahi chalta")
             # Dict or DictComp
             val = self.parse_expression()
             if self._check(TokenType.GHUMO):
@@ -1295,6 +1667,10 @@ class Parser:
             while self._match(TokenType.COMMA):
                 if self._check(TokenType.RBRACE):
                     break
+                if self._match(TokenType.DOUBLESTAR):
+                    keys.append(None)
+                    values.append(self.parse_expression())
+                    continue
                 k = self.parse_expression()
                 self._expect(TokenType.COLON, "Expected ':' after key in dictionary")
                 v = self.parse_expression()
@@ -1313,9 +1689,46 @@ class Parser:
             while self._match(TokenType.COMMA):
                 if self._check(TokenType.RBRACE):
                     break
-                elts.append(self.parse_expression())
+                if self._match(TokenType.STAR):
+                    elts.append(
+                        Starred(value=self.parse_expression(), line=tok.line, col=tok.col)
+                    )
+                else:
+                    elts.append(self.parse_expression())
             self._expect(TokenType.RBRACE, "Expected '}' at end of set")
             return Set(elts=elts, line=tok.line, col=tok.col)
+
+    def _parse_dict_unpacking(self, tok: Token) -> Expr:
+        """Parse `{**d}` / `{'a': 1, **d}` / `{**d ghumo d mein dicts}` (PEP 448/798)."""
+        unpack_expr = self.parse_expression()
+        if self._check(TokenType.GHUMO):
+            generators = self.parse_comprehensions()
+            self._expect(TokenType.RBRACE, "Expected '}' at end of dict comprehension")
+            return DictComp(
+                key=unpack_expr,
+                value=None,
+                generators=generators,
+                unpack=True,
+                line=tok.line,
+                col=tok.col,
+            )
+
+        keys: list[Expr | None] = [None]
+        values: list[Expr] = [unpack_expr]
+        while self._match(TokenType.COMMA):
+            if self._check(TokenType.RBRACE):
+                break
+            if self._match(TokenType.DOUBLESTAR):
+                keys.append(None)
+                values.append(self.parse_expression())
+                continue
+            k = self.parse_expression()
+            self._expect(TokenType.COLON, "Expected ':' after key in dictionary")
+            v = self.parse_expression()
+            keys.append(k)
+            values.append(v)
+        self._expect(TokenType.RBRACE, "Expected '}' at end of dictionary")
+        return Dict(keys=keys, values=values, line=tok.line, col=tok.col)
 
     def parse_comprehensions(self) -> list[comprehension]:
         generators = []
@@ -1337,10 +1750,10 @@ class Parser:
                 target = Tuple(elts=elts, line=target.line, col=target.col)
 
             self._expect(TokenType.MEIN, "Expected 'mein' in comprehension")
-            iter_expr = self.parse_expression()
+            iter_expr = self.parse_expression(allow_ternary=False)
             ifs = []
             while self._match(TokenType.AGAR):
-                ifs.append(self.parse_expression())
+                ifs.append(self.parse_expression(allow_ternary=False))
             generators.append(
                 comprehension(target=target, iter=iter_expr, ifs=ifs, is_async=is_async)
             )

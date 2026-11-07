@@ -181,7 +181,7 @@ twine upload dist/*
 1. **Branch from `main`** with a descriptive name (e.g., `feature/pattern-matching`, `fix/parser-error`)
 2. **Keep PRs focused** on a single concern
 3. **Include tests** for new features and bug fixes
-4. **Ensure CI passes** (runs tests on Python 3.10–3.14 + ruff linting)
+4. **Ensure CI passes** (runs tests on Python 3.10–3.15 + ruff linting)
 5. **Update documentation** if changing behavior or adding features
 6. **Write meaningful commit messages**
 

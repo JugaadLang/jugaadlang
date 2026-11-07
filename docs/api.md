@@ -19,7 +19,7 @@ __license__ = "MIT"
 **`class TokenType(Enum)`**
 
 All token types used by the lexer. Categories:
-- **Literals**: `INT`, `FLOAT`, `STRING`, `FSTRING`
+- **Literals**: `INT`, `FLOAT`, `STRING`, `FSTRING`, `TSTRING`
 - **Keywords**: `BOLO`, `POOCHHO`, `AGAR`, `SHAYAD`, `WARNA`, `GHUMO`, `JABTAK`, `BANAO`, `WAPAS`, `USTAD`, `KHUD`, `LAO`, `SE`, `RUKJA`, `CHALTE_RAHO`, `KOSHISH`, `GADBAD`, `AAKHIR_ME`, `UDAO`, `SAHI`, `GALAT`, `KUCH_NAHI`, `AUR`, `YA`, `NAHI`, `TEZ`, `INTEZAAR`, `BAANTO`, `THEEK_HAI`, `SABKA`, `CHOTA_FUNKSHAN`, `MEIN`, `MEIN_NAHI`, `HAI`, `NAHI_HAI`, `BULAWO`, `DEL`, `NONLOCAL`, `WITH`, `AS`, `ASSERT`, `AGAR_MATCH`, `KAAND`
 - **Operators**: `PLUS`, `MINUS`, `STAR`, `SLASH`, `DOUBLESLASH`, `PERCENT`, `DOUBLESTAR`, `EQ`, `NEQ`, `LT`, `GT`, `LTE`, `GTE`, `ASSIGN`, `PLUS_ASSIGN`, `MINUS_ASSIGN`, `STAR_ASSIGN`, `SLASH_ASSIGN`, `PERCENT_ASSIGN`, `DOUBLESTAR_ASSIGN`, `DOUBLESLASH_ASSIGN`, `ARROW`, `WALRUS`, `AT`, `AT_ASSIGN`, `TILDE`, `AMP`, `PIPE`, `CARET`, `LSHIFT`, `RSHIFT`, `AMP_ASSIGN`, `PIPE_ASSIGN`, `CARET_ASSIGN`, `LSHIFT_ASSIGN`, `RSHIFT_ASSIGN`
 - **Delimiters**: `LPAREN`, `RPAREN`, `LBRACKET`, `RBRACKET`, `LBRACE`, `RBRACE`, `COMMA`, `DOT`, `COLON`, `SEMICOLON`, `ELLIPSIS`
@@ -55,7 +55,7 @@ Methods: `is_keyword() -> bool`
 | `Lexer(source, filename)` | — | Initialize with source string and optional filename |
 | `.tokenize()` | `list[Token]` | Tokenize the entire source |
 
-Internal: Uses INDENT/DEDENT stack for indentation-based block detection. Supports `#`, `//`, `/* */` comments, all string types (single, double, triple, f-strings), and all number formats.
+Internal: Uses INDENT/DEDENT stack for indentation-based block detection. Supports `#`, `//`, `/* */` comments, all string types (single, double, triple, f-strings, t-strings), and all number formats. A raw `r"..."` prefix raises a clear lexer error. Prefixes are letters that end at a quote, so identifiers such as `test`, `tf`, and `f` are unaffected.
 
 ---
 
@@ -69,7 +69,9 @@ All AST nodes are `@dataclass` inheriting from `ASTNode` (base), `Stmt`, or `Exp
 `Module`, `FunctionDef`, `ClassDef`, `Return`, `Delete`, `Assign`, `AugAssign`, `AnnAssign`, `For`, `While`, `If`, `With`, `Raise`, `Try`, `Assert`, `Import`, `ImportFrom`, `Global`, `Nonlocal`, `ExprStmt`, `Pass`, `Break`, `Continue`, `PoochhoStmt`, `Match`
 
 **Expressions:**
-`BoolOp`, `BinOp`, `UnaryOp`, `Lambda`, `IfExp`, `Dict`, `Set`, `ListComp`, `SetComp`, `DictComp`, `GeneratorExp`, `Await`, `Yield`, `YieldFrom`, `Compare`, `Call`, `FormattedValue`, `JoinedStr`, `Constant`, `Attribute`, `Subscript`, `Starred`, `Name`, `List`, `Tuple`, `Slice`
+`BoolOp`, `BinOp`, `UnaryOp`, `Lambda`, `IfExp`, `Dict`, `Set`, `ListComp`, `SetComp`, `DictComp`, `GeneratorExp`, `Await`, `Yield`, `YieldFrom`, `Compare`, `Call`, `FormattedValue`, `JoinedStr`, `TemplateStr`, `Interpolation`, `Constant`, `Attribute`, `Subscript`, `Starred`, `Name`, `List`, `Tuple`, `Slice`
+
+`TemplateStr`/`Interpolation` model PEP 750 t-strings (`Interpolation` carries `value`, `str`, `conversion`, `format_spec`). `DictComp` carries `unpack: bool` for `{**d ghumo ...}`; `Import`/`ImportFrom` carry `is_lazy: bool` for `sust lao ...`.
 
 **Helper Nodes:**
 `arg`, `arguments`, `keyword`, `alias`, `withitem`, `ExceptHandler`, `comprehension`
@@ -104,7 +106,8 @@ Internal recursive-descent parser with these parse methods:
 - `.parse_match()` — `agar_match`/`kaand`
 - `.parse_try()` — `koshish`/`gadbad`/`aakhir_me`
 - `.parse_lambda()` — `chota_funkshan`
-- `.parse_import()` / `.parse_import_from()` — `lao`/`se ... lao`
+- `.parse_import()` / `.parse_import_from()` — `lao`/`se ... lao` (also `sust`-prefixed lazy imports)
+- `.parse_fstring()` / `.parse_tstring()` — `f"..."` and `t"..."` interpolation, including `!r`/`!s`/`!a` conversions and format specs
 
 ---
 
@@ -128,6 +131,15 @@ Key translations:
 - `bolo` → `print`
 - `poochho` → `input`
 - All Hindi built-in names → Python built-in names (mapped in `visit_Name`)
+
+Version-gated emission (`PY314` / `PY315` constants) — newer syntax is written only when the running interpreter supports it, otherwise an equivalent older construct is emitted:
+
+| JugaadLang feature | Python 3.14+ / 3.15+ | Older Python |
+|---|---|---|
+| `t"..."` (PEP 750) | `ast.TemplateStr` / `ast.Interpolation` | `ast.JoinedStr` / `ast.FormattedValue` |
+| `sust lao x` (PEP 810) | `ast.Import(is_lazy=1)` | plain `ast.Import` |
+| `[*x ghumo ...]` (PEP 798) | `ast.Starred` in comprehension | extra lowering loop |
+| `jamhi_kosh` / `pahredaar` | `frozendict` / `sentinel` | `JugaadError` naming Python 3.15 |
 
 ---
 
@@ -154,7 +166,10 @@ The interpreter maintains a `globals` dict that persists across calls (important
 | **System** | `saaf()`, `ruk(seconds)`, `bahar()` |
 | **Fun** | `namaste()`, `chai()`, `himmat()`, `ghaas_chhoo()`, `bachao()`, `fortune()`, `jugaad()`, `nazar()`, `ashirwad()`, `dhanya_waad()`, `bhagwan_bhala_kare()`, `paisa_wasool()`, `bas_kar_bhai()`, `chilla_mat()`, `kundli()` |
 | **Dev** | `debug(var)`, `version()`, `madad()` |
+| **Templates** | `roop(template)` → render `t"..."` to `str` |
 | **Built-in Mappings** | `maan` → `abs`, `sab` → `all`, `lambaee` → `len`, etc. |
+
+Optional builtins from newer CPython releases (`frozendict`, `sentinel`, `__lazy_import__`) are added to the allowlist only when the running interpreter provides them.
 
 ---
 

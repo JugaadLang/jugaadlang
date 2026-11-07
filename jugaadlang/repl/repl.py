@@ -83,6 +83,13 @@ class JugaadPygmentsLexer(RegexLexer):
                     (
                         "bolo",
                         "poochho",
+                        "kismat",
+                        "sikka",
+                        "saaf",
+                        "ruk",
+                        "bahar",
+                        "namaste",
+                        "version",
                         "chai",
                         "himmat",
                         "ghaas_chhoo",
@@ -201,6 +208,7 @@ KEYWORDS_LIST = [
     "khud",
     "lao",
     "se",
+    "sust",
     "rukja",
     "chalte_raho",
     "koshish",
@@ -225,6 +233,14 @@ KEYWORDS_LIST = [
     "nahi_hai",
     "bulawo",
     "chai",
+    "kismat",
+    "sikka",
+    "saaf",
+    "ruk",
+    "bahar",
+    "namaste",
+    "version",
+    "roop",
     "himmat",
     "ghaas_chhoo",
     "bachao",
@@ -337,6 +353,51 @@ completer = WordCompleter(KEYWORDS_LIST, ignore_case=True)
 # ── REPL ──────────────────────────────────────────────────────────────────────
 
 
+def _open_bracket_depth(source: str) -> int:
+    """Count unclosed ``(``, ``[`` and ``{`` brackets in *source*.
+
+    String literals and comments are skipped so that text such as
+    ``bolo("(")`` does not look like an unfinished call. The REPL uses this
+    to keep reading lines until the brackets balance, the way Python does.
+    """
+    depth = 0
+    i = 0
+    length = len(source)
+    quote: str | None = None
+    while i < length:
+        ch = source[i]
+        if quote is not None:
+            if ch == "\\":
+                i += 2
+                continue
+            if source.startswith(quote, i):
+                i += len(quote)
+                quote = None
+                continue
+            i += 1
+            continue
+        if ch in "\"'":
+            if source.startswith(ch * 3, i):
+                quote = ch * 3
+                i += 3
+            else:
+                quote = ch
+                i += 1
+            continue
+        if ch == "#" or source.startswith("//", i):
+            newline = source.find("\n", i)
+            if newline == -1:
+                break
+            i = newline + 1
+            continue
+        if ch in "([{":
+            depth += 1
+        elif ch in ")]}":
+            depth = max(depth - 1, 0)
+        i += 1
+    return depth
+
+
 class JugaadREPL:
     """
     JugaadLang Interactive REPL session.
@@ -353,10 +414,14 @@ class JugaadREPL:
         """Launch the REPL loop."""
         # Print welcome banner
         console.print(
-            "[bold orange1]JugaadLang v1.2.6 — Modern Programming Language in Hindi 🇮🇳[/bold orange1]"
+            "[bold orange1]JugaadLang v1.2.8 — Modern Programming Language in Hindi 🇮🇳[/bold orange1]"
         )
         console.print(
             "[dim]Type code and press Enter. Enter blank line to execute block. Ctrl+D to exit.[/dim]\n"
+        )
+        console.print(
+            "[dim]A line ending with ':' opens a block and the next line is indented automatically. "
+            "Start a line with your own spaces to return to an outer level.[/dim]\n"
         )
 
         session: PromptSession = PromptSession(
@@ -375,14 +440,35 @@ class JugaadREPL:
 
                 # Check for block entry
                 if line.rstrip().endswith(":"):
+                    # Lines are indented automatically. Every line ending with
+                    # ':' opens one more level, so nested blocks can be built
+                    # one line at a time and the prompt shows the current
+                    # depth. A line that starts with whitespace is kept exactly
+                    # as typed, which is how an outer level is reached again.
                     lines = [line]
-                    indent = "    "
+                    level = 1
                     while True:
+                        indent = "    " * level
                         sub_line = session.prompt(".. " + indent)
                         if not sub_line.strip():
                             # Double enter / empty line executes
                             break
-                        lines.append(indent + sub_line)
+                        if sub_line[:1] in (" ", "\t"):
+                            source_line = sub_line
+                            typed_indent = len(sub_line) - len(sub_line.lstrip())
+                            level = typed_indent // 4
+                        else:
+                            source_line = indent + sub_line
+                        lines.append(source_line)
+                        if source_line.rstrip().endswith(":"):
+                            level += 1
+                    source = "\n".join(lines)
+                elif _open_bracket_depth(line) > 0:
+                    # An unfinished call, list, dict or multi-line string:
+                    # keep reading until the brackets balance.
+                    lines = [line]
+                    while _open_bracket_depth("\n".join(lines)) > 0:
+                        lines.append(session.prompt(".. "))
                     source = "\n".join(lines)
                 else:
                     source = line

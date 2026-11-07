@@ -10,6 +10,7 @@ from __future__ import annotations
 import copy
 import dataclasses
 import hashlib
+import importlib.util
 import json
 import marshal
 import os
@@ -22,6 +23,10 @@ from ..ast_nodes.nodes import Module
 from ..events.bus import event_bus
 
 CACHE_VERSION: int = 1
+
+# CPython's bytecode magic — differs per Python version/build, so cache files
+# written by one interpreter are never keyed the same way as another's.
+MAGIC_NUMBER: bytes = importlib.util.MAGIC_NUMBER
 
 NODE_TYPE_MAP: dict[str, type[ast_nodes.ASTNode]] = {
     name: cls
@@ -85,7 +90,11 @@ class CacheManager:
                 pass
 
     def _get_key(self, source: str) -> str:
-        return hashlib.sha256(source.encode("utf-8")).hexdigest()
+        # Mix in the interpreter's bytecode magic number and the compiler version:
+        # `.jugb` payloads are marshal'd code objects, which are only loadable by
+        # the exact CPython build (and JugaadLang version) that produced them.
+        material = f"{MAGIC_NUMBER.hex()}|{__version__}|{source}"
+        return hashlib.sha256(material.encode("utf-8")).hexdigest()
 
     def _get_l2_path(self, key: str, filename: Optional[str] = None, ext: str = ".jugc") -> str:
         # If filename is given, group cache by basename if desired, but here we just use cache_dir

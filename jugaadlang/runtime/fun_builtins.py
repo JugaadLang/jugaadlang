@@ -1,4 +1,151 @@
+import os
 import random
+import sys
+import time
+from typing import Any
+
+
+# 🎲 Random
+def kismat(start: int = 1, end: int | None = None) -> int:
+    """Return a random number between start and end."""
+    if end is None:
+        if start == 1:
+            return random.randint(1, 100)
+        s, e = min(1, start), max(1, start)
+        return random.randint(s, e)
+    s, e = min(start, end), max(start, end)
+    return random.randint(s, e)
+
+
+def sikka() -> str:
+    """Return 'Head' or 'Tail'."""
+    return random.choice(["Head", "Tail"])
+
+
+# ⚙️ System
+def saaf() -> None:
+    """Clear terminal."""
+    os.system("clear" if os.name == "posix" else "cls")
+
+
+def ruk(seconds: float = 1.0) -> None:
+    """Sleep for given seconds."""
+    time.sleep(seconds)
+
+
+def bahar(code: int = 0) -> None:
+    """Exit program."""
+    sys.exit(code)
+
+
+# 🙏 Banner, Help & Dev
+def namaste() -> None:
+    """Displays a welcome banner."""
+    banner = """
+       __                             ________                 
+      / /_  ______ _____ _____ _____/ / / / /___ _____  ____ 
+ __  / / / / / __ `/ __ `/ __ `/ __  / / / / __ `/ __ \\/ __ `
+/ /_/ / /_/ / /_/ / /_/ / /_/ / /_/ / / / / /_/ / / / / /_/ /
+\\____/\\__,_/\\__, /\\__,_/\\__,_/\\__,_/_/_/_/\\__,_/_/ /_/\\__, / 
+           /____/                                    /____/  
+"""
+    print(banner)
+    print("Welcome to JugaadLang! The desi way to code. 🇮🇳")
+
+
+def version() -> None:
+    """Show JugaadLang version."""
+    try:
+        from .. import __version__
+
+        print(f"JugaadLang Version: {__version__}")
+    except Exception:
+        print("JugaadLang Version: 1.2.7")
+
+
+def madad() -> None:
+    """Show available commands and functions."""
+    help_text = """
+📚 JugaadLang Full Help Menu 📚
+
+--- Standard I/O ---
+bolo(x)            : Print x to console.
+poochho(prompt)    : Read input from console.
+
+--- Data Types & Conversion ---
+purnank(x)         : Convert to Integer.
+shabd(x)           : Convert to String / Text.
+suchi(x)           : Convert to List.
+kosh(x)            : Convert to Dictionary.
+satyata(x)         : Convert to Boolean (True/False).
+prakar(x)          : Get type of x.
+
+--- Math & Logic ---
+yog(x)             : Sum.
+adhiktam(a, b)     : Max value.
+nyuntam(a, b)      : Min value.
+maan(x)            : Absolute value.
+lambaee(x)         : Length of x.
+
+--- Random Functions ---
+kismat(start, end) : Returns a random number.
+sikka()            : Returns "Head" or "Tail".
+
+--- System Functions ---
+saaf()             : Clear terminal.
+ruk(seconds)       : Sleep for `seconds` seconds.
+bahar()            : Exit program.
+
+--- Fun & Desi Functions ---
+namaste()          : Displays a welcome banner.
+chai()             : Motivational message.
+jugaad()           : Random coding tip.
+himmat()           : Hidden feature message.
+ghaas_chhoo()      : Touch grass message.
+bachao()           : StackOverflow rescue.
+fortune()          : Random tech fortune.
+nazar()            : Ward off evil eye.
+ashirwad()         : Success blessing.
+paisa_wasool()     : Value for money message.
+kundli()           : Code horoscope.
+
+--- Developer Functions ---
+debug(variable)    : Print debug information about a variable.
+version()          : Show JugaadLang version.
+madad()            : Show this help menu.
+"""
+    print(help_text)
+
+
+def jugaad() -> None:
+    """Print standard jugaad tips."""
+    tips = [
+        "🛠️ Restart karke dekho, 90% bugs solve ho jaate hain.",
+        "🛠️ Print statement dalkar debug karo, debugger to shauk ke liye hai.",
+        "🛠️ Commit karke so jao, subah tak apne aap thik ho jayega.",
+        "🛠️ StackOverflow se copy karte waqt variable name change karna na bhoolna.",
+    ]
+    print(random.choice(tips))
+
+
+def himmat() -> None:
+    """Print a hidden feature message."""
+    print("🔥 Hidden feature detected. Aapke andar himmat hai!")
+
+
+def bachao() -> None:
+    """Print a stackoverflow search message."""
+    print("🚨 StackOverflow search shuru. Bachao bachao!")
+
+
+def dhanya_waad() -> None:
+    """Print a polite but funny Indian thank you."""
+    print("🙏 Dhanyawaad! Code chalaane ke liye aapka aabhari hoon. Keep coding! 🙏")
+
+
+def chilla_mat() -> None:
+    """Print a message to calm down when compiler throws errors."""
+    print("🤫 Chilla mat, deep breath le aur debug kar. 🤫")
 
 
 # ☕ Daily Life
@@ -67,8 +214,11 @@ def bunk() -> None:
 
 
 # 👨‍💻 Programmer
-def debug_fun() -> None:
-    print("🐛 Bug found.\n\nCongratulations.\nNow find the remaining 47 bugs.")
+def debug_fun(variable: Any = None) -> None:
+    if variable is not None:
+        print(f"🐛 Debug: {repr(variable)} (Type: {type(variable).__name__})")
+    else:
+        print("🐛 Bug found.\n\nCongratulations.\nNow find the remaining 47 bugs.")
 
 
 def motivation() -> None:
@@ -205,7 +355,53 @@ def leetcode_bachao() -> None:
     print("🆘 LeetCode Rescue:\nHere is the O(1) solution: Just skip the question.")
 
 
+# 🧩 Python 3.14 t-strings (PEP 750)
+def roop(maal: Any) -> str:
+    """Template (t-string) ko render karke text (str) banao — f-string jaisa."""
+    if isinstance(maal, str):
+        return maal  # Python < 3.14: t-strings already degrade to plain strings
+    try:
+        from string.templatelib import Interpolation
+    except ImportError:  # pragma: no cover - guarded by the check above
+        return str(maal)
+
+    parts = []
+    for item in maal:  # iterating a Template yields str + Interpolation chunks
+        if isinstance(item, Interpolation):
+            value = item.value
+            # Runtime conversions are 'r'/'s'/'a' (or None); the AST uses 114/115/97
+            conv = item.conversion
+            if conv in (114, "r"):
+                value = repr(value)
+            elif conv in (97, "a"):
+                value = ascii(value)
+            elif conv in (115, "s"):
+                value = str(value)
+            value = format(value, item.format_spec) if item.format_spec else str(value)
+            parts.append(value)
+        else:
+            parts.append(item)
+    return "".join(parts)
+
+
 FUN_BUILTINS = {
+    # Random
+    "kismat": kismat,
+    "sikka": sikka,
+    # System
+    "saaf": saaf,
+    "ruk": ruk,
+    "bahar": bahar,
+    # Banner, Help & Dev
+    "namaste": namaste,
+    "version": version,
+    "madad": madad,
+    # Fun & Desi
+    "jugaad": jugaad,
+    "himmat": himmat,
+    "bachao": bachao,
+    "dhanya_waad": dhanya_waad,
+    "chilla_mat": chilla_mat,
     "chai": chai,
     "pani_pilo": pani_pilo,
     "soja": soja,
@@ -251,4 +447,5 @@ FUN_BUILTINS = {
     "interview_prep": interview_prep,
     "roadmap": roadmap,
     "leetcode_bachao": leetcode_bachao,
+    "roop": roop,
 }
