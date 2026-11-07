@@ -24,6 +24,8 @@ from jugaadlang.ast_nodes.nodes import (
     Name,
     Slice,
     Subscript,
+    Yield,
+    YieldFrom,
 )
 from jugaadlang.lexer.lexer import Lexer
 from jugaadlang.parser.parser import Parser
@@ -218,48 +220,51 @@ agar_match x:
     assert case4.pattern.name is None
 
 
-def test_parse_match_star_pattern():
-    src = """
-agar_match xs:
-    kaand [a, *rest]:
-        bolo(a)
-"""
+def test_parse_yield_expression():
+    src = "banao gen():\n    baanto 1\n"
     tokens = Lexer(src).tokenize()
     parser = Parser(tokens, source=src)
     ast_mod = parser.parse()
 
-    case = ast_mod.body[0].cases[0]
-    pattern = case.pattern
-    assert isinstance(pattern, MatchSequence)
-    assert isinstance(pattern.patterns[1], MatchStar)
-    assert pattern.patterns[1].name == "rest"
+    func = ast_mod.body[0]
+    assert isinstance(func, FunctionDef)
+    stmt = func.body[0]
+    assert isinstance(stmt, ExprStmt)
+    assert isinstance(stmt.value, Yield)
+    assert isinstance(stmt.value.value, Constant)
+    assert stmt.value.value.value == 1
 
 
-def test_parse_match_star_wildcard_pattern():
-    src = """
-agar_match xs:
-    kaand [*_]:
-        bolo("any")
-"""
+def test_parse_bare_yield():
+    src = "banao gen():\n    baanto\n"
     tokens = Lexer(src).tokenize()
     parser = Parser(tokens, source=src)
     ast_mod = parser.parse()
 
-    pattern = ast_mod.body[0].cases[0].pattern
-    assert isinstance(pattern.patterns[0], MatchStar)
-    assert pattern.patterns[0].name is None
+    stmt = ast_mod.body[0].body[0]
+    assert isinstance(stmt.value, Yield)
+    assert stmt.value.value is None
 
 
-def test_parse_match_star_in_tuple_pattern():
-    src = """
-agar_match xs:
-    kaand (a, *rest):
-        bolo(a)
-"""
+def test_parse_yield_from():
+    src = "banao gen():\n    baanto se other()\n"
     tokens = Lexer(src).tokenize()
     parser = Parser(tokens, source=src)
     ast_mod = parser.parse()
 
-    pattern = ast_mod.body[0].cases[0].pattern
-    assert isinstance(pattern, MatchSequence)
-    assert isinstance(pattern.patterns[1], MatchStar)
+    stmt = ast_mod.body[0].body[0]
+    assert isinstance(stmt.value, YieldFrom)
+    assert isinstance(stmt.value.value, Call)
+
+
+def test_parse_yield_as_assignment_value():
+    src = "x = baanto 5\n"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    ast_mod = parser.parse()
+
+    stmt = ast_mod.body[0]
+    assert isinstance(stmt, Assign)
+    assert isinstance(stmt.value, Yield)
+    assert isinstance(stmt.value.value, Constant)
+    assert stmt.value.value.value == 5

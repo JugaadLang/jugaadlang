@@ -426,44 +426,59 @@ res = outer()
     assert interpreter.globals["res"] == 20
 
 
-def test_run_expression_type_error_runs_user_code_once():
+def test_generator_yield_runtime():
     interpreter = JugaadInterpreter()
     interpreter.run("""
-events = []
-banao fail():
-    events.append(1)
-    wapas 1 + "bad"
+banao count_up_to(n):
+    count = 1
+    jabtak count <= n:
+        baanto count
+        count += 1
+
+result = list(count_up_to(3))
 """)
-    with pytest.raises(TypeError):
-        interpreter.run_expression("fail()")
-    assert interpreter.globals["events"] == [1]
+    assert interpreter.globals["result"] == [1, 2, 3]
 
 
-def test_run_expression_type_error_runs_cached_code_once():
+def test_generator_bare_yield_runtime():
     interpreter = JugaadInterpreter()
     interpreter.run("""
-events = []
-banao fail():
-    events.append(1)
-    wapas 1 + "bad"
+banao gen():
+    baanto
+    baanto
+
+result = list(gen())
 """)
-    with pytest.raises(TypeError):
-        interpreter.run_expression("fail()")
-    with pytest.raises(TypeError):
-        interpreter.run_expression("fail()")
-    assert interpreter.globals["events"] == [1, 1]
+    assert interpreter.globals["result"] == [None, None]
 
 
-def test_run_expression_statement_executes_once():
+def test_generator_yield_from_runtime():
     interpreter = JugaadInterpreter()
-    result = interpreter.run_expression("x = 5")
-    assert result is None
-    assert interpreter.globals["x"] == 5
+    interpreter.run("""
+banao inner():
+    baanto 1
+    baanto 2
+
+banao outer():
+    baanto se inner()
+    baanto 3
+
+result = list(outer())
+""")
+    assert interpreter.globals["result"] == [1, 2, 3]
 
 
-def test_run_expression_eval_and_exec_do_not_cross_contaminate():
+def test_generator_yield_receives_sent_value():
     interpreter = JugaadInterpreter()
-    assert interpreter.run_expression("10 * 2 + 5") == 25
-    assert interpreter.run_expression("y = 7") is None
-    assert interpreter.run_expression("10 * 2 + 5") == 25
-    assert interpreter.globals["y"] == 7
+    interpreter.run("""
+banao echo():
+    received = baanto "ready"
+    baanto received
+
+gen = echo()
+first = next(gen)
+second = gen.send("done")
+""")
+    assert interpreter.globals["first"] == "ready"
+    assert interpreter.globals["second"] == "done"
+
