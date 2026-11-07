@@ -219,8 +219,6 @@ agar_match x:
     assert case4.pattern.name is None
 
 
-def test_parse_tuple_subscript():
-    src = "bolo(d[1, 2])"
 def test_parse_match_star_pattern():
     src = """
 agar_match xs:
@@ -231,14 +229,6 @@ agar_match xs:
     parser = Parser(tokens, source=src)
     ast_mod = parser.parse()
 
-    subscript = ast_mod.body[0].value.args[0]
-    assert isinstance(subscript, Subscript)
-    assert isinstance(subscript.slice, Tuple)
-    assert [elt.value for elt in subscript.slice.elts] == [1, 2]
-
-
-def test_parse_tuple_subscript_with_slice():
-    src = "bolo(p[1:2, 3])"
     case = ast_mod.body[0].cases[0]
     pattern = case.pattern
     assert isinstance(pattern, MatchSequence)
@@ -256,16 +246,6 @@ agar_match xs:
     parser = Parser(tokens, source=src)
     ast_mod = parser.parse()
 
-    subscript = ast_mod.body[0].value.args[0]
-    assert isinstance(subscript.slice, Tuple)
-    assert isinstance(subscript.slice.elts[0], Slice)
-    assert subscript.slice.elts[0].lower.value == 1
-    assert subscript.slice.elts[0].upper.value == 2
-    assert subscript.slice.elts[1].value == 3
-
-
-def test_parse_single_element_tuple_subscript():
-    src = "bolo(d[1,])"
     pattern = ast_mod.body[0].cases[0].pattern
     assert isinstance(pattern.patterns[0], MatchStar)
     assert pattern.patterns[0].name is None
@@ -277,6 +257,44 @@ agar_match xs:
     kaand (a, *rest):
         bolo(a)
 """
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    ast_mod = parser.parse()
+
+    pattern = ast_mod.body[0].cases[0].pattern
+    assert isinstance(pattern, MatchSequence)
+    assert isinstance(pattern.patterns[1], MatchStar)
+
+
+
+def test_parse_tuple_subscript():
+    src = "bolo(d[1, 2])"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    ast_mod = parser.parse()
+
+    subscript = ast_mod.body[0].value.args[0]
+    assert isinstance(subscript, Subscript)
+    assert isinstance(subscript.slice, Tuple)
+    assert [elt.value for elt in subscript.slice.elts] == [1, 2]
+
+
+def test_parse_tuple_subscript_with_slice():
+    src = "bolo(p[1:2, 3])"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    ast_mod = parser.parse()
+
+    subscript = ast_mod.body[0].value.args[0]
+    assert isinstance(subscript.slice, Tuple)
+    assert isinstance(subscript.slice.elts[0], Slice)
+    assert subscript.slice.elts[0].lower.value == 1
+    assert subscript.slice.elts[0].upper.value == 2
+    assert subscript.slice.elts[1].value == 3
+
+
+def test_parse_single_element_tuple_subscript():
+    src = "bolo(d[1,])"
     tokens = Lexer(src).tokenize()
     parser = Parser(tokens, source=src)
     ast_mod = parser.parse()
@@ -297,6 +315,3 @@ def test_parse_generic_annotation_with_commas():
     assert isinstance(annotation, Subscript)
     assert isinstance(annotation.slice, Tuple)
     assert len(annotation.slice.elts) == 2
-    pattern = ast_mod.body[0].cases[0].pattern
-    assert isinstance(pattern, MatchSequence)
-    assert isinstance(pattern.patterns[1], MatchStar)
