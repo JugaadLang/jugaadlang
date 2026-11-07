@@ -21,6 +21,7 @@ from jugaadlang.ast_nodes.nodes import (
     MatchClass,
     MatchSequence,
     MatchSingleton,
+    MatchStar,
     MatchValue,
     Module,
     Name,
