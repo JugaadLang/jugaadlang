@@ -5,6 +5,7 @@ JugaadLang CLI Main Entry Point.
 from __future__ import annotations
 
 import ast
+import builtins
 import os
 import sys
 from typing import Any
@@ -307,6 +308,7 @@ def check(file: str) -> None:
         from jugaadlang.cache.manager import cache_manager
         from jugaadlang.lexer.lexer import Lexer
         from jugaadlang.parser.parser import Parser
+        from jugaadlang.transformer.to_python import JugaadToPythonTransformer
 
         lexer = Lexer(source, file)
         tokens = lexer.tokenize()
@@ -316,6 +318,16 @@ def check(file: str) -> None:
             cache_manager.set_ast(source, ast_mod, filename=file)
         except Exception:
             pass
+
+        # Run the rest of the compile pipeline without executing the result, so
+        # errors that only surface during transformation or compilation (a
+        # top-level break or return, an invalid assignment target, a try with no
+        # handler, and so on) are reported here as well.
+        transformer = JugaadToPythonTransformer(file)
+        py_ast = transformer.transform(ast_mod)
+        # `compile` is also the name of a CLI command in this module, so the
+        # builtin is called explicitly.
+        builtins.compile(py_ast, file, "exec")
 
         console.print("[bold green]✓ Code bilkul sahi hai! (Syntax is valid)[/bold green]")
     except Exception as e:
