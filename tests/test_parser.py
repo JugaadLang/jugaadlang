@@ -2,6 +2,8 @@
 Tests for JugaadLang Parser.
 """
 
+import pytest
+
 from jugaadlang.ast_nodes.nodes import (
     Assign,
     Await,
@@ -9,6 +11,7 @@ from jugaadlang.ast_nodes.nodes import (
     ClassDef,
     Constant,
     ExprStmt,
+    For,
     FunctionDef,
     If,
     IfExp,
@@ -22,12 +25,14 @@ from jugaadlang.ast_nodes.nodes import (
     MatchValue,
     Module,
     Name,
+    Return,
     Slice,
+    Starred,
     Subscript,
     Tuple,
 )
 from jugaadlang.lexer.lexer import Lexer
-from jugaadlang.parser.parser import Parser
+from jugaadlang.parser.parser import ParseError, Parser
 
 
 def test_parse_expression_stmt():
@@ -217,7 +222,6 @@ agar_match x:
     case4 = stmt.cases[4]
     assert isinstance(case4.pattern, MatchAs)
     assert case4.pattern.name is None
-
 
 def test_parse_match_star_pattern():
     src = """
