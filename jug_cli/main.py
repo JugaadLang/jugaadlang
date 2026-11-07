@@ -5,6 +5,7 @@ JugaadLang CLI Main Entry Point.
 from __future__ import annotations
 
 import ast
+import builtins
 import os
 import sys
 from typing import Any
@@ -307,6 +308,7 @@ def check(file: str) -> None:
         from jugaadlang.cache.manager import cache_manager
         from jugaadlang.lexer.lexer import Lexer
         from jugaadlang.parser.parser import Parser
+        from jugaadlang.transformer.to_python import JugaadToPythonTransformer
 
         lexer = Lexer(source, file)
         tokens = lexer.tokenize()
@@ -314,6 +316,14 @@ def check(file: str) -> None:
         ast_mod = parser.parse()
         try:
             cache_manager.set_ast(source, ast_mod, filename=file)
+        except Exception:
+            pass
+
+        transformer = JugaadToPythonTransformer(file)
+        py_ast = transformer.transform(ast_mod)
+        code_obj = builtins.compile(py_ast, file, "exec")
+        try:
+            cache_manager.set_bytecode(source, code_obj, filename=file)
         except Exception:
             pass
 
