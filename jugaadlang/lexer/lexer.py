@@ -1,17 +1,3 @@
-"""
-JugaadLang Lexer — Tokenizes .jug source code.
-
-Supports:
-  - Full indentation tracking (INDENT/DEDENT like Python)
-  - Implicit line joining inside (), [] and {} (newlines and indentation ignored)
-  - JugaadLang keywords + English interop keywords
-  - # line comments, // line comments, /* block comments */
-  - Single/double/triple-quoted strings, f-strings, t-strings (PEP 750)
-  - Integer literals: decimal, hex (0x), octal (0o), binary (0b), underscores
-  - Float literals with optional exponent
-  - All operators including **, //, ->, :=, ==, !=, <=, >=
-  - Full Unicode + emoji support in identifiers and strings
-"""
 
 from __future__ import annotations
 
@@ -31,196 +17,149 @@ class LexerError(Exception):
         self.source_line = source_line
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-#  Character helpers
-# ─────────────────────────────────────────────────────────────────────────────
-
-
 def _is_id_start(ch: str) -> bool:
-    """Can this character start an identifier?"""
-    return ch.isalpha() or ch == "_" or (ord(ch) > 127)
+    return ch == "_" or (bool(ch) and ch.isidentifier() and not ch.isdigit())
 
 
 def _is_id_cont(ch: str) -> bool:
-    """Can this character continue an identifier?"""
-    return ch.isalnum() or ch == "_" or (ord(ch) > 127)
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-#  Lexer
-# ─────────────────────────────────────────────────────────────────────────────
+    return ch == "_" or (bool(ch) and ("a" + ch).isidentifier())
 
 
 class Lexer:
-    """
-    JugaadLang tokenizer.
-
-    Usage::
-
-        lexer = Lexer(source_code, filename="hello.jug")
-        tokens = lexer.tokenize()
-    """
+    """JugaadLang tokenizer."""
 
     def __init__(self, source: str, filename: str = "<stdin>") -> None:
-        # Normalise line endings
-        self.source: str = source.replace("\r\n", "\n").replace("\r", "\n")
-        # Editors on Windows often save UTF-8 with a byte order mark. It is not
-        # part of the program text, so drop a single leading one here instead of
-        # letting it glue itself to the first identifier.
+        self.source = source.replace("\r\n", "\n").replace("\r", "\n")
         if self.source.startswith("\ufeff"):
             self.source = self.source[1:]
-        self.filename: str = filename
-        self._pos: int = 0
-        self._line: int = 1
-        self._col: int = 1
-        # Stack of indentation levels; starts with 0
-        self._indent_stack: list[int] = [0]
-        self._source_lines: list[str] = self.source.splitlines()
-        # Depth of open (), [] and {}: newlines and indentation are ignored inside
-        self._bracket_depth: int = 0
 
-    # ── Public API ────────────────────────────────────────────────────
-
-    def tokenize(self) -> list[Token]:
-        """Return the full token list for the source."""
-        from ..events.bus import event_bus
-        event_bus.emit("LEXING_STARTED", {"filename": self.filename, "source_length": len(self.source)})
-        tokens = list(self._generate())
-        event_bus.emit("LEXING_COMPLETED", {"filename": self.filename, "token_count": len(tokens)})
-        return tokens
-
-    # ── Internal helpers ──────────────────────────────────────────────
+        self.filename = filename
+        self._pos = 0
+        self._line = 1
+        self._col = 1
+        self._indent_stack = [0]
+        self._source_lines = self.source.splitlines()
+        self._bracket_stack: list[tuple[str, int, int]] = []
 
     def _current(self) -> str:
-        if self._pos < len(self.source):
-            return self.source[self._pos]
-        return ""
+        return self.source[self._pos] if self._pos < len(self.source) else ""
 
     def _peek(self, offset: int = 1) -> str:
         idx = self._pos + offset
-        if idx < len(self.source):
-            return self.source[idx]
-        return ""
+        return self.source[idx] if idx < len(self.source) else ""
 
     def _advance(self) -> str:
+        if self._pos >= len(self.source):
+            return ""
+
         ch = self.source[self._pos]
         self._pos += 1
+
         if ch == "\n":
             self._line += 1
             self._col = 1
         else:
             self._col += 1
+
         return ch
 
     def _make(self, ttype: TokenType, value: str, line: int, col: int) -> Token:
         return Token(ttype, value, line, col)
 
     def _source_line_at(self, line: int) -> str:
-        idx = line - 1
-        if 0 <= idx < len(self._source_lines):
-            return self._source_lines[idx]
-        return ""
+        return self._source_lines[line - 1] if 0 < line <= len(self._source_lines) else ""
 
-    def _error(self, msg: str) -> LexerError:
-        return LexerError(msg, self._line, self._col, self._source_line_at(self._line))
+    def _error(self, message: str, line: Optional[int] = None,
+               col: Optional[int] = None) -> LexerError:
+        line = line or self._line
+        col = col or self._col
+        return LexerError(message, line, col, self._source_line_at(line))
 
-    # ── Main generator ────────────────────────────────────────────────
+    def tokenize(self) -> list[Token]:
+        from ..events.bus import event_bus
+
+        event_bus.emit("LEXING_STARTED", {
+            "filename": self.filename,
+            "source_length": len(self.source)
+        })
+
+        tokens = list(self._generate())
+
+        event_bus.emit("LEXING_COMPLETED", {
+            "filename": self.filename,
+            "token_count": len(tokens)
+        })
+        return tokens
 
     def _generate(self) -> Iterator[Token]:
-        """
-        Core token generator.
-
-        Algorithm:
-          1. At each line start, compute indentation and emit INDENT/DEDENT.
-          2. Skip whitespace (not newlines).
-          3. Dispatch to individual scan methods.
-          4. Emit NEWLINE at end of logical lines.
-          5. Emit EOF at the end.
-        """
         at_line_start = True
+        last_was_newline = True
 
         while self._pos < len(self.source):
             line, col = self._line, self._col
             ch = self._current()
 
-            # ── Handle line start (indentation) ───────────────────
             if at_line_start:
-                # Continuation line inside (), [] or {} — implicit line joining,
-                # so indentation is not meaningful and no INDENT/DEDENT is due.
-                if self._bracket_depth > 0:
-                    while self._pos < len(self.source) and self.source[self._pos] in (" ", "\t"):
-                        self._pos += 1
-                        self._col += 1
+                if self._bracket_stack:
+                    while self._current() in (" ", "\t"):
+                        self._advance()
                     at_line_start = False
                     continue
 
-                # Count leading spaces/tabs
-                indent_level = 0
-                while self._pos < len(self.source) and self.source[self._pos] in (" ", "\t"):
-                    if self.source[self._pos] == "\t":
-                        indent_level = (indent_level // 8 + 1) * 8
+                indent = 0
+                while self._current() in (" ", "\t"):
+                    if self._current() == "\t":
+                        indent = (indent // 8 + 1) * 8
                     else:
-                        indent_level += 1
-                    self._pos += 1
-                    self._col += 1
+                        indent += 1
+                    self._advance()
 
-                # Blank or comment-only line — skip
-                cur = self._current()
-                if cur == "\n" or cur == "" or (cur == "#") or (cur == "/" and self._peek() == "/"):
-                    # Still at line start if next line
-                    if cur == "\n":
+                ch = self._current()
+
+                if ch in ("", "\n", "#") or (ch == "/" and self._peek() == "/"):
+                    if ch == "\n":
                         self._advance()
-                    elif cur == "#":
-                        while self._pos < len(self.source) and self.source[self._pos] != "\n":
+                    elif ch in ("#", "/"):
+                        while self._current() not in ("", "\n"):
                             self._advance()
                         if self._current() == "\n":
                             self._advance()
-                    elif cur == "/" and self._peek() == "/":
-                        while self._pos < len(self.source) and self.source[self._pos] != "\n":
-                            self._advance()
-                        if self._current() == "\n":
-                            self._advance()
-                    # remain at_line_start = True
                     continue
 
-                # Emit INDENT / DEDENT
-                prev = self._indent_stack[-1]
-                if indent_level > prev:
-                    self._indent_stack.append(indent_level)
+                previous = self._indent_stack[-1]
+
+                if indent > previous:
+                    self._indent_stack.append(indent)
                     yield self._make(TokenType.INDENT, "", line, 1)
-                elif indent_level < prev:
-                    while self._indent_stack[-1] > indent_level:
+
+                elif indent < previous:
+                    while len(self._indent_stack) > 1 and self._indent_stack[-1] > indent:
                         self._indent_stack.pop()
                         yield self._make(TokenType.DEDENT, "", line, 1)
-                    if self._indent_stack[-1] != indent_level:
-                        raise self._error("Indentation galat hai bhai!")
+
+                    if self._indent_stack[-1] != indent:
+                        raise self._error("Inconsistent indentation", line, col)
 
                 at_line_start = False
-                continue  # Re-enter loop to process the actual token
+                continue
 
-            # ── Newline ───────────────────────────────────────────
             if ch == "\n":
                 self._advance()
-                if self._bracket_depth == 0:
+                if not self._bracket_stack:
                     yield self._make(TokenType.NEWLINE, "\n", line, col)
+                    last_was_newline = True
                 at_line_start = True
                 continue
 
-            # ── Skip horizontal whitespace ────────────────────────
-            if ch in (" ", "\t", "\r"):
+            if ch in (" ", "\t"):
                 self._advance()
                 continue
 
-            # ── Stray byte order mark ─────────────────────────────
             if ch == "\ufeff":
-                raise self._error(
-                    "UTF-8 BOM sirf source ke shuru mein aa sakta hai, beech mein nahi"
-                )
+                raise self._error("BOM is only allowed at the beginning of the source")
 
-            # ── Comments ──────────────────────────────────────────
             if ch == "#":
                 self._scan_line_comment()
-                # Don't emit COMMENT tokens — just skip
                 continue
 
             if ch == "/" and self._peek() == "/":
@@ -231,381 +170,363 @@ class Lexer:
                 self._scan_block_comment()
                 continue
 
-            # ── Strings ───────────────────────────────────────────
             if self._string_prefix() is not None:
-                tok = self._scan_string(line, col)
-                yield tok
+                yield self._scan_string(line, col)
+                last_was_newline = False
                 continue
 
-            # ── Numbers ───────────────────────────────────────────
             if ch.isdigit() or (ch == "." and self._peek().isdigit()):
                 yield from self._scan_number(line, col)
+                last_was_newline = False
                 continue
 
-            # ── Identifiers / Keywords ────────────────────────────
             if _is_id_start(ch):
                 yield self._scan_identifier(line, col)
+                last_was_newline = False
                 continue
 
-            # ── Operators & Delimiters ────────────────────────────
             tok = self._scan_operator(line, col)
-            if tok:
-                if tok.type in (TokenType.LPAREN, TokenType.LBRACKET, TokenType.LBRACE):
-                    self._bracket_depth += 1
-                elif tok.type in (TokenType.RPAREN, TokenType.RBRACKET, TokenType.RBRACE):
-                    self._bracket_depth = max(0, self._bracket_depth - 1)
-                yield tok
-                continue
 
-            # ── Unknown character ─────────────────────────────────
-            raise self._error(f"Ye character kya hai bhai: {ch!r}")
+            if tok is None:
+                raise self._error(f"Unexpected character: {ch!r}", line, col)
 
-        # ── End of source: close open indents ─────────────────────
+            opening = {
+                TokenType.LPAREN: ")",
+                TokenType.LBRACKET: "]",
+                TokenType.LBRACE: "}",
+            }
+
+            closing = {
+                TokenType.RPAREN: ")",
+                TokenType.RBRACKET: "]",
+                TokenType.RBRACE: "}",
+            }
+
+            if tok.type in opening:
+                self._bracket_stack.append((opening[tok.type], line, col))
+
+            elif tok.type in closing:
+                if not self._bracket_stack:
+                    raise self._error("Unexpected closing bracket", line, col)
+
+                expected, _, _ = self._bracket_stack[-1]
+                if tok.value != expected:
+                    raise self._error(
+                        f"Mismatched bracket: expected {expected!r}",
+                        line,
+                        col
+                    )
+                self._bracket_stack.pop()
+
+            yield tok
+            last_was_newline = False
+
+        if self._bracket_stack:
+            expected, line, col = self._bracket_stack[-1]
+            raise self._error(
+                f"Unclosed bracket: expected {expected!r}",
+                line,
+                col
+            )
+
+        if not last_was_newline and self._pos > 0:
+            yield self._make(TokenType.NEWLINE, "\n", self._line, self._col)
+
         while len(self._indent_stack) > 1:
             self._indent_stack.pop()
             yield self._make(TokenType.DEDENT, "", self._line, self._col)
 
         yield self._make(TokenType.EOF, "", self._line, self._col)
 
-    # ── Comment scanners ──────────────────────────────────────────────
-
-    def _scan_line_comment(self) -> str:
-        start = self._pos
-        while self._pos < len(self.source) and self.source[self._pos] != "\n":
-            self._pos += 1
-            self._col += 1
-        return self.source[start : self._pos]
+    def _scan_line_comment(self) -> None:
+        while self._current() not in ("", "\n"):
+            self._advance()
 
     def _scan_line_comment_slash(self) -> None:
-        # Skip "//"
         self._advance()
         self._advance()
-        while self._pos < len(self.source) and self.source[self._pos] != "\n":
+        while self._current() not in ("", "\n"):
             self._advance()
 
     def _scan_block_comment(self) -> None:
-        # Skip "/*"
         line, col = self._line, self._col
         self._advance()
         self._advance()
+
         while self._pos < len(self.source):
-            if self.source[self._pos] == "*" and self._peek() == "/":
+            if self._current() == "*" and self._peek() == "/":
                 self._advance()
                 self._advance()
                 return
             self._advance()
-        raise LexerError("Block comment band nahi hua (*/ missing)", line, col)
 
-    # ── String scanner ────────────────────────────────────────────────
+        raise self._error("Unclosed block comment (*/ missing)", line, col)
 
     def _string_prefix(self) -> Optional[str]:
-        """Return the literal prefix if a string literal starts here, else None.
-
-        Returns ``""`` for a plain quoted string and e.g. ``"f"``, ``"t"`` or
-        ``"tr"`` for prefixed literals. Letters are limited to ``f`` (f-string),
-        ``t`` (t-string, PEP 750) and ``r`` (raw) so identifiers such as ``test``
-        are never mistaken for a prefix.
-        """
-        src = self.source
         pos = self._pos
-        if pos < len(src) and src[pos] in ('"', "'"):
+        src = self.source
+
+        if pos < len(src) and src[pos] in ("'", '"'):
             return ""
+
         for length in (2, 1):
-            if pos + length < len(src) and src[pos + length] in ('"', "'"):
-                prefix = src[pos : pos + length]
-                if prefix and all(c in "ftr" for c in prefix) and len(set(prefix)) == len(prefix):
+            if pos + length < len(src) and src[pos + length] in ("'", '"'):
+                prefix = src[pos:pos + length]
+                if (
+                    all(c in "ft" for c in prefix)
+                    and len(set(prefix)) == len(prefix)
+                ):
                     return prefix
+
         return None
 
     def _scan_string(self, line: int, col: int) -> Token:
         prefix = self._string_prefix() or ""
-        if "r" in prefix:
-            raise LexerError(
-                "Raw string (r-prefix) abhi support nahi hai — r hata kar likho",
-                line,
-                col,
-                self._source_line_at(line),
-            )
+
         if "f" in prefix and "t" in prefix:
-            raise LexerError(
-                "Ek string par f-prefix aur t-prefix saath nahi lag sakte",
-                line,
-                col,
-                self._source_line_at(line),
-            )
+            raise self._error("f and t prefixes cannot be combined", line, col)
+
         is_fstring = "f" in prefix
         is_tstring = "t" in prefix
+
         for _ in prefix:
             self._advance()
 
-        quote_char = self._advance()  # ' or "
+        quote = self._advance()
         triple = False
 
-        # Check for triple quote
-        if self._current() == quote_char and self._peek() == quote_char:
+        if self._current() == quote and self._peek() == quote:
             self._advance()
             self._advance()
             triple = True
 
-        buf: list[str] = []
-        while True:
-            if self._pos >= len(self.source):
-                raise LexerError(
-                    "String khatam nahi hua (closing quote missing)",
-                    line,
-                    col,
-                    self._source_line_at(line),
-                )
+        result: list[str] = []
 
-            ch = self.source[self._pos]
+        while self._pos < len(self.source):
+            ch = self._current()
 
             if triple:
                 if (
-                    ch == quote_char
-                    and self._pos + 1 < len(self.source)
-                    and self.source[self._pos + 1] == quote_char
-                    and self._pos + 2 < len(self.source)
-                    and self.source[self._pos + 2] == quote_char
+                    ch == quote
+                    and self._peek() == quote
+                    and self._peek(2) == quote
                 ):
                     self._advance()
                     self._advance()
                     self._advance()
                     break
             else:
-                if ch == quote_char:
+                if ch == quote:
                     self._advance()
                     break
                 if ch == "\n":
-                    raise LexerError(
-                        "Single-line string mein newline nahi dal sakte",
-                        line,
-                        col,
-                        self._source_line_at(line),
-                    )
+                    raise self._error("Newline inside single-line string", line, col)
 
             if ch == "\\":
                 self._advance()
-                esc = self._advance()
-                escape_map = {
-                    "n": "\n",
-                    "t": "\t",
-                    "r": "\r",
-                    "\\": "\\",
-                    "'": "'",
-                    '"': '"',
-                    "a": "\a",
-                    "b": "\b",
-                    "f": "\f",
-                    "v": "\v",
+                esc = self._current()
+
+                if not esc:
+                    raise self._error("Incomplete string escape", line, col)
+
+                self._advance()
+
+                escapes = {
+                    "n": "\n", "t": "\t", "r": "\r",
+                    "\\": "\\", "'": "'", '"': '"',
+                    "a": "\a", "b": "\b", "f": "\f", "v": "\v",
                 }
-                if esc in "01234567":
-                    # \ooo — up to three octal digits, first one already read
-                    oct_digits = esc
+
+                if esc in escapes:
+                    result.append(escapes[esc])
+
+                elif esc in "01234567":
+                    digits = esc
                     for _ in range(2):
                         if self._current() in "01234567":
-                            oct_digits += self._advance()
+                            digits += self._advance()
                         else:
                             break
-                    buf.append(chr(int(oct_digits, 8)))
-                elif esc in escape_map:
-                    buf.append(escape_map[esc])
-                elif esc == "u":
-                    # \uXXXX
-                    buf.append(self._scan_hex_escape(4, "u", line, col))
-                elif esc == "x":
-                    # \xXX
-                    buf.append(self._scan_hex_escape(2, "x", line, col))
-                elif esc == "U":
-                    # \UXXXXXXXX
-                    buf.append(self._scan_hex_escape(8, "U", line, col))
+                    result.append(chr(int(digits, 8)))
+
+                elif esc in ("x", "u", "U"):
+                    count = {"x": 2, "u": 4, "U": 8}[esc]
+                    result.append(self._scan_hex_escape(count, esc, line, col))
+
                 elif esc == "N":
-                    # \N{CHARACTER NAME}
-                    buf.append(self._scan_named_escape(line, col))
+                    result.append(self._scan_named_escape(line, col))
+
+                elif esc == "\n":
+                    continue
+
                 else:
-                    buf.append("\\")
-                    buf.append(esc)
+                    result.extend(("\\", esc))
+
             else:
-                buf.append(self._advance())
+                result.append(self._advance())
 
-        raw = "".join(buf)
-        ttype = (
-            TokenType.TSTRING
-            if is_tstring
-            else (TokenType.FSTRING if is_fstring else TokenType.STRING)
+        else:
+            raise self._error("Unterminated string", line, col)
+
+        token_type = (
+            TokenType.TSTRING if is_tstring
+            else TokenType.FSTRING if is_fstring
+            else TokenType.STRING
         )
-        return self._make(ttype, raw, line, col)
 
-    def _scan_hex_escape(self, n_digits: int, esc_char: str, line: int, col: int) -> str:
-        """Read `n_digits` hex digits for a \\u or \\x escape and return the decoded char.
+        return self._make(token_type, "".join(result), line, col)
 
-        Raises a proper LexerError (instead of letting IndexError/ValueError from
-        truncated or malformed escapes propagate as raw Python exceptions) when the
-        source ends early or the digits aren't valid hex.
-        """
-        hex_chars = ""
-        for _ in range(n_digits):
-            if self._pos >= len(self.source):
-                raise LexerError(
-                    f"String khatam nahi hua (\\{esc_char} escape adhoora hai, "
-                    f"{n_digits} hex digits chahiye)",
-                    line,
-                    col,
-                    self._source_line_at(line),
-                )
-            hex_chars += self._advance()
+    def _scan_hex_escape(self, count: int, esc: str,
+                         line: int, col: int) -> str:
+        digits = ""
+
+        for _ in range(count):
+            ch = self._current()
+            if not ch or ch not in "0123456789abcdefABCDEF":
+                raise self._error(f"Invalid \\{esc} escape", line, col)
+            digits += self._advance()
+
+        value = int(digits, 16)
 
         try:
-            return chr(int(hex_chars, 16))
+            return chr(value)
         except ValueError:
-            raise LexerError(
-                f"Galat \\{esc_char} escape sequence: {hex_chars!r} "
-                f"({n_digits} hex digits hone chahiye)",
-                line,
-                col,
-                self._source_line_at(line),
-            ) from None
+            raise self._error("Invalid Unicode code point", line, col) from None
 
     def _scan_named_escape(self, line: int, col: int) -> str:
-        """Read ``\\N{CHARACTER NAME}`` and return the named character.
-
-        Raises a LexerError when the braces are missing or the name is not a
-        real Unicode name, instead of letting the KeyError from
-        ``unicodedata.lookup`` escape as a raw Python exception.
-        """
         if self._current() != "{":
-            raise LexerError(
-                "\\N escape ke baad { naam } chahiye (jaise \\N{SNOWMAN})",
-                line,
-                col,
-                self._source_line_at(line),
-            )
-        self._advance()  # consume '{'
+            raise self._error("Expected { after \\N", line, col)
 
-        name_chars: list[str] = []
+        self._advance()
+        chars = []
+
         while self._pos < len(self.source) and self._current() != "}":
-            name_chars.append(self._advance())
+            chars.append(self._advance())
 
-        if self._pos >= len(self.source):
-            raise LexerError(
-                "\\N{...} band nahi hua (} missing)",
-                line,
-                col,
-                self._source_line_at(line),
-            )
-        self._advance()  # consume '}'
+        if self._current() != "}":
+            raise self._error("Unclosed Unicode character name", line, col)
 
-        name = "".join(name_chars)
+        self._advance()
+        name = "".join(chars)
+
         try:
             return unicodedata.lookup(name)
         except KeyError:
-            raise LexerError(
-                f"\\N{{{name}}} naam ki koi Unicode character nahi hai",
-                line,
-                col,
-                self._source_line_at(line),
-            ) from None
-
-    # ── Number scanner ────────────────────────────────────────────────
+            raise self._error(f"Unknown Unicode character: {name}", line, col) from None
 
     def _scan_number(self, line: int, col: int) -> Iterator[Token]:
         start = self._pos
         is_float = False
 
-        if self._current() == "0" and self._peek() in ("x", "X"):
-            # Hex
+        if self._current() == "0" and self._peek() in "xXoObB":
+            prefix = self._peek().lower()
             self._advance()
             self._advance()
-            while self._pos < len(self.source) and (
-                self.source[self._pos] in "0123456789abcdefABCDEF_"
-            ):
-                self._advance()
-            yield self._make(
-                TokenType.INT, self.source[start : self._pos].replace("_", ""), line, col
-            )
+
+            allowed = {
+                "x": "0123456789abcdefABCDEF",
+                "o": "01234567",
+                "b": "01",
+            }[prefix]
+
+            digits = 0
+            previous_underscore = False
+
+            while self._current():
+                ch = self._current()
+
+                if ch == "_":
+                    if digits == 0 or previous_underscore:
+                        raise self._error("Invalid underscore in number", line, col)
+                    previous_underscore = True
+                    self._advance()
+
+                elif ch in allowed:
+                    digits += 1
+                    previous_underscore = False
+                    self._advance()
+
+                else:
+                    break
+
+            if digits == 0 or previous_underscore:
+                raise self._error("Invalid integer literal", line, col)
+
+            raw = self.source[start:self._pos].replace("_", "")
+            yield self._make(TokenType.INT, raw, line, col)
             return
 
-        if self._current() == "0" and self._peek() in ("o", "O"):
-            # Octal
-            self._advance()
-            self._advance()
-            while self._pos < len(self.source) and self.source[self._pos] in "01234567_":
-                self._advance()
-            yield self._make(
-                TokenType.INT, self.source[start : self._pos].replace("_", ""), line, col
-            )
-            return
+        digits = 0
+        previous_underscore = False
 
-        if self._current() == "0" and self._peek() in ("b", "B"):
-            # Binary
-            self._advance()
-            self._advance()
-            while self._pos < len(self.source) and self.source[self._pos] in "01_":
-                self._advance()
-            yield self._make(
-                TokenType.INT, self.source[start : self._pos].replace("_", ""), line, col
-            )
-            return
+        while self._current().isdigit() or self._current() == "_":
+            ch = self._advance()
 
-        # Decimal / float
-        while self._pos < len(self.source) and (
-            self.source[self._pos].isdigit() or self.source[self._pos] == "_"
-        ):
-            self._advance()
+            if ch == "_":
+                if digits == 0 or previous_underscore:
+                    raise self._error("Invalid underscore in number", line, col)
+                previous_underscore = True
+            else:
+                digits += 1
+                previous_underscore = False
 
-        if self._pos < len(self.source) and self.source[self._pos] == "." and self._peek() != ".":
+        if previous_underscore:
+            raise self._error("Number cannot end with underscore", line, col)
+
+        if self._current() == "." and self._peek() != ".":
             is_float = True
             self._advance()
-            while self._pos < len(self.source) and (
-                self.source[self._pos].isdigit() or self.source[self._pos] == "_"
-            ):
-                self._advance()
 
-        # Optional exponent
-        if self._pos < len(self.source) and self.source[self._pos] in ("e", "E"):
+            while self._current().isdigit() or self._current() == "_":
+                ch = self._advance()
+                if ch == "_":
+                    if previous_underscore:
+                        raise self._error("Invalid underscore in number", line, col)
+                    previous_underscore = True
+                else:
+                    previous_underscore = False
+
+            if previous_underscore:
+                raise self._error("Number cannot end with underscore", line, col)
+
+        if self._current() in ("e", "E"):
             is_float = True
             self._advance()
-            if self._pos < len(self.source) and self.source[self._pos] in ("+", "-"):
-                self._advance()
-            while self._pos < len(self.source) and self.source[self._pos].isdigit():
+
+            if self._current() in ("+", "-"):
                 self._advance()
 
-        raw = self.source[start : self._pos].replace("_", "")
-        ttype = TokenType.FLOAT if is_float else TokenType.INT
-        yield self._make(ttype, raw, line, col)
+            exp_start = self._pos
+            while self._current().isdigit():
+                self._advance()
 
-    # ── Identifier / keyword scanner ──────────────────────────────────
+            if self._pos == exp_start:
+                raise self._error("Exponent requires digits", line, col)
+
+        if _is_id_start(self._current()):
+            raise self._error("Invalid character after number", line, col)
+
+        raw = self.source[start:self._pos].replace("_", "")
+        yield self._make(
+            TokenType.FLOAT if is_float else TokenType.INT,
+            raw,
+            line,
+            col
+        )
 
     def _scan_identifier(self, line: int, col: int) -> Token:
         start = self._pos
-        while self._pos < len(self.source) and _is_id_cont(self.source[self._pos]):
+
+        while self._current() and _is_id_cont(self._current()):
             self._advance()
-        word = self.source[start : self._pos]
-        ttype = KEYWORDS.get(word, TokenType.IDENTIFIER)
-        return self._make(ttype, word, line, col)
 
-    # ── Operator / delimiter scanner ──────────────────────────────────
+        word = self.source[start:self._pos]
+        return self._make(KEYWORDS.get(word, TokenType.IDENTIFIER), word, line, col)
 
-    def _scan_operator(self, line: int, col: int) -> Token | None:
+    def _scan_operator(self, line: int, col: int) -> Optional[Token]:
+        three = self.source[self._pos:self._pos + 3]
+        two = self.source[self._pos:self._pos + 2]
         ch = self._current()
-
-        def adv1(t: TokenType, v: str) -> Token:
-            self._advance()
-            return self._make(t, v, line, col)
-
-        def adv2(t: TokenType, v: str) -> Token:
-            self._advance()
-            self._advance()
-            return self._make(t, v, line, col)
-
-        def adv3(t: TokenType, v: str) -> Token:
-            self._advance()
-            self._advance()
-            self._advance()
-            return self._make(t, v, line, col)
-
-        # Two-char then three-char operators first
-        three = self.source[self._pos : self._pos + 3]
-        two = self.source[self._pos : self._pos + 2]
 
         three_map = {
             "**=": TokenType.DOUBLESTAR_ASSIGN,
@@ -614,59 +535,46 @@ class Lexer:
             ">>=": TokenType.RSHIFT_ASSIGN,
             "...": TokenType.ELLIPSIS,
         }
-        if three in three_map:
-            return adv3(three_map[three], three)
 
         two_map = {
-            "==": TokenType.EQ,
-            "!=": TokenType.NEQ,
-            "<=": TokenType.LTE,
-            ">=": TokenType.GTE,
-            "**": TokenType.DOUBLESTAR,
-            "//": TokenType.DOUBLESLASH,
-            "->": TokenType.ARROW,
-            ":=": TokenType.WALRUS,
-            "+=": TokenType.PLUS_ASSIGN,
-            "-=": TokenType.MINUS_ASSIGN,
-            "*=": TokenType.STAR_ASSIGN,
-            "/=": TokenType.SLASH_ASSIGN,
-            "%=": TokenType.PERCENT_ASSIGN,
-            "@=": TokenType.AT_ASSIGN,
-            "&=": TokenType.AMP_ASSIGN,
-            "|=": TokenType.PIPE_ASSIGN,
-            "^=": TokenType.CARET_ASSIGN,
-            "<<": TokenType.LSHIFT,
+            "==": TokenType.EQ, "!=": TokenType.NEQ,
+            "<=": TokenType.LTE, ">=": TokenType.GTE,
+            "**": TokenType.DOUBLESTAR, "//": TokenType.DOUBLESLASH,
+            "->": TokenType.ARROW, ":=": TokenType.WALRUS,
+            "+=": TokenType.PLUS_ASSIGN, "-=": TokenType.MINUS_ASSIGN,
+            "*=": TokenType.STAR_ASSIGN, "/=": TokenType.SLASH_ASSIGN,
+            "%=": TokenType.PERCENT_ASSIGN, "@=": TokenType.AT_ASSIGN,
+            "&=": TokenType.AMP_ASSIGN, "|=": TokenType.PIPE_ASSIGN,
+            "^=": TokenType.CARET_ASSIGN, "<<": TokenType.LSHIFT,
             ">>": TokenType.RSHIFT,
         }
-        if two in two_map:
-            return adv2(two_map[two], two)
 
         one_map = {
-            "+": TokenType.PLUS,
-            "-": TokenType.MINUS,
-            "*": TokenType.STAR,
-            "/": TokenType.SLASH,
-            "%": TokenType.PERCENT,
-            "=": TokenType.ASSIGN,
-            "<": TokenType.LT,
-            ">": TokenType.GT,
-            "(": TokenType.LPAREN,
-            ")": TokenType.RPAREN,
-            "[": TokenType.LBRACKET,
-            "]": TokenType.RBRACKET,
-            "{": TokenType.LBRACE,
-            "}": TokenType.RBRACE,
-            ",": TokenType.COMMA,
-            ".": TokenType.DOT,
-            ":": TokenType.COLON,
-            ";": TokenType.SEMICOLON,
-            "@": TokenType.AT,
-            "~": TokenType.TILDE,
-            "&": TokenType.AMP,
-            "|": TokenType.PIPE,
+            "+": TokenType.PLUS, "-": TokenType.MINUS,
+            "*": TokenType.STAR, "/": TokenType.SLASH,
+            "%": TokenType.PERCENT, "=": TokenType.ASSIGN,
+            "<": TokenType.LT, ">": TokenType.GT,
+            "(": TokenType.LPAREN, ")": TokenType.RPAREN,
+            "[": TokenType.LBRACKET, "]": TokenType.RBRACKET,
+            "{": TokenType.LBRACE, "}": TokenType.RBRACE,
+            ",": TokenType.COMMA, ".": TokenType.DOT,
+            ":": TokenType.COLON, ";": TokenType.SEMICOLON,
+            "@": TokenType.AT, "~": TokenType.TILDE,
+            "&": TokenType.AMP, "|": TokenType.PIPE,
             "^": TokenType.CARET,
         }
-        if ch in one_map:
-            return adv1(one_map[ch], ch)
 
-        return None
+        if three in three_map:
+            value, token_type = three, three_map[three]
+        elif two in two_map:
+            value, token_type = two, two_map[two]
+        elif ch in one_map:
+            value, token_type = ch, one_map[ch]
+        else:
+            return None
+
+        for _ in value:
+            self._advance()
+
+        return self._make(token_type, value, line, col)
+
