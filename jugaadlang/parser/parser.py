@@ -1412,6 +1412,30 @@ class Parser:
             return TemplateStr(values=parts, line=token.line, col=token.col)
         return JoinedStr(values=parts, line=token.line, col=token.col)
 
+    @staticmethod
+    def _skip_string_literal(val: str, pos: int) -> int:
+        """Return the index just past a quoted string literal starting at ``pos``.
+
+        Interpolation scanning must ignore f-string syntax characters that sit
+        inside a string literal, e.g. the ``}`` in ``f"{'}'}"`` or the ``:`` in
+        ``f"{'a:b'}"``. Single, double and triple quotes are handled, along
+        with backslash escapes.
+        """
+        quote = val[pos]
+        triple = val.startswith(quote * 3, pos)
+        pos += 3 if triple else 1
+        while pos < len(val):
+            if val[pos] == "\\":
+                pos += 2
+                continue
+            if triple:
+                if val.startswith(quote * 3, pos):
+                    return pos + 3
+            elif val[pos] == quote:
+                return pos + 1
+            pos += 1
+        return len(val)
+
     def _interpolation_parts(
         self, val: str, token: Token, col_offset: int, template: bool
     ) -> list[Expr]:
@@ -1434,9 +1458,13 @@ class Parser:
                 start = pos
                 depth = 1
                 while pos < len(val):
-                    if val[pos] == "{":
+                    ch = val[pos]
+                    if ch in "'\"":
+                        pos = self._skip_string_literal(val, pos)
+                        continue
+                    if ch == "{":
                         depth += 1
-                    elif val[pos] == "}":
+                    elif ch == "}":
                         depth -= 1
                         if depth == 0:
                             break
@@ -1533,7 +1561,12 @@ class Parser:
         depth = 0
         conv_pos: Optional[int] = None
         spec_pos: Optional[int] = None
-        for i, ch in enumerate(body):
+        i = 0
+        while i < len(body):
+            ch = body[i]
+            if ch in "'\"":
+                i = self._skip_string_literal(body, i)
+                continue
             if ch in "([{":
                 depth += 1
             elif ch in ")]}":
@@ -1545,6 +1578,7 @@ class Parser:
                         conv_pos = i
                 elif ch == ":" and spec_pos is None and body[i + 1 : i + 2] != "=":
                     spec_pos = i
+            i += 1
 
         cut = min(p for p in (conv_pos, spec_pos) if p is not None) if (
             conv_pos is not None or spec_pos is not None
@@ -1598,11 +1632,11 @@ class Parser:
         sub_lexer = Lexer(text, filename=self._filename)
         sub_lexer._line = token.line
         sub_lexer._col = token.col + col
+        # Keep the EOF sentinel: parser lookahead relies on it to stop before
+        # running past the end of the token list (e.g. a bare string literal).
         sub_tokens = sub_lexer.tokenize()
-        if sub_tokens and sub_tokens[-1].type == TokenType.EOF:
-            sub_tokens.pop()
 
-        if not sub_tokens:
+        if not sub_tokens or sub_tokens[0].type == TokenType.EOF:
             raise ParseError("f-string expression khali hai", token.line, token.col)
 
         sub_parser = Parser(
