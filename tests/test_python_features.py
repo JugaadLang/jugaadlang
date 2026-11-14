@@ -211,6 +211,35 @@ def test_tstring_debug_specifier():
     assert template.values[0].value == "x="
     assert template.values[1].str == "x"
     assert template.values[1].conversion == ord("r")
+
+
+def test_fstring_string_literal_expression_ast():
+    module = parse("""bolo(f"{'hi'}")""")
+    formatted = module.body[0].value.args[0].values[0]
+    assert isinstance(formatted, FormattedValue)
+    assert isinstance(formatted.value, Constant)
+    assert formatted.value.value == "hi"
+    assert formatted.conversion == -1
+    assert formatted.format_spec is None
+
+
+def test_fstring_string_literal_with_format_spec_ast():
+    module = parse("""bolo(f"{'x':>3}")""")
+    formatted = module.body[0].value.args[0].values[0]
+    assert isinstance(formatted.value, Constant)
+    assert formatted.value.value == "x"
+    assert formatted.format_spec.values[0].value == ">3"
+
+
+def test_fstring_string_literal_syntax_chars_are_not_special():
+    module = parse("""bolo(f"{'a:b!c{}'}")""")
+    formatted = module.body[0].value.args[0].values[0]
+    assert isinstance(formatted.value, Constant)
+    assert formatted.value.value == "a:b!c{}"
+    assert formatted.conversion == -1
+    assert formatted.format_spec is None
+
+
 # ── Parser: adjacent string literal concatenation ─────────────────────────────
 
 
@@ -510,6 +539,48 @@ def test_fstring_debug_output_matches_cpython(capsys):
     )
     lines = run(source, capsys).splitlines()
     assert lines == ["x=42", "x = 42", "x=   42", "s='abc'", "s=     abc", "True"]
+
+
+@pytest.mark.parametrize(
+    ("expression", "expected"),
+    [
+        ("'hi'", "hi"),
+        ("'a' + 'b'", "ab"),
+        ("'hi'.upper()", "HI"),
+        ("'abc'[1]", "b"),
+        ("{'a': 1}['a']", "1"),
+        ("'a:b'", "a:b"),
+        ("'a!b'", "a!b"),
+        ("'='", "="),
+        ("'}'", "}"),
+        ("'{'", "{"),
+        ("'{}'", "{}"),
+        ("'a' agar sahi warna 'b'", "a"),
+        ("str('hi')", "hi"),
+    ],
+)
+def test_fstring_string_literal_expression(expression, expected, capsys):
+    assert run(f'bolo(f"{{ {expression} }}")', capsys) == expected
+
+
+def test_fstring_triple_quoted_string_literal(capsys):
+    assert run("""bolo(f"{'''hi'''}")""", capsys) == "hi"
+
+
+def test_fstring_string_literal_with_format_spec_runs(capsys):
+    assert run("""bolo(f"{'x':>3}")""", capsys) == "  x"
+
+
+def test_fstring_string_literal_debug_specifier(capsys):
+    assert run("""bolo(f"{'a'=}")""", capsys) == "'a'='a'"
+
+
+def test_fstring_string_literal_adjacent_strings(capsys):
+    assert run("""bolo(f"{'a'}" "b" f"{'c'}")""", capsys) == "abc"
+
+
+def test_tstring_string_literal_expression(capsys):
+    assert run("""bolo(roop(t"{'hi'}"))""", capsys) == "hi"
 
 
 def test_tstring_debug_output_matches_fstring(capsys):
