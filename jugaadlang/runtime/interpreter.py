@@ -14,6 +14,7 @@ from ..ast_nodes.nodes import ExprStmt
 from ..cache.manager import cache_manager
 from ..errors.messages import format_error
 from ..lexer.lexer import Lexer
+from ..optimizer.ast_optimizer import JugaadASTOptimizer
 from ..parser.parser import Parser
 from ..transformer.to_python import JugaadToPythonTransformer
 from .fun_builtins import FUN_BUILTINS
@@ -109,6 +110,9 @@ class JugaadInterpreter:
 
                     parser = Parser(tokens, self.filename, source)
                     ast_mod = parser.parse()
+                    
+                    # 2.5 AST Optimization
+                    ast_mod = JugaadASTOptimizer().optimize(ast_mod)
 
                     try:
                         cache_manager.set_ast(source, ast_mod, filename=self.filename)
@@ -145,6 +149,7 @@ class JugaadInterpreter:
         from ..events.bus import event_bus
         event_bus.emit("EXECUTION_STARTED", {"filename": self.filename, "mode": "eval"})
         try:
+            # AST Optimizer should run before caching
 
             cache_key = f"expr::{source}"
             ast_mod = cache_manager.get_ast(cache_key, filename=self.filename)
@@ -170,6 +175,19 @@ class JugaadInterpreter:
             code_obj = cache_manager.get_bytecode(bytecode_key, filename=self.filename)
 
             if code_obj is None:
+                ast_mod = cache_manager.get_ast(cache_key, filename=self.filename)
+                
+                if ast_mod is None:
+                    lexer = Lexer(source, self.filename)
+                    tokens = lexer.tokenize()
+                    parser = Parser(tokens, self.filename, source)
+                    ast_mod = parser.parse()
+                    ast_mod = JugaadASTOptimizer().optimize(ast_mod)
+                    try:
+                        cache_manager.set_ast(cache_key, ast_mod, filename=self.filename)
+                    except Exception:
+                        pass
+                
                 transformer = JugaadToPythonTransformer(self.filename)
                 py_ast = transformer.transform(ast_mod)
 
