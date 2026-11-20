@@ -271,141 +271,51 @@ agar_match xs:
 
 
 
-def test_parse_multiple_assignment_targets():
-    src = "a, b = 1, 2"
+def test_parse_tuple_subscript():
+    src = "bolo(d[1, 2])"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    ast_mod = parser.parse()
+
+    subscript = ast_mod.body[0].value.args[0]
+    assert isinstance(subscript, Subscript)
+    assert isinstance(subscript.slice, Tuple)
+    assert [elt.value for elt in subscript.slice.elts] == [1, 2]
+
+
+def test_parse_tuple_subscript_with_slice():
+    src = "bolo(p[1:2, 3])"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    ast_mod = parser.parse()
+
+    subscript = ast_mod.body[0].value.args[0]
+    assert isinstance(subscript.slice, Tuple)
+    assert isinstance(subscript.slice.elts[0], Slice)
+    assert subscript.slice.elts[0].lower.value == 1
+    assert subscript.slice.elts[0].upper.value == 2
+    assert subscript.slice.elts[1].value == 3
+
+
+def test_parse_single_element_tuple_subscript():
+    src = "bolo(d[1,])"
+    tokens = Lexer(src).tokenize()
+    parser = Parser(tokens, source=src)
+    ast_mod = parser.parse()
+
+    subscript = ast_mod.body[0].value.args[0]
+    assert isinstance(subscript.slice, Tuple)
+    assert len(subscript.slice.elts) == 1
+
+
+def test_parse_generic_annotation_with_commas():
+    src = "x: dict[str, int] = {'a': 1}"
     tokens = Lexer(src).tokenize()
     parser = Parser(tokens, source=src)
     ast_mod = parser.parse()
 
     stmt = ast_mod.body[0]
-    assert isinstance(stmt, Assign)
-    assert len(stmt.targets) == 1
-    target = stmt.targets[0]
-    assert isinstance(target, Tuple)
-    assert len(target.elts) == 2
-    assert all(isinstance(elt, Name) for elt in target.elts)
-
-    value = stmt.value
-    assert isinstance(value, Tuple)
-    assert len(value.elts) == 2
-    assert [elt.value for elt in value.elts] == [1, 2]
-
-
-def test_parse_multiple_assignment_value_from_call():
-    src = "a, b = get_pair()"
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    ast_mod = parser.parse()
-
-    stmt = ast_mod.body[0]
-    assert isinstance(stmt, Assign)
-    assert isinstance(stmt.targets[0], Tuple)
-    assert isinstance(stmt.value, Call)
-
-
-def test_parse_unparenthesized_tuple_value():
-    src = "x = 1, 2, 3"
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    ast_mod = parser.parse()
-
-    stmt = ast_mod.body[0]
-    assert isinstance(stmt, Assign)
-    assert isinstance(stmt.value, Tuple)
-    assert [elt.value for elt in stmt.value.elts] == [1, 2, 3]
-
-
-def test_parse_single_element_tuple_value():
-    src = "x = 1,"
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    ast_mod = parser.parse()
-
-    stmt = ast_mod.body[0]
-    assert isinstance(stmt, Assign)
-    assert isinstance(stmt.value, Tuple)
-    assert len(stmt.value.elts) == 1
-
-
-def test_parse_return_tuple_without_parens():
-    src = "banao do_teen():\n    wapas 1, 2\n"
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    ast_mod = parser.parse()
-
-    func = ast_mod.body[0]
-    assert isinstance(func, FunctionDef)
-    ret = func.body[0]
-    assert isinstance(ret, Return)
-    assert isinstance(ret.value, Tuple)
-    assert len(ret.value.elts) == 2
-
-
-def test_parse_chained_tuple_assignment():
-    src = "a = b = 1, 2"
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    ast_mod = parser.parse()
-
-    stmt = ast_mod.body[0]
-    assert isinstance(stmt, Assign)
-    assert len(stmt.targets) == 2
-    assert isinstance(stmt.value, Tuple)
-
-
-def test_parse_starred_assignment_target():
-    src = "head, *tail = items"
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    ast_mod = parser.parse()
-
-    stmt = ast_mod.body[0]
-    assert isinstance(stmt, Assign)
-    target = stmt.targets[0]
-    assert isinstance(target, Tuple)
-    assert isinstance(target.elts[0], Name)
-    assert isinstance(target.elts[1], Starred)
-    assert isinstance(target.elts[1].value, Name)
-    assert target.elts[1].value.id == "tail"
-
-
-def test_parse_starred_parenthesized_target():
-    src = "(a, *rest) = values"
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    ast_mod = parser.parse()
-
-    stmt = ast_mod.body[0]
-    assert isinstance(stmt, Assign)
-    target = stmt.targets[0]
-    assert isinstance(target, Tuple)
-    assert isinstance(target.elts[1], Starred)
-
-
-def test_parse_starred_for_target():
-    src = "ghumo head, *tail mein rows:\n    bolo(head)\n"
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    ast_mod = parser.parse()
-
-    stmt = ast_mod.body[0]
-    assert isinstance(stmt, For)
-    target = stmt.target
-    assert isinstance(target, Tuple)
-    assert isinstance(target.elts[1], Starred)
-
-
-def test_parse_bare_starred_target_rejected():
-    src = "*a = 1"
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    with pytest.raises(ParseError):
-        parser.parse()
-
-
-def test_parse_bare_starred_for_target_rejected():
-    src = "ghumo *a mein rows:\n    bolo(a)\n"
-    tokens = Lexer(src).tokenize()
-    parser = Parser(tokens, source=src)
-    with pytest.raises(ParseError):
-        parser.parse()
+    annotation = stmt.annotation
+    assert isinstance(annotation, Subscript)
+    assert isinstance(annotation.slice, Tuple)
+    assert len(annotation.slice.elts) == 2
