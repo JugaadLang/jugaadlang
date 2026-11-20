@@ -424,7 +424,7 @@ class Parser:
         tok = self._expect(TokenType.WAPAS, "Expected 'wapas'")
         value = None
         if not self._check(TokenType.NEWLINE, TokenType.EOF, TokenType.DEDENT):
-            value = self.parse_expression_list(allow_star=True)
+            value = self.parse_expression_list()
         self._expect_newline_or_eof()
         return Return(value=value, line=tok.line, col=tok.col)
 
@@ -440,10 +440,10 @@ class Parser:
 
     def parse_for(self, is_async: bool) -> For:
         tok = self._expect(TokenType.GHUMO, "Expected 'ghumo'")
-        target = self.parse_target_list(allow_star=True)
+        target = self.parse_target_list()
 
         self._expect(TokenType.MEIN, "Expected 'mein' after loop target variables")
-        iter_expr = self.parse_expression_list(allow_star=True)
+        iter_expr = self.parse_expression_list()
         body = self.parse_block()
 
         orelse = []
@@ -881,15 +881,15 @@ class Parser:
         return With(items=items, body=body, line=tok.line, col=tok.col)
 
     def parse_expr_statement_or_assignment(self) -> Stmt:
-        expr = self.parse_expression_list(allow_star=True)
+        expr = self.parse_expression_list()
 
         # Check for assignment
         if self._match(TokenType.ASSIGN):
             targets = [expr]
-            value = self.parse_expression_list(allow_star=True)
+            value = self.parse_expression_list()
             while self._match(TokenType.ASSIGN):
                 targets.append(value)
-                value = self.parse_expression_list(allow_star=True)
+                value = self.parse_expression_list()
             self._expect_newline_or_eof()
             return Assign(targets=targets, value=value, line=expr.line, col=expr.col)
 
@@ -930,7 +930,7 @@ class Parser:
             annotation = self.parse_expression()
             value = None
             if self._match(TokenType.ASSIGN):
-                value = self.parse_expression_list(allow_star=True)
+                value = self.parse_expression_list()
             self._expect_newline_or_eof()
             return AnnAssign(
                 target=expr, annotation=annotation, value=value, line=expr.line, col=expr.col
@@ -984,10 +984,6 @@ class Parser:
         """
         first = self._parse_list_item(allow_star)
         if not self._match(TokenType.COMMA):
-            if allow_star and isinstance(first, Starred):
-                raise self._error(
-                    "Starred expression ke baad comma chahiye (jaise *a, ya *a, b)"
-                )
             return first
 
         elts = [first]
@@ -1019,10 +1015,6 @@ class Parser:
         """Parse ``target (, target)*`` for ``ghumo`` loops."""
         first = self._parse_target_item(allow_star)
         if not self._match(TokenType.COMMA):
-            if allow_star and isinstance(first, Starred):
-                raise self._error(
-                    "Starred loop target ke baad comma chahiye (jaise *rest,)"
-                )
             return first
 
         elts = [first]
